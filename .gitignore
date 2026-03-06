@@ -6,6 +6,9 @@ node_modules/
 .env.local
 .env.*
 
+# dump files
+dump.rdb
+
 # OS generated files
 .DS_Store
 Thumbs.db

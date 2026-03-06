@@ -1,5 +1,6 @@
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { connectRedis } from './config/redis';
 import app from './app';
 
 const PORT = process.env.PORT || 3002
@@ -18,11 +19,14 @@ async function startServer() {
     },
   });
 
+  // Connect to Redis Data Client
+  await connectRedis();
+
   // Handle SocketIO Connections
   io.on('connection', (socket) => {
     console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId})`);
 
-    // TO-DO
+    // TO-DO: Register Socket Events
 
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);
