@@ -1,16 +1,28 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 
 // Load environment variables from .env file
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3002;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse incoming JSON payloads
+// Set HTTP headers to secure app
+app.use(helmet());
+// Configure CORS to allow only PeerPrep frontend to communicate with this service
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+);
+// Parse incoming JSON payloads
+app.use(express.json());
 
 // Basic Health Check Route
 app.get('/health', (req: Request, res: Response) => {
