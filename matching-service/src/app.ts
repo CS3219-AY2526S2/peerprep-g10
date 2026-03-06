@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
@@ -7,12 +7,12 @@ import helmet from 'helmet';
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3002;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Middleware
 // Set HTTP headers to secure app
 app.use(helmet());
+
 // Configure CORS to allow only PeerPrep frontend to communicate with this service
 app.use(
   cors({
@@ -21,6 +21,7 @@ app.use(
     credentials: true,
   })
 );
+
 // Parse incoming JSON payloads
 app.use(express.json());
 
@@ -29,7 +30,12 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'Matching Service is running perfectly.' });
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`[server]: Matching Service is running at http://localhost:${port}`);
+// 404 fallback, catch any HTTP requests that don't match the defined routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: `The endpoint ${req.method} ${req.path} does not exist on the Matching Service.`,
+  });
 });
+
+export default app;
