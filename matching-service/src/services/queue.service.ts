@@ -14,7 +14,7 @@ class QueueService {
   /**
    * Generates the deterministic key for a specific topic/difficulty bucket.
    */
-  private getQueueKey(topic: string, difficulty: string): string {
+  public getQueueKey(topic: string, difficulty: string): string {
     // Normalize strings to omit case-sensitivity bugs
     return `queue:${topic.toLowerCase()}:${difficulty.toLowerCase()}`;
   }
@@ -22,7 +22,7 @@ class QueueService {
   /**
    * Generates the deterministic key for a user match ticket.
    */
-  private getTicketKey(userId: string): string {
+  public getTicketKey(userId: string): string {
     return `ticket:${userId}`;
   }
 

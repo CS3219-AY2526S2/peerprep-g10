@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import { queueService } from './services/queue.service';
+import { matchingService } from './services/matching.service';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -42,12 +43,14 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Test Queue Route
-app.post('/test/findmatch', (req: Request, res: Response) => {
-  const userId = req.body.userid;
+app.post('/test/findmatch', async (req: Request, res: Response) => {
+  const userId = String(req.body.userid);
   const topic = req.body.topic;
   const difficulty = req.body.difficulty;
+  const socketId = req.body.socketId;
 
-  queueService.addUserToQueue(String(userId), "0", topic, difficulty);
+  await queueService.addUserToQueue(userId, socketId, topic, difficulty);
+  await matchingService.findMatch(socketId, userId, topic, difficulty);
 
   const message = `userId = ${userId}, topic = ${topic}, difficult = ${difficulty} added to queue`
   console.log(message);
