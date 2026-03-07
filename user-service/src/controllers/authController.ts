@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import isEmail from 'validator/lib/isEmail';
 import jwt from 'jsonwebtoken';
 import pool from '../config/db';
 import { z } from 'zod';
@@ -14,6 +15,13 @@ const registerSchema = z.object({
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = registerSchema.parse(req.body);
+
+    // RFC 5322 Validation
+    if (!isEmail(email)) {
+        return res.status(400).json({ 
+        message: "Invalid email format. Please follow RFC 5322 standards (e.g., name@domain.com)." 
+        });
+    }
 
     const userExists = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
     if (userExists.rows.length > 0) {
@@ -44,12 +52,22 @@ export const loginUser = async (req: Request, res: Response) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
 
-    // Check if user exists and password matches
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid email or password" });
+    // Unregistered email check
+    if (!user) {
+      return res.status(401).json({ 
+        message: "This email is not registered. Please sign up first." 
+      });
     }
 
-    // Sign JWT
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: "Incorrect password. Please try again." 
+      });
+    }
+
+    // Login success: Issue JWT
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.access_role },
       process.env.JWT_SECRET as string,

@@ -47,3 +47,5 @@ export const deleteUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error deleting user" });
   }
 };
+
+// Update user (remember to include isEmail(email))
