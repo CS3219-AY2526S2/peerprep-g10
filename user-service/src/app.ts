@@ -18,7 +18,6 @@ app.use(
 );
 
 app.use(helmet()); // Security headers
-app.use(cors());   // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Parse incoming JSON payloads
 
 // Routes

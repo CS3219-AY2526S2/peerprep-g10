@@ -5,6 +5,9 @@ src/
 ├── controllers/
 │   ├── authController.ts # Business logic for Login & Registration
 │   └── userController.ts # Logic for Profile, Updates, & Admin CRUD
+│   ├── services/
+│   │   ├── authService.ts    # Business logic: hashing, JWTs, DB calls
+│   │   └── userService.ts    # Business logic: user CRUD, DB calls
 ├── middleware/
 │   ├── authMiddleware.ts # JWT verification & user attachment
 │   └── roleMiddleware.ts # RBAC logic (authorizeRoles)

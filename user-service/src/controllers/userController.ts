@@ -1,51 +1,62 @@
 import { Request, Response } from 'express';
-import pool from '../config/db';
+import isEmail from 'validator/lib/isEmail';
+import { getUserById, getAllUsersDB, deleteUserDB, updateUserDB } from '../services/userServices';
 
-// Get User Profile
 export const getProfile = async (req: Request, res: Response) => {
   try {
-    // This comes from your middleware after it decodes the token
     const userId = (req as any).user.userId;
+    const user = await getUserById(userId);
 
-    const result = await pool.query(
-      'SELECT id, username, email, access_role, created_at FROM users WHERE id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    res.json(result.rows[0]);
+    res.json(user);
   } catch (error: any) {
     res.status(500).json({ message: "Error fetching profile" });
   }
 };
 
-// Get all users (Admin only)
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT id, username, email, access_role, created_at FROM users');
-    res.json(result.rows);
+    const users = await getAllUsersDB();
+    res.json(users);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
   }
 };
 
-// Delete User (Admin only)
 export const deleteUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
   try {
-    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+    const { id } = req.params;
+    const deletedCount = await deleteUserDB(id as string);
     
-    if (result.rowCount === 0) {
+    if (deletedCount === 0) {
       return res.status(404).json({ message: "User not found" });
     }
-    
     res.json({ message: `User with ID ${id} deleted successfully.` });
   } catch (error) {
     res.status(500).json({ message: "Error deleting user" });
   }
 };
 
-// Update user (remember to include isEmail(email))
+export const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { username, email } = req.body;
+
+    // Validate email format if it's being updated
+    if (email && !isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format." });
+    }
+
+    const updatedUser = await updateUserDB(userId, username, email);
+    
+    if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
