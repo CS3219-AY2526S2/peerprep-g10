@@ -33,16 +33,8 @@ export const registerUser = async (req: Request, res: Response) => {
     }
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      const formattedErrors: Record<string, string> = {};
-      error.issues.forEach((issue) => {
-        const path = issue.path[0]?.toString() ?? 'error';
-        formattedErrors[path] = issue.message;
-      });
-
-      return res.status(400).json({ 
-        message: "Validation failed", 
-        errors: formattedErrors 
-      });
+      const message = error.issues[0]?.message || "Inalid input data";
+      return res.status(400).json({ message });
     }
     
     console.error("REGISTRATION ERROR:", error);
