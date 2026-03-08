@@ -1,15 +1,15 @@
 services:
-  postgres:
+  question-db:
     image: postgres:17
-    container_name: peerprep-postgres
+    container_name: question-db
     environment:
-      POSTGRES_DB: peerprep
+      POSTGRES_DB: question_service
       POSTGRES_USER: peerprep
       POSTGRES_PASSWORD: peerprep_dev
     ports:
       - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - question-db-data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  question-db-data:
