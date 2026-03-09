@@ -1,3 +1,4 @@
+import { Navbar } from '@/src/components/navbar/Navbar';
 import RoleLayout from '@/src/components/RoleLayout';
 
 export default function UserLayout({
@@ -7,6 +8,7 @@ export default function UserLayout({
 }) {
   return (
     <RoleLayout role="user">
+      <Navbar />
       {children}
     </RoleLayout>
   );

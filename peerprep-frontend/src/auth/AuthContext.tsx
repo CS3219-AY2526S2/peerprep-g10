@@ -5,6 +5,7 @@ import { getRoleFromToken } from '@/src/lib/auth';
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  isLoading: boolean;
   role: string | null;
   login: (token: string) => string | null;
   logout: () => void;
@@ -15,6 +16,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  console.log("Current Auth State:", { isLoggedIn, role, isLoading });
 
   // Clear authentication state and removes token
   const logout = () => {
@@ -41,21 +45,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Runs once on app load to validate existing token
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
-    
-    const decodedRole = getRoleFromToken(token);
 
-    if (!decodedRole) {
+    if (token) {
+      const decodedRole = getRoleFromToken(token);
+
+      if (decodedRole) {
+        setIsLoggedIn(true);
+        setRole(decodedRole);
+      } else {
+        // Token exists but is invalid/expired
         logout();
-        return;
+      }
     }
 
-    setIsLoggedIn(true);
-    setRole(decodedRole);
+    setIsLoading(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, role, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

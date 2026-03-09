@@ -10,18 +10,22 @@ interface RoleLayoutProps {
 }
 
 export default function RoleLayout({ role: requiredRole, children }: RoleLayoutProps) {
-  const { isLoggedIn, role } = useAuth();
+  const { isLoggedIn, isLoading, role } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (isLoading) return;
+
     if (!isLoggedIn) {
       router.push('/auth/login');
-    } else if (role === requiredRole) {
-      router.push(`/${role}`);
     }
-  }, [isLoggedIn, role, requiredRole, router]);
+    
+    // if (role !== requiredRole) {
+    //   router.push(`/${role}`);
+    // }
+  }, [isLoggedIn, isLoading, role, requiredRole, router]);
 
-  if (!isLoggedIn || role === null) {
+  if (isLoading || role === null) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-zinc-500 animate-pulse">

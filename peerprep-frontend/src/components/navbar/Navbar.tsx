@@ -3,9 +3,14 @@
 import Link from 'next/link';
 import { useAuth } from '@/src/auth/AuthContext';
 import { UserNavbar } from './UserNavbar';
+import { AdminNavbar } from './AdminNavbar';
 
 export const Navbar = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, role, isLoading } = useAuth();
+
+  if (isLoading || !isLoggedIn || !role) {
+    return null;
+  }
 
   return (
     <nav className="w-full border-b border-zinc-200 bg-white">
@@ -18,7 +23,7 @@ export const Navbar = () => {
         </Link>
 
         <div className="flex items-center">
-          {isLoggedIn && <UserNavbar />}
+          {role === 'admin' ? <AdminNavbar /> : <UserNavbar />}
         </div>
       </div>
     </nav>
