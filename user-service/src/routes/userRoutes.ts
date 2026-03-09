@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, getAllUsers, deleteUser, updateUserProfile } from '../controllers/userController';
+import { getProfile, getAllUsers, deleteUser, updateUserProfile, changePassword } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 import { authorizeRoles } from '../middleware/roleMiddleware';
 
@@ -19,5 +19,8 @@ router.delete('/:id', authorizeRoles('admin'), deleteUser);
 
 // Update user profile
 router.patch('/profile', updateUserProfile);
+
+// update user password
+router.patch('/changepassword', changePassword);
 
 export default router;
