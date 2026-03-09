@@ -25,3 +25,11 @@ export const updateUserDB = async (id: string, username: string, email: string) 
   );
   return result.rows[0];
 };
+
+export const updateUserPasswordDB = async (id: string, hashedPassword: string) => {
+  const result = await pool.query(
+    'UPDATE users SET password_hash = $1 WHERE id = $2',
+    [hashedPassword, id]
+  );
+  return result.rows[0];
+};
