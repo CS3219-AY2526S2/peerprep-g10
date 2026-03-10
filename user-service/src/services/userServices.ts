@@ -1,35 +1,45 @@
-import pool from '../config/db';
+import bcrypt from 'bcrypt';
+import { UserDB } from '../model/userModel';
 
-export const getUserById = async (id: string) => {
-  const result = await pool.query(
-    'SELECT id, username, email, access_role, created_at FROM users WHERE id = $1',
-    [id]
-  );
-  return result.rows[0];
+export const UserService = {
+  async getUserById(id: string) {
+    return await UserDB.getUserById(id);
+  },
+
+  async getAllUser() {
+    // Logic could go here in the future
+    return await UserDB.getAllUsers();
+  },
+
+  async deleteUser(id: string) {
+    return await UserDB.deleteUser(id);
+  },
+  
+  async verifyUserPassword(userId: string, plainPassword: string) {
+    const user = await UserDB.getUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    const isMatch = await bcrypt.compare(plainPassword, user.password_hash);
+    if (!isMatch) throw new Error("Incorrect password");
+    
+    return user;
+  },
+
+  async updateProfile(userId: string, username: string, email: string, password: string) {
+    // Check password first
+    await this.verifyUserPassword(userId, password);
+
+    return await UserDB.updateProfile(userId, username, email);
+  },
+
+  async updatePassword(userId: string, currentPass: string, newPass: string) {
+    // Check old password first
+    await this.verifyUserPassword(userId, currentPass);
+
+    const saltRounds = 12;
+    const hashed = await bcrypt.hash(newPass, saltRounds);
+
+    return await UserDB.updatePassword(userId, hashed);
+  }
 };
 
-export const getAllUsersDB = async () => {
-  const result = await pool.query('SELECT id, username, email, access_role, created_at FROM users');
-  return result.rows;
-};
-
-export const deleteUserDB = async (id: string) => {
-  const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
-  return result.rowCount;
-};
-
-export const updateUserDB = async (id: string, username: string, email: string) => {
-  const result = await pool.query(
-    'UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email',
-    [username, email, id]
-  );
-  return result.rows[0];
-};
-
-export const updateUserPasswordDB = async (id: string, hashedPassword: string) => {
-  const result = await pool.query(
-    'UPDATE users SET password_hash = $1 WHERE id = $2',
-    [hashedPassword, id]
-  );
-  return result.rows[0];
-};

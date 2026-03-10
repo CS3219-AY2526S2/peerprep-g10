@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import isEmail from 'validator/lib/isEmail';
 import { z } from 'zod';
-import {register, login} from '../services/authServices';
+import { AuthService } from '../services/authServices';
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -21,7 +21,7 @@ export const registerUser = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = registerSchema.parse(req.body);
     
-    await register(username, email, password);
+    await AuthService.register(username, email, password);
     res.status(201).json({ message: "User registered successfully!" });
 
   } catch (error: any) {
@@ -45,13 +45,12 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    const authData = await login(email, password);
+    const authData = await AuthService.login(email, password);
     
     res.status(200).json({ 
       message: "Login successful", 
       ...authData 
     });
-
   } catch (error: any) {
     if (error.message === "USER_NOT_FOUND") {
       return res.status(401).json({ message: "This email is not registered. Please sign up first." });
@@ -59,6 +58,7 @@ export const loginUser = async (req: Request, res: Response) => {
     if (error.message === "INVALID_PASSWORD") {
       return res.status(401).json({ message: "Incorrect password. Please try again." });
     }
+    console.error("DEBUG LOGIN ERROR:", error.message);
     res.status(500).json({ message: "Server Error during login" });
   }
 };

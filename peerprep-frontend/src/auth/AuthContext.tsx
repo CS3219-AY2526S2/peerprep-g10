@@ -18,8 +18,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  console.log("Current Auth State:", { isLoggedIn, role, isLoading });
-
   // Clear authentication state and removes token
   const logout = () => {
     localStorage.removeItem('token');

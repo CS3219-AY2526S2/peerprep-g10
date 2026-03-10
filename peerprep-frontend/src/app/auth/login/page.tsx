@@ -24,7 +24,6 @@ export default function LoginPage() {
     const password = form.get('password') as string;
 
     try {
-      console.log("hello");
       const res = await fetch('http://localhost:3004/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,7 +31,6 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      console.log("hello");
 
       if (!res.ok) {
         throw new Error(data?.message || 'Invalid credentials');

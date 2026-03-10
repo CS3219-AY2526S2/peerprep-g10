@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import isEmail from 'validator/lib/isEmail';
-import { getUserById, getAllUsersDB, deleteUserDB, updateUserDB, updateUserPasswordDB } from '../services/userServices';
+import { UserService } from '../services/userServices';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
-    const user = await getUserById(userId);
+    const user = await UserService.getUserById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -20,7 +19,7 @@ export const getProfile = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await getAllUsersDB();
+    const users = await UserService.getAllUser();
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
@@ -30,7 +29,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const deletedCount = await deleteUserDB(id as string);
+    const deletedCount = await UserService.deleteUser(id as string);
     
     if (deletedCount === 0) {
       return res.status(404).json({ message: "User not found" });
@@ -53,16 +52,17 @@ const updateProfileSchema = z.object({
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
-    const { username, email } = req.body;
+    const { username, email, password } = req.body;
 
     // Validate email format if it's being updated
     const parseProfile = updateProfileSchema.safeParse({ username, email });
+    console.log(email);
 
     if (!parseProfile.success) {
       return res.status(400).json({ message: parseProfile.error.issues[0]?.message });
     }
 
-    const updatedUser = await updateUserDB(userId, username, email);
+    const updatedUser = await UserService.updateProfile(userId, username, email, password);
     
     if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
@@ -85,7 +85,7 @@ const changePasswordSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Password needs a special character"),
 });
 
-export const changePassword = async (req: Request, res: Response) => {
+export const updatePassword = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
     const { currentPassword, newPassword } = req.body;
@@ -96,17 +96,7 @@ export const changePassword = async (req: Request, res: Response) => {
       return res.status(400).json({ message: parseResult.error.issues[0]?.message });
     }
 
-    // Get user from DB
-    const user = await getUserById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // Check current password
-    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
-
-    // Hash new password
-    const hashed = await bcrypt.hash(newPassword, 12);
-    const updatedPassword = await updateUserPasswordDB(userId, hashed);
+    const updatedPassword = await UserService.updatePassword(userId, currentPassword, newPassword);
 
     if (!updatedPassword) {
         return res.status(404).json({ message: "User not found" });
