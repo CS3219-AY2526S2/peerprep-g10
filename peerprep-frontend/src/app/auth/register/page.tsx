@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
+import { ROUTES } from '@/src/constant/route';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function RegisterPage() {
         throw new Error('Registration failed');
       }
 
-      router.push('/login');
+      router.push(ROUTES.LOGIN);
 
     } catch (err) {
       if (err instanceof Error) {

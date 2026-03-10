@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@/src/auth/AuthContext';
+import { ROUTES } from '@/src/constant/route'
 
 interface RoleLayoutProps {
   role: 'admin' | 'user';
@@ -19,7 +20,7 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
 
     console.log("Current Auth State:", { isLoggedIn, role, isLoading });
     if (!isLoggedIn) {
-      router.push('/auth/login');
+      router.push(ROUTES.LOGIN);
     }
     
   }, [isLoggedIn, isLoading, role, requiredRole, router]);

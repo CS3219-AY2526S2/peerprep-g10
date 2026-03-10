@@ -19,7 +19,8 @@ export const UserService = {
     const user = await UserDB.getUserById(userId);
     if (!user) throw new Error("User not found");
 
-    const isMatch = await bcrypt.compare(plainPassword, user.password_hash);
+    const isMatch = await bcrypt.compare(plainPassword, user.password);
+
     if (!isMatch) throw new Error("Incorrect password");
     
     return user;
@@ -32,13 +33,13 @@ export const UserService = {
     return await UserDB.updateProfile(userId, username, email);
   },
 
-  async updatePassword(userId: string, currentPass: string, newPass: string) {
+  async updatePassword(userId: string, currentPassword: string, newPassword: string) {
     // Check old password first
-    await this.verifyUserPassword(userId, currentPass);
+    await this.verifyUserPassword(userId, currentPassword);
 
     const saltRounds = 12;
-    const hashed = await bcrypt.hash(newPass, saltRounds);
-
+    const hashed = await bcrypt.hash(newPassword, saltRounds);
+    
     return await UserDB.updatePassword(userId, hashed);
   }
 };

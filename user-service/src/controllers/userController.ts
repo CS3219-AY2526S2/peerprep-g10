@@ -56,7 +56,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     // Validate email format if it's being updated
     const parseProfile = updateProfileSchema.safeParse({ username, email });
-    console.log(email);
 
     if (!parseProfile.success) {
       return res.status(400).json({ message: parseProfile.error.issues[0]?.message });
@@ -69,7 +68,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     }
 
     res.json({ message: "Profile updated successfully", user: updatedUser });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Incorrect password") {
+      return res.status(401).json({ message: error.message });
+    }
     res.status(500).json({ message: "Error updating profile" });
   }
 };
@@ -104,7 +106,9 @@ export const updatePassword = async (req: Request, res: Response) => {
 
     res.json({ message: "Password updated successfully" });
   } catch (error: any) {
-    console.error(error);
+    if (error.message === "Incorrect password") {
+      return res.status(401).json({ message: error.message });
+    }
     res.status(500).json({ message: "Error changing password" });
   }
 };

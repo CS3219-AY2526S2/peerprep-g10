@@ -6,6 +6,7 @@ import { useAuth } from '@/src/auth/AuthContext';
 import Link from 'next/link';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
+import { ROUTES } from '@/src/constant/route';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -42,7 +43,7 @@ export default function LoginPage() {
 
       const role = login(data.token);
       
-      router.push(role === 'admin' ? '/admin' : '/user');
+      router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
