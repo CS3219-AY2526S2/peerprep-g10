@@ -8,6 +8,7 @@ export interface Question {
   pseudocode: string;
   image_url: string;
   created_at: string;
+  updated_at: string;
 }
 
-export type QuestionFormData = Omit<Question, 'id' | 'created_at'>;
+export type QuestionFormData = Omit<Question, 'id' | 'created_at' | 'updated_at'>;
