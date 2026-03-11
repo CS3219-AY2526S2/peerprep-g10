@@ -11,5 +11,19 @@ services:
     volumes:
       - question-db-data:/var/lib/postgresql/data
 
+  user-db:
+    image: postgres:17
+    container_name: user-db
+    environment:
+      POSTGRES_DB: peerprep
+      POSTGRES_USER: peerprep
+      POSTGRES_PASSWORD: peerprep_dev
+    ports:
+      - "5434:5432"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+      - ./user-service/src/database:/docker-entrypoint-initdb.d
+
 volumes:
   question-db-data:
+  user-db-data:
