@@ -13,7 +13,6 @@ interface RoleLayoutProps {
 export default function RoleLayout({ role: requiredRole, children }: RoleLayoutProps) {
   const { isLoggedIn, isLoading, role } = useAuth();
   const router = useRouter();
-  console.log("Current Auth State before:", { isLoggedIn, role, isLoading });
 
   useEffect(() => {
     if (isLoading) return;
