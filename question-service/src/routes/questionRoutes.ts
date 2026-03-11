@@ -80,7 +80,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 
   const result = await pool.query(
     `UPDATE questions SET title = $1, description = $2, topics = $3, difficulty = $4,
-     examples = $5, pseudocode = $6, image_url = $7 WHERE id = $8 RETURNING *`,
+     examples = $5, pseudocode = $6, image_url = $7, updated_at = NOW() WHERE id = $8 RETURNING *`,
     [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, image_url ?? null, id]
   );
 
