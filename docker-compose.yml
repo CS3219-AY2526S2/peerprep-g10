@@ -15,7 +15,7 @@ services:
     image: postgres:17
     container_name: user-db
     environment:
-      POSTGRES_DB: peerprep
+      POSTGRES_DB: user_service
       POSTGRES_USER: peerprep
       POSTGRES_PASSWORD: peerprep_dev
     ports:
