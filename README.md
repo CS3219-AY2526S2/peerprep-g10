@@ -41,20 +41,7 @@ Verify: `curl localhost:3003/questions/topics`
 ```bash
 cd user-service
 npm install
-```
-Create a `.env` file in `user-service/` with:
-```env
-PORT=3004
-DB_USER=peerprep
-DB_HOST=localhost
-DB_NAME=peerprep
-DB_PASS=peerprep_dev
-DB_PORT=5434
-JWT_SECRET=<generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
-FRONTEND_URL=http://localhost:3000
-```
-Then run:
-```bash
+cp .env.example .env
 npm run dev        # starts on port 3004
 ```
 
@@ -78,6 +65,7 @@ npm run dev        # starts on port 3000
 | `/auth/login` | Login page |
 | `/auth/register` | User registration |
 | `/user` | User dashboard (requires user role) |
+| `/user/profile` | User profile (requires user role) |
 | `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
