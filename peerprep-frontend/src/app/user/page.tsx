@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Book, ChevronDown, User, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Book, ChevronDown, ArrowRight } from 'lucide-react';
 import { fetchTopics } from '@/src/services/questionApi';
+import { io } from "socket.io-client";
+import { API_BASE } from "@/src/constant/api"
+import { useAuth } from '@/src/auth/AuthContext';
 
 export default function UserDashboard() {
   const [topics, setTopics] = useState<string[]>([]);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Easy');
   const [isLoading, setIsLoading] = useState(true);
+
+  const { logout } = useAuth();
 
   useEffect(() => {
     fetchTopics().then(setTopics)
@@ -23,6 +28,34 @@ export default function UserDashboard() {
 
     console.log(`Find Match with Topic: ${selectedTopic}, Difficulty: ${selectedDifficulty}`);
 
+    const token = localStorage.getItem("token");
+
+    const socket = io(API_BASE.MATCHING_SERIVCE, {
+      auth: {
+        token: token, 
+      },
+      query: {
+        topic: selectedTopic,
+        difficulty: selectedDifficulty.toLowerCase(),
+      },
+    });
+
+    socket.on('connect', () => {
+      socket.on('MATCH_FOUND', (payload) => {
+        console.log(`MATCH FOUND: ${JSON.stringify(payload)}`);
+      });
+
+      socket.on('MATCH_ERROR', (error) => {
+        console.log(`MATCH ERROR: ${error.message}`);
+      });
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Connection rejected:", err.message);
+      if (err.message === "Authentication error: Invalid or expired token") {
+        logout();
+      }
+    });
   }
 
   return (
