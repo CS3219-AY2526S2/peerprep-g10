@@ -2,6 +2,8 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
+import { queueService } from './services/queue.service';
+import { matchingService } from './services/matching.service';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -24,6 +26,16 @@ app.use(
 
 // Parse incoming JSON payloads
 app.use(express.json());
+
+// Home Route
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ 
+    message: 'Welcome to PeerPrep Matching Service. Use /health to check server status',
+    available_endpoints: [
+      '/health',
+    ] 
+  });
+});
 
 // Basic Health Check Route
 app.get('/health', (req: Request, res: Response) => {
