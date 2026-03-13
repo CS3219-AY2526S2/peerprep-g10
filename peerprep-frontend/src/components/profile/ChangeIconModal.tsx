@@ -15,7 +15,7 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
   const [selected, setSelected] = useState<string>(currentIcon ?? 'default');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [avatarOptions, setAvatarOptions] = useState<string[]>([]);
+  const [avatarOptions, setAvatarOptions] = useState<{ key: string; url: string }[]>([]);
   const { user, setUser } = useAuth();
 
   useEffect(() => {
@@ -82,15 +82,15 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
           {avatarOptions.length === 0 ? (
             <p className="text-sm text-zinc-400 col-span-4">Loading avatars...</p>
           ) : (
-            avatarOptions.map((icon) => (
+            avatarOptions.map(({ key, url}) => (
               <div
-                key={icon}
-                onClick={() => setSelected(icon)}
+                key={key}
+                onClick={() => setSelected(url)}
                 className={`cursor-pointer rounded-full border-2 p-1 transition-all ${
-                  selected === icon ? 'border-blue-500' : 'border-transparent'
+                  selected === url ? 'border-blue-500' : 'border-transparent'
                 }`}
               >
-                <img src={`/icons/${icon}.png`} className="w-full h-full rounded-full object-cover" />
+                <img src={url} className="w-full h-full rounded-full object-cover" />
               </div>
             ))
           )}

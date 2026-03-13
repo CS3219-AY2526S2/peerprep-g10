@@ -59,7 +59,7 @@ export default function ProfilePage() {
           <div className="flex flex-col items-center gap-2">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
               {user.profile_icon
-                ? <img src={`/icons/${user.profile_icon}.png`} className="w-full h-full rounded-full object-cover" />
+                ? <img src={user.profile_icon} className="w-full h-full rounded-full object-cover" />
                 : <User className="w-8 h-8 text-gray-400" />
               }
             </div>
@@ -100,7 +100,7 @@ export default function ProfilePage() {
       <ChangeIconModal
         isOpen={iconOpen}
         onClose={() => setIconOpen(false)}
-        currentIcon={user.profile_icon ?? 'default'}
+        currentIcon={user.profile_icon}
         onSuccess={(newIcon) => setUser({ ...user, profile_icon: newIcon })}
       />
     </div>
