@@ -29,7 +29,7 @@ class QueueService {
   /**
    * Place user into the matching queue and creates a timeout ticket.
    */
-  public async addUserToQueue(userId: string, socketId: string, topic: string, difficulty: string): Promise<void> {
+  public async addUserToMatchPool(userId: string, socketId: string, topic: string, difficulty: string): Promise<void> {
     const queueKey = this.getQueueKey(topic, difficulty);
     const ticketKey = this.getTicketKey(userId);
 
@@ -55,9 +55,9 @@ class QueueService {
   }
 
   /**
-   * Removes a user from the matching queue (for cancellations or disconnects).
+   * Removes user ticket and user from all matching queue (for cancellations or disconnects).
    */
-  public async removeUserFromQueue(userId: string): Promise<void> {
+  public async removeUserFromMatchPool(userId: string): Promise<void> {
     const ticketKey = this.getTicketKey(userId);
     
     // Get user's ticket to find their queue
@@ -81,6 +81,38 @@ class QueueService {
   }
 
   /**
+   * Removes both users ticket and users from all matching queue (for match found).
+   */
+  public async removeBothUserFromMatchPool(userA: string, userB: string): Promise<Boolean> {
+    const ticketA = await this.getTicket(userA);
+    const ticketB = await this.getTicket(userB);
+
+    if (!ticketA || !ticketB) return false;
+
+    // Remove both users and their tickets simultaneously.
+    const ticketAQueueKey = this.getQueueKey(ticketA.topic, ticketA.difficulty);
+    const ticketBQueueKey = this.getQueueKey(ticketB.topic, ticketB.difficulty);
+    const results = await redisClient.multi()
+        .sRem(ticketAQueueKey, userA)
+        .sRem(ticketBQueueKey, userB)
+        .del(this.getTicketKey(userA))
+        .del(this.getTicketKey(userB))
+        .execTyped();
+        
+    // If sRem returns 0, it means another server already matched them in the last millisecond.
+    // We abort to prevent creating duplicate rooms.
+    if (results[0] === 0 || results[1] === 0) {
+      console.log(`[RACE CONDITION AVERTED] Users ${userA} or ${userB} were already matched.`);
+      return false; 
+    }
+
+    console.log(`[QUEUE] Removed user ${userA} from ${ticketAQueueKey} (Match Found)`);
+    console.log(`[QUEUE] Removed user ${userB} from ${ticketBQueueKey} (Match Found)`);
+
+    return true;
+  }
+
+  /**
    * Retrieves user's current match ticket to check if they are still active.
    */
   public async getTicket(userId: string): Promise<MatchTicket | null> {
@@ -96,6 +128,13 @@ class QueueService {
     const queueKey = this.getQueueKey(topic, difficulty);
     // SMembers returns an array of userIds currently in this Set
     return await redisClient.sMembers(queueKey);
+  }
+
+  /**
+   * Removes user from a specific queue.
+   */
+  public async removeUserFromQueue(userId: string, topic: string, difficulty: string): Promise<void> {
+    await redisClient.sRem(queueService.getQueueKey(topic, difficulty), userId);
   }
 }
 

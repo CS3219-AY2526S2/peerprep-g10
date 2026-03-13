@@ -1,6 +1,5 @@
 import { Server } from 'socket.io';
-import { queueService, MatchTicket } from './queue.service';
-import { redisClient } from '../config/redis';
+import { queueService } from './queue.service';
 
 import { QuestionClient } from '../clients/question.client';
 import { CollabClient } from '../clients/collab.client';
@@ -10,7 +9,6 @@ class MatchingService {
    * When a user joins the queue, it attempts an immediate exact match.
    */
   public async findMatch(io: Server, userId: string, topic: string, difficulty: string): Promise<void> {
-    console.log("Finding Match...");
     const isMatched = await this.tryExactMatch(io, userId, topic, difficulty);
   }
 
@@ -19,7 +17,6 @@ class MatchingService {
    */
   private async tryExactMatch(io: Server, userId: string, topic: string, difficulty: string): Promise<boolean> {
     const candidates = await queueService.getCandidatesInQueue(topic, difficulty);
-    console.log(`Get Candidates ${candidates.join(", ")}`);
     let partnerId = null;
     let partnerQueueTime = Infinity;
 
@@ -31,9 +28,6 @@ class MatchingService {
       }
 
       const candidateTicket = await queueService.getTicket(candidateId);
-      console.log(`Candidate Ticket Retrieved: ${candidateTicket?.userId}, ${candidateTicket?.joinedAt}`);
-      console.log(`Difficulty: ${candidateTicket?.difficulty}, ${difficulty.toLowerCase()}`);
-      console.log(`Topic: ${candidateTicket?.topic}, ${topic.toLowerCase()}`);
 
       const isMatchingTicketValid = candidateTicket 
           && candidateTicket.difficulty === difficulty 
@@ -41,19 +35,19 @@ class MatchingService {
 
       // Candidate does not have a valid matching ticket (timeout)
       if (!isMatchingTicketValid) {
-          console.log("Ticket is not valid");
+          console.log(`Ticket is not valid for ${candidateId}. Removing stale candidate from queue.`);
+          // Remove stale user from the Redis Set to prevent queue build up
+          queueService.removeUserFromQueue(candidateId, topic, difficulty);
           continue;
       }
 
       // Found a candidate that joined queue earlier
       if (candidateTicket.joinedAt < partnerQueueTime) {
-          console.log(`Partner Found`);
           partnerId = candidateId;
           partnerQueueTime = candidateTicket.joinedAt;
       }
     }
 
-    console.log(`Partner is ${partnerId}`);
     if (partnerId) {
       return await this.executeMatch(io, userId, partnerId, topic, difficulty);
     }
@@ -64,27 +58,11 @@ class MatchingService {
    * Atomically removes both users from Redis and create a session.
    */
   private async executeMatch(io: Server, userA: string, userB: string, topic: string, difficulty: string): Promise<boolean> {
-    console.log("Executing Match...");
-    const ticketA = await queueService.getTicket(userA);
-    const ticketB = await queueService.getTicket(userB);
-
-    if (!ticketA || !ticketB) return false;
-
-    // Remove both users and their tickets simultaneously.
-    const results = await redisClient.multi()
-        .sRem(queueService.getQueueKey(ticketA.topic, ticketA.difficulty), userA)
-        .sRem(queueService.getQueueKey(ticketB.topic, ticketB.difficulty), userB)
-        .del(queueService.getTicketKey(userA))
-        .del(queueService.getTicketKey(userB))
-        .execTyped();
     
-    console.log("Removing users from queue...");
-    
-    // If sRem returns 0, it means another server already matched them in the last millisecond.
-    // We abort to prevent creating duplicate rooms.
-    if (results[0] === 0 || results[1] === 0) {
-      console.log(`[RACE CONDITION AVERTED] Users ${userA} or ${userB} were already matched.`);
-      return false; 
+    const isRemovedSuccess = await queueService.removeBothUserFromMatchPool(userA, userB);
+
+    if (!isRemovedSuccess) {
+      return false;
     }
 
     console.log(`🎉 MATCH SUCCESS: ${userA} & ${userB}`);

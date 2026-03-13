@@ -49,11 +49,10 @@ app.post('/test/findmatch', async (req: Request, res: Response) => {
   const difficulty = req.body.difficulty;
   const socketId = req.body.socketId;
 
-  await queueService.addUserToQueue(userId, socketId, topic, difficulty);
+  await queueService.addUserToMatchPool(userId, socketId, topic, difficulty);
   await matchingService.findMatch(socketId, userId, topic, difficulty);
 
   const message = `userId = ${userId}, topic = ${topic}, difficult = ${difficulty} added to queue`
-  console.log(message);
   res.status(200).json({
     message: message,
     body: req.body
