@@ -83,12 +83,10 @@ class QueueService {
   /**
    * Removes both users ticket and users from all matching queue (for match found).
    */
-  public async removeBothUserFromMatchPool(userA: string, userB: string): Promise<Boolean> {
-    const ticketA = await this.getTicket(userA);
-    const ticketB = await this.getTicket(userB);
-
-    if (!ticketA || !ticketB) return false;
-
+  public async removeBothUserFromMatchPool(ticketA: MatchTicket, ticketB: MatchTicket): Promise<boolean> {
+    const userA = ticketA.userId;
+    const userB = ticketB.userId;
+    
     // Remove both users and their tickets simultaneously.
     const ticketAQueueKey = this.getQueueKey(ticketA.topic, ticketA.difficulty);
     const ticketBQueueKey = this.getQueueKey(ticketB.topic, ticketB.difficulty);

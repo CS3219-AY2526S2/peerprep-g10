@@ -58,8 +58,12 @@ class MatchingService {
    * Atomically removes both users from Redis and create a session.
    */
   private async executeMatch(io: Server, userA: string, userB: string, topic: string, difficulty: string): Promise<boolean> {
-    
-    const isRemovedSuccess = await queueService.removeBothUserFromMatchPool(userA, userB);
+    const ticketA = await queueService.getTicket(userA);
+    const ticketB = await queueService.getTicket(userB);
+
+    if (!ticketA || !ticketB) return false;
+
+    const isRemovedSuccess = await queueService.removeBothUserFromMatchPool(ticketA, ticketB);
 
     if (!isRemovedSuccess) {
       return false;
@@ -81,17 +85,20 @@ class MatchingService {
         partnerId: userB, // For User A
       };
 
-      // TO-DO: Emit Match Found to User A
+      // Emit Match Found to User A
+      io.to(ticketA.socketId).emit('MATCH_FOUND', payload);
       
       payload.partnerId = userA; // Swap partner ID for User B
-      // TO-DO: Emit Match Found to User B
+      // Emit Match Found to User B
+      io.to(ticketB.socketId).emit('MATCH_FOUND', payload);
 
       return true;
 
     } catch (error) {
-      console.error(`[MATCH_EXECUTION_ERROR] Failed to provision session for ${userA} & ${userB}:`, error);
-      // TO-DO: Notify users of the error
-      
+      console.error(`[MATCH_EXECUTION_ERROR] Failed to create session for ${userA} & ${userB}:`, error);
+      // Notify users of the error
+      io.to(ticketA.socketId).emit('MATCH_ERROR', { message: 'Failed to create workspace.' });
+      io.to(ticketB.socketId).emit('MATCH_ERROR', { message: 'Failed to create workspace.' });
       return false;
     }
   }

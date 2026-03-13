@@ -42,23 +42,6 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'Matching Service is running perfectly.' });
 });
 
-// Test Queue Route
-app.post('/test/findmatch', async (req: Request, res: Response) => {
-  const userId = String(req.body.userid);
-  const topic = req.body.topic;
-  const difficulty = req.body.difficulty;
-  const socketId = req.body.socketId;
-
-  await queueService.addUserToMatchPool(userId, socketId, topic, difficulty);
-  await matchingService.findMatch(socketId, userId, topic, difficulty);
-
-  const message = `userId = ${userId}, topic = ${topic}, difficult = ${difficulty} added to queue`
-  res.status(200).json({
-    message: message,
-    body: req.body
-  });
-});
-
 // 404 fallback, catch any HTTP requests that don't match the defined routes
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
