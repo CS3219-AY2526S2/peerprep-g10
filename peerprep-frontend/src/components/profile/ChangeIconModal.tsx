@@ -1,0 +1,116 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { useAuth } from '@/src/auth/AuthContext';
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  currentIcon: string;
+  onSuccess: (newIcon: string) => void;
+}
+
+export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSuccess }: Props) {
+  const [selected, setSelected] = useState<string>(currentIcon ?? 'default');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [avatarOptions, setAvatarOptions] = useState<string[]>([]);
+  const { user, setUser } = useAuth();
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchAvatars = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3004/api/users/avatars', {
+        });
+
+        const data = await res.json();
+
+        setAvatarOptions(data.avatars ?? []);
+      } catch {
+        setError('Failed to load avatars');
+      }
+    };
+
+    fetchAvatars();
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSave = async () => {
+    if (!selected) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:3004/api/users/me/icon', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ profile_icon: selected }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update icon');
+
+      const data = await res.json();
+      const newIcon = data.user.profile_icon;
+
+      // Update auth context so navbar reflects change immediately
+      setUser({ ...user, profile_icon: newIcon });
+      localStorage.setItem('user', JSON.stringify({ ...user, profile_icon: newIcon }));
+      
+      onSuccess(newIcon);
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 w-[500px] shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Choose Avatar</h2>
+          <X className="cursor-pointer" onClick={onClose} />
+        </div>
+
+        <div className="grid grid-cols-5 gap-4 mb-6">
+          {avatarOptions.length === 0 ? (
+            <p className="text-sm text-zinc-400 col-span-4">Loading avatars...</p>
+          ) : (
+            avatarOptions.map((icon) => (
+              <div
+                key={icon}
+                onClick={() => setSelected(icon)}
+                className={`cursor-pointer rounded-full border-2 p-1 transition-all ${
+                  selected === icon ? 'border-blue-500' : 'border-transparent'
+                }`}
+              >
+                <img src={`/icons/${icon}.png`} className="w-full h-full rounded-full object-cover" />
+              </div>
+            ))
+          )}
+        </div>
+
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={loading || !selected}
+            className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

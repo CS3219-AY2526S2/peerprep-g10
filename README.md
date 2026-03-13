@@ -6,17 +6,66 @@
 - You are required to develop individual microservices within separate folders within this repository.
 - The teaching team should be given access to the repositories, as we may require viewing the history of the repository in case of any disputes or disagreements. 
 
-### Set Up Instructions:
-- Ensure NodeJS is installed (Min Version v20.9)
+### Set Up Instructions
 
-#### Frontend Set Up:
-1. `cd peerprep-frontend`
-2. Install packages with `npm install`
-3. Create file `.env` in `peerprep-frontend` root directory
-4. Run app with `npm run dev`
+#### Prerequisites
+- NodeJS >= v20.9 (recommend using `nvm use 22`)
+- Docker Desktop installed and running
 
-#### Backend Set Up:
-1. `cd XXX-service`
-2. Install packages with `npm install`
-3. Create file `.env` in `XXX-service` root directory
-4. Run app with `npm run dev`
+#### 1. Database Set Up
+From the project root:
+```bash
+docker compose up -d
+```
+This starts two PostgreSQL containers:
+- **question-db** on port `5433`
+- **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
+
+**Default admin account** (seeded automatically):
+- Email: `admin@peerprep.com`
+- Password: `Admin123!`
+
+> To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
+
+#### 2. Question Service Set Up
+```bash
+cd question-service
+npm install
+cp .env.example .env
+npm run dev        # starts on port 3003, creates tables automatically
+npm run seed       # populates the database with sample questions
+```
+Verify: `curl localhost:3003/questions/topics`
+
+#### 3. User Service Set Up
+```bash
+cd user-service
+npm install
+cp .env.example .env
+npm run dev        # starts on port 3004
+```
+
+#### 4. Frontend Set Up
+```bash
+cd peerprep-frontend
+npm install
+npm run dev        # starts on port 3000
+```
+
+### Running the App
+1. Start databases: `docker compose up -d`
+2. Start question-service: `cd question-service && npm run dev`
+3. Start user-service: `cd user-service && npm run dev`
+4. Start frontend: `cd peerprep-frontend && npm run dev`
+5. Open http://localhost:3000
+
+### Available Pages
+| Route | Description |
+|-------|-------------|
+| `/auth/login` | Login page |
+| `/auth/register` | User registration |
+| `/user` | User dashboard (requires user role) |
+| `/user/profile` | User profile (requires user role) |
+| `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
+| `/admin/questions/create` | Create a new question |
+| `/admin/questions/[id]/edit` | Edit an existing question |

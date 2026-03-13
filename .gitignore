@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.*
+!.env.example
 
 # dump files
 dump.rdb
@@ -16,3 +17,6 @@ Thumbs.db
 # IDE folders
 .vscode/
 .idea/
+
+# Helper docs
+docs
