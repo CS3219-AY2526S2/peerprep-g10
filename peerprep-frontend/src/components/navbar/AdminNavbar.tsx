@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
 import { LogOut } from 'lucide-react';
 
 export const AdminNavbar = () => {

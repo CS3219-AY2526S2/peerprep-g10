@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
+import { User } from '@/src/user/types';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   username: string;
   userEmail: string;
-  onSuccess: (userData: any) => void;
+  onSuccess: (userData: User) => void;
 }
 
 export default function EditProfileModal({ isOpen, onClose, userEmail, username, onSuccess }: Props) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route';
 import { LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';

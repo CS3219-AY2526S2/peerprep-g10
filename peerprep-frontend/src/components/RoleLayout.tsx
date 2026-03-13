@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route'
 
 interface RoleLayoutProps {

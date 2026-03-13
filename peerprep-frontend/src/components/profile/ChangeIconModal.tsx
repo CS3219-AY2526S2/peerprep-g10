@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { User } from '@/src/user/types';
 
 interface Props {
   isOpen: boolean;
@@ -23,7 +24,6 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
 
     const fetchAvatars = async () => {
       try {
-        const token = localStorage.getItem('token');
         const res = await fetch('http://localhost:3004/api/users/avatars', {
         });
 
@@ -55,13 +55,13 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
       if (!res.ok) throw new Error('Failed to update icon');
 
       const data = await res.json();
-      const newIcon = data.user.profile_icon;
+      const updatedUser = data.user as User;
 
       // Update auth context so navbar reflects change immediately
-      setUser({ ...user, profile_icon: newIcon });
-      localStorage.setItem('user', JSON.stringify({ ...user, profile_icon: newIcon }));
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       
-      onSuccess(newIcon);
+      onSuccess(updatedUser.profile_icon);
       onClose();
     } catch (err: any) {
       setError(err.message);

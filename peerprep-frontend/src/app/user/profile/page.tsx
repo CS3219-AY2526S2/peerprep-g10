@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Pencil, User } from 'lucide-react';
+import { Pencil, User as UserIcon } from 'lucide-react';
 import EditProfileModal from '@/src/components/profile/EditProfileModal';
 import ChangePasswordModal from '@/src/components/profile/ChangePasswordModal';
 import ChangeIconModal from '@/src/components/profile/ChangeIconModal';
+import { User } from '@/src/user/types';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editOpen, setEditOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function ProfilePage() {
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
               {user.profile_icon
                 ? <img src={user.profile_icon} className="w-full h-full rounded-full object-cover" />
-                : <User className="w-8 h-8 text-gray-400" />
+                : <UserIcon className="w-8 h-8 text-gray-400" />
               }
             </div>
             <span onClick={() => setIconOpen(true)} className="text-blue-500 text-sm cursor-pointer">Change Avatar</span>

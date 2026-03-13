@@ -2,14 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getRoleFromToken } from '@/src/lib/auth';
+import { User } from '@/src/user/types';
 
 interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   role: string | null;
-  user: any | null;
-  setUser: (user: any) => void;
-  login: (token: string, user: any) => string | null;
+  user: User | null;
+  setUser: (user: User | null) => void;
+  login: (token: string, user: User) => string | null;
   logout: () => void;
 }
 
@@ -18,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<string | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Clear authentication state and removes token
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Stores token and update authentication state
-  const login = (token: string, user: any) : string | null => {
+  const login = (token: string, user: User) : string | null => {
     const decodeRole = getRoleFromToken(token);
 
     if (!decodeRole) {

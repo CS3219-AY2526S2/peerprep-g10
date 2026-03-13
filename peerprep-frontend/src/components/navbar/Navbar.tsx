@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
 import { UserNavbar } from './UserNavbar';
 import { AdminNavbar } from './AdminNavbar';
 
