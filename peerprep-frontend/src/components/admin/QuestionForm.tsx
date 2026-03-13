@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { QuestionFormData } from '@/src/admin/types';
-import { fetchTopics } from '@/src/admin/questionApi';
+import { QuestionFormData } from '@/src/services/types';
+import { fetchTopics } from '@/src/services/questionApi';
 import { X } from 'lucide-react';
 
 interface QuestionFormProps {
