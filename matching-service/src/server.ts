@@ -4,6 +4,7 @@ import { connectRedis } from './config/redis';
 import app from './app';
 import { matchingService } from './services/matching.service';
 import { queueService } from './services/queue.service';
+import jwt from 'jsonwebtoken';
 
 const PORT = process.env.PORT || 3002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -26,14 +27,34 @@ async function startServer() {
 
   // SocketIO Middleware
   io.use((socket, next) => {
-    const query = socket.handshake.query;
+    try {
+      const query = socket.handshake.query;
+      const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
 
-    // Extract and assign to socket.data
-    socket.data.userId = query.userId;
-    socket.data.topic = query.topic;
-    socket.data.difficulty = query.difficulty;
+      if (!token) {
+        return next(new Error("Authentication error: Missing token"));
+      }
 
-    next();
+      // Verify the JWT
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+
+      // Verify all required query fields are present
+      if (!query.topic || !query.difficulty) {
+        return next(new Error("Connection error: Missing topic or difficulty"));
+      }
+
+      // Assign to socket.data
+      socket.data.userId = String(decoded.userId);
+      socket.data.topic = query.topic;
+      socket.data.difficulty = query.difficulty;
+
+      next();
+  
+    } catch (error) {
+      // JWT verification error
+      console.error("Socket authentication failed:", error);
+      return next(new Error("Authentication error: Invalid or expired token"));
+    }
   });
 
   // Handle SocketIO Connections
