@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import isEmail from 'validator/lib/isEmail';
 import { UserService } from '../services/userServices';
+import { AVATAR_OPTIONS } from '../config/avatar';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -72,6 +73,12 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     if (error.message === "Incorrect password") {
       return res.status(401).json({ message: error.message });
     }
+    if (error.message === 'EMAIL_EXISTS') {
+      return res.status(400).json({ message: 'This email is already in use.' });
+    }
+    if (error.message === 'USERNAME_EXISTS') {
+      return res.status(400).json({ message: 'This username is already taken.' });
+    }
     res.status(500).json({ message: "Error updating profile" });
   }
 };
@@ -111,4 +118,24 @@ export const updatePassword = async (req: Request, res: Response) => {
     }
     res.status(500).json({ message: "Error changing password" });
   }
+};
+
+export const updateProfileIcon = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { profile_icon } = req.body;
+
+    if (!profile_icon) {
+      return res.status(400).json({ message: "Profile icon is required" });
+    }
+    
+    const updatedUser = await UserService.updateProfileIcon(userId, profile_icon);
+    res.json({ message: "Profile icon updated successfully", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile icon" });
+  }
+};
+
+export const getAvatarOptions = (_req: Request, res: Response) => {
+  res.json({ avatars: AVATAR_OPTIONS });
 };

@@ -3,28 +3,28 @@ import pool from '../config/db';
 export const UserDB = {
   async findByEmailOrUsername(email: string, username: string) {
     const result = await pool.query(
-      'SELECT username, email FROM users WHERE username = $1 OR email = $2',
+      'SELECT id, username, email FROM users WHERE username = $1 OR email = $2',
       [username, email]
     );
     return result.rows[0];
   },
 
   async findByEmail(email: string) {
-    const result = await pool.query('SELECT id, username, email, password, access_role FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon FROM users WHERE email = $1', [email]);
     return result.rows[0];
   },
 
-  async createUser(username: string, email: string, passwordHash: string) {
+  async createUser(username: string, email: string, passwordHash: string, profileIcon: string) {
     const result = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, access_role',
-      [username, email, passwordHash]
+      'INSERT INTO users (username, email, password, profile_icon) VALUES ($1, $2, $3, $4) RETURNING id, username, access_role',
+      [username, email, passwordHash, profileIcon]
     );
     return result.rows[0];
   },
 
   async getUserById(id: string) {
     const result = await pool.query(
-      'SELECT id, username, email, password, access_role FROM users WHERE id = $1',
+      'SELECT id, username, email, password, access_role, profile_icon FROM users WHERE id = $1',
       [id]
     );
     return result.rows[0];
@@ -32,7 +32,7 @@ export const UserDB = {
 
   async getAllUsers() {
     const result = await pool.query(
-      'SELECT id, username, email, access_role, created_at FROM users'
+      'SELECT id, username, email, access_role, profile_icon created_at FROM users'
     );
     return result.rows;
   },
@@ -57,6 +57,14 @@ export const UserDB = {
     const result = await pool.query(
       'UPDATE users SET password = $1 WHERE id = $2 RETURNING id',
       [hashedPassword, id]
+    );
+    return result.rows[0];
+  },
+
+  async updateProfileIcon(id: string, profileIcon: string) {
+    const result = await pool.query(
+      'UPDATE users SET profile_icon = $1 WHERE id = $2 RETURNING id, username, email, profile_icon',
+      [profileIcon, id]
     );
     return result.rows[0];
   },

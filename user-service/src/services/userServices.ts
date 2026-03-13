@@ -7,7 +7,6 @@ export const UserService = {
   },
 
   async getAllUser() {
-    // Logic could go here in the future
     return await UserDB.getAllUsers();
   },
 
@@ -30,6 +29,13 @@ export const UserService = {
     // Check password first
     await this.verifyUserPassword(userId, password);
 
+    // Check if email or username is taken by another user
+    const existing = await UserDB.findByEmailOrUsername(email, username);
+    if (existing && existing.id !== userId) {
+      if (existing.email === email) throw new Error('EMAIL_EXISTS');
+      if (existing.username === username) throw new Error('USERNAME_EXISTS');
+    }
+
     return await UserDB.updateProfile(userId, username, email);
   },
 
@@ -41,6 +47,10 @@ export const UserService = {
     const hashed = await bcrypt.hash(newPassword, saltRounds);
     
     return await UserDB.updatePassword(userId, hashed);
-  }
+  },
+
+  async updateProfileIcon(userId: string, profileIcon: string) {
+    return await UserDB.updateProfileIcon(userId, profileIcon);
+  },
 };
 

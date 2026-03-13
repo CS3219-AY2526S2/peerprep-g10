@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { getRandomAvatar } from '../config/avatar';
 import { UserDB } from '../model/userModel';
 
 export const AuthService = {
@@ -13,8 +14,9 @@ export const AuthService = {
 
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const randomIcon = getRandomAvatar();
 
-    return await UserDB.createUser(username, lowercaseEmail, hashedPassword);
+    return await UserDB.createUser(username, lowercaseEmail, hashedPassword, randomIcon);
   },
 
   async login(email: string, password: string) {
@@ -33,7 +35,7 @@ export const AuthService = {
     
     return { 
       token, 
-      user: { id: user.id, username: user.username, role: user.access_role } 
+      user: { id: user.id, username: user.username, email: user.email, role: user.access_role, profile_icon: user.profile_icon } 
     };
   }
 };

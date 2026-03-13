@@ -2,7 +2,10 @@
 
 ```
 src/
-├── config/                   # Database connection & pooling (PostgreSQL)
+├── config/
+│   ├── db.ts                 # Database connection & pooling (PostgreSQL)
+│   ├── avatar.ts             # Avatar helper & random picker
+│   └── avatars.json          # Avatar keys (single source of truth)
 ├── controllers/
 │   ├── authController.ts     # Business logic for Login & Registration
 │   └── userController.ts     # Logic for Profile, Updates, & Admin CRUD

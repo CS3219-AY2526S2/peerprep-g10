@@ -7,7 +7,9 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   role: string | null;
-  login: (token: string) => string | null;
+  user: any | null;
+  setUser: (user: any) => void;
+  login: (token: string, user: any) => string | null;
   logout: () => void;
 }
 
@@ -16,17 +18,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Clear authentication state and removes token
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsLoggedIn(false);
     setRole(null);
+    setUser(null);
   };
 
   // Stores token and update authentication state
-  const login = (token: string) : string | null => {
+  const login = (token: string, user: any) : string | null => {
     const decodeRole = getRoleFromToken(token);
 
     if (!decodeRole) {
@@ -34,8 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return null;
     }
     localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
     setIsLoggedIn(true);
     setRole(decodeRole);
+    setUser(user);
 
     return decodeRole;
   };
@@ -43,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Runs once on app load to validate existing token
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
     if (token) {
       const decodedRole = getRoleFromToken(token);
@@ -50,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (decodedRole) {
         setIsLoggedIn(true);
         setRole(decodedRole);
+        setUser(storedUser ? JSON.parse(storedUser) : null);
       } else {
         // Token exists but is invalid/expired
         logout();
@@ -60,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

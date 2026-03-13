@@ -41,7 +41,7 @@ export default function LoginPage() {
         throw new Error("No token received from server");
       }
 
-      const role = login(data.token);
+      const role = login(data.token, data.user);
       
       router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
     } catch (err: any) {

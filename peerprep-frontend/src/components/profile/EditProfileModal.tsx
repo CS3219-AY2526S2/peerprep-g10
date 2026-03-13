@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 
-
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  username: string,
+  username: string;
   userEmail: string;
   onSuccess: (userData: any) => void;
 }
@@ -19,11 +18,9 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
     newUsername: '',
     password: ''
   });
-
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset form when modal opens with fresh data
   useEffect(() => {
     if (isOpen) {
       setForm({ newEmail: userEmail, newUsername: username, password: '' });
@@ -37,10 +34,8 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
     e.preventDefault();
     setSaving(true);
     setError('');
-
     try {
       const token = localStorage.getItem('token');
-
       const res = await fetch('http://localhost:3004/api/users/update-profile', {
         method: 'PATCH',
         headers: {
@@ -53,14 +48,10 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
           password: form.password
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-
-      onSuccess(data.user); // return updated user info only, message not returned
-      alert('Password updated');
+      onSuccess(data.user);
       onClose();
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -69,13 +60,11 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white rounded-3xl p-10 w-full max-w-[500px] relative shadow-2xl">
-        
         <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-black transition-colors">
-          <X size={24}/>
+          <X size={24} />
         </button>
-
         <h2 className="text-2xl font-bold mb-2">Edit Profile</h2>
         <p className="text-gray-500 mb-6 text-sm">Update your account information below.</p>
 
@@ -86,14 +75,13 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          
           <div>
             <label className="text-xs font-semibold text-gray-500 ml-1 uppercase">Username</label>
             <input
               required
               placeholder="New Username"
               value={form.newUsername}
-              onChange={(e) => setForm({...form, newUsername: e.target.value})}
+              onChange={(e) => setForm({ ...form, newUsername: e.target.value })}
               className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
@@ -105,28 +93,30 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
               type="email"
               placeholder="New Email"
               value={form.newEmail}
-              onChange={(e) => setForm({...form, newEmail: e.target.value.toLowerCase()})} // Normalizing here too!
+              onChange={(e) => setForm({ ...form, newEmail: e.target.value.toLowerCase() })}
               className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
 
-          <div className="relative">
+          <div>
             <label className="text-xs font-semibold text-gray-500 ml-1 uppercase">Confirm Password</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              placeholder="Enter current password"
-              value={form.password}
-              onChange={(e) => setForm({...form, password: e.target.value})}
-              className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-8 text-gray-400 hover:text-blue-600"
-            >
-              {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
-            </button>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                placeholder="Enter current password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 bottom-3 text-gray-400 hover:text-blue-600"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -137,8 +127,7 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
           >
             {saving ? 'Verifying & Saving...' : 'Save Changes'}
           </button>
-          
-          <button 
+          <button
             type="button"
             onClick={onClose}
             className="w-full text-gray-500 text-sm font-medium hover:underline"
