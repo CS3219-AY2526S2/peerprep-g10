@@ -96,9 +96,12 @@ class MatchingService {
 
     } catch (error) {
       console.error(`[MATCH_EXECUTION_ERROR] Failed to create session for ${userA} & ${userB}:`, error);
+
+      const errMsg = error instanceof Error ? error.message : 'Unable to get a question or create a session';
+      
       // Notify users of the error
-      io.to(ticketA.socketId).emit('MATCH_ERROR', { message: 'Failed to create workspace.' });
-      io.to(ticketB.socketId).emit('MATCH_ERROR', { message: 'Failed to create workspace.' });
+      io.to(ticketA.socketId).emit('MATCH_ERROR', { message: errMsg });
+      io.to(ticketB.socketId).emit('MATCH_ERROR', { message: errMsg });
       return false;
     }
   }

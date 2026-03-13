@@ -16,7 +16,7 @@ class CollaborationClient {
      * @param questionId The ID of the question to initialize the workspace with
      * @returns The session details, crucially including the generated roomId
      */
-    public async createSession(userA: string, userB: string, questionId: string): Promise<CollabSessionResponse> {
+    public async createSession(userA: string, userB: string, questionId: number): Promise<CollabSessionResponse> {
         const mockResponse: CollabSessionResponse = {
             roomId: `stub-room-${Math.random().toString(36).substring(2, 10)}`,
             status: 'created',
