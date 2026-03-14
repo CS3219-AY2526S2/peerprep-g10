@@ -37,7 +37,6 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
     updateProfileIcon(selected)
       .then((updatedUser) => {
         setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
         onSuccess(updatedUser);
         onClose();
       })

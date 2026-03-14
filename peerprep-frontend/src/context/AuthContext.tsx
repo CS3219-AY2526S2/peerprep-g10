@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getRoleFromToken } from '@/src/lib/auth';
 import { User } from '@/src/user/types';
+import { verifyToken } from '../user/userApi';
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Clear authentication state and removes token
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setIsLoggedIn(false);
     setRole(null);
     setUser(null);
@@ -33,40 +32,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Stores token and update authentication state
   const login = (token: string, user: User) : string | null => {
-    const decodeRole = getRoleFromToken(token);
-
-    if (!decodeRole) {
-        logout();
-        return null;
+    if (!user.access_role) {
+      logout();
+      return null;
     }
+
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
     setIsLoggedIn(true);
-    setRole(decodeRole);
+    setRole(user.access_role);
     setUser(user);
 
-    return decodeRole;
+    return user.access_role;
   };
 
-  // Runs once on app load to validate existing token
+  // Runs once on app load to validate existing token with backend
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
 
-    if (token) {
-      const decodedRole = getRoleFromToken(token);
-
-      if (decodedRole) {
-        setIsLoggedIn(true);
-        setRole(decodedRole);
-        setUser(storedUser ? JSON.parse(storedUser) : null);
-      } else {
-        // Token exists but is invalid/expired
-        logout();
-      }
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
+    verifyToken()
+      .then(({ user }) => {
+        setIsLoggedIn(true);
+        setRole(user.access_role);
+        setUser(user);
+      })
+      .catch(() => logout())
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (

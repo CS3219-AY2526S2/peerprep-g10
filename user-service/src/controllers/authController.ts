@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import isEmail from 'validator/lib/isEmail';
 import { z } from 'zod';
 import { AuthService } from '../services/authServices';
+import { UserService } from '../services/userServices';
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -60,5 +61,20 @@ export const loginUser = async (req: Request, res: Response) => {
     }
     console.error("DEBUG LOGIN ERROR:", error.message);
     res.status(500).json({ message: "Server Error during login" });
+  }
+};
+
+export const verifyToken = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    const user = await UserService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Error verifying token" });
   }
 };

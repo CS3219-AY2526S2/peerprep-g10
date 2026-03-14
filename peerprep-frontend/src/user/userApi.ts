@@ -103,3 +103,13 @@ export async function register(username: string, email: string, password: string
     throw new Error('Registration failed');
   }
 }
+
+export async function verifyToken(): Promise<{ user: User }> {
+  const res = await fetch(`${AUTH_BASE_URL}/verify-token`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+
+  if (!res.ok) throw new Error('Invalid token');
+  
+  return res.json();
+}
