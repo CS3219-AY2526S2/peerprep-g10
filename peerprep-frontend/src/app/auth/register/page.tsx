@@ -33,7 +33,7 @@ export default function RegisterPage() {
 
     register(username, email, password)
       .then(() => router.push(ROUTES.LOGIN))
-      .catch((err) => err.message)
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
