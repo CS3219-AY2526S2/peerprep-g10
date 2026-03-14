@@ -20,9 +20,10 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
     console.log("Current Auth State:", { isLoggedIn, role, isLoading });
     if (!isLoggedIn) {
       router.push(ROUTES.LOGIN);
+      return;
     }
     
-  }, [isLoggedIn, isLoading, role, requiredRole, router]);
+  }, [isLoggedIn, isLoading, router]);
 
   if (isLoading || role === null) {
     return (
