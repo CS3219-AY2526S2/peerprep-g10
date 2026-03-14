@@ -9,21 +9,30 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.2",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/state": "^6.5.4",
+    "@codemirror/view": "^6.39.16",
+    "@uiw/react-codemirror": "^4.25.7",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.577.0",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "next": "^16.1.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "socket.io-client": "^4.8.3",
+    "y-codemirror.next": "^0.3.5",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^20.19.37",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "5.9.3"
+    "typescript": "^5"
   },
   "overrides": {
     "minimatch": "^10.2.1"
