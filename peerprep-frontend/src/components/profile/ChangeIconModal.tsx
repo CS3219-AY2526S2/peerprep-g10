@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { User } from '@/src/user/types';
+import { fetchAvatarOptions, updateProfileIcon } from '@/src/user/userApi';
 
 interface Props {
   isOpen: boolean;
@@ -16,51 +17,32 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [avatarOptions, setAvatarOptions] = useState<{ key: string; url: string }[]>([]);
-  const { user, setUser } = useAuth();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchAvatars = async () => {
-      try {
-        const res = await fetch('http://localhost:3004/api/users/avatars');
-        const data = await res.json();
-        setAvatarOptions(data.avatars ?? []);
-      } catch {
-        setError('Failed to load avatars');
-      }
-    };
-    fetchAvatars();
+    fetchAvatarOptions()
+      .then(setAvatarOptions)
+      .catch((err) => setError(err.message));
+    
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
     if (!selected) return;
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3004/api/users/me/icon', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ profile_icon: selected }),
-      });
-
-      if (!res.ok) throw new Error('Failed to update icon');
-
-      const data = await res.json();
-      const updatedUser = data.user as User;
-      
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      onSuccess(updatedUser);
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    updateProfileIcon(selected)
+      .then((updatedUser) => {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        onSuccess(updatedUser);
+        onClose();
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   };
 
   return (

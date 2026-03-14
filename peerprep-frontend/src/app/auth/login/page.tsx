@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
 import { ROUTES } from '@/src/constant/route';
+import { login as loginApi} from '@/src/user/userApi';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -20,22 +21,14 @@ export default function LoginPage() {
     const form = new FormData(e.currentTarget);
     const email = form.get('email') as string;
     const password = form.get('password') as string;
-    try {
-      const res = await fetch('http://localhost:3004/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Invalid credentials');
-      if (!data?.token) throw new Error("No token received from server");
-      const role = login(data.token, data.user);
-      router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+
+    loginApi(email, password)
+      .then(({ token, user }) => {
+        const role = login(token, user); // save to auth context
+        router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   };
 
   return (

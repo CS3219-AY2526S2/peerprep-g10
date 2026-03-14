@@ -7,3 +7,9 @@ export interface User {
   is_verified: boolean;
   created_at: string;
 }
+
+export type UpdateProfileData = {
+  username: string;
+  email: string;
+  password: string;
+};

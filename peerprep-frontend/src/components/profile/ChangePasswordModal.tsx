@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
+import { updatePassword } from '@/src/user/userApi';
 
 interface Props {
   isOpen: boolean;
@@ -8,16 +9,9 @@ interface Props {
 }
 
 export default function ChangePasswordModal({ isOpen, onClose }: Props) {
-  const [form, setForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [show, setShow] = useState({
-    currentPassword: false,
-    newPassword: false,
-    confirmPassword: false,
-  });
+  const [form, setForm] = useState({currentPassword: '', newPassword: '', confirmPassword: ''});
+  const [show, setShow] = useState({currentPassword: false, newPassword: false, confirmPassword: false});
+
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -29,26 +23,13 @@ export default function ChangePasswordModal({ isOpen, onClose }: Props) {
       setError('Passwords do not match');
       return;
     }
-    try {
-      setSaving(true);
-      setError('');
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3004/api/users/change-password', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ currentPassword: form.currentPassword, newPassword: form.newPassword }),
-      });
 
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message);
-      
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    setSaving(true);
+    setError('');
+    updatePassword(form.currentPassword, form.newPassword)
+      .then(() => onClose())
+      .catch((err) => setError(err.message))
+      .finally(() => setSaving(false));
   };
 
   const inputClass = `border dark:border-zinc-600 p-3 w-full rounded-xl 

@@ -5,6 +5,7 @@ import EditProfileModal from '@/src/components/profile/EditProfileModal';
 import ChangePasswordModal from '@/src/components/profile/ChangePasswordModal';
 import ChangeIconModal from '@/src/components/profile/ChangeIconModal';
 import { User } from '@/src/user/types';
+import { fetchProfile } from '@/src/user/userApi';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,31 +16,19 @@ export default function ProfilePage() {
   const [iconOpen, setIconOpen] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-
-        if (!token) throw new Error('No token found');
-
-        const res = await fetch('http://localhost:3004/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch profile');
-        
-        const data = await res.json();
-        setUser(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
+    fetchProfile()
+      .then(setUser)
+      .catch((err) => (err.message))
+      .finally(() => setLoading(false))
   }, []);
 
-  if (loading) return <div className="flex justify-center p-20 text-zinc-700 dark:text-zinc-300">Loading...</div>;
-  if (error || !user) return <div className="flex justify-center p-20 text-red-500">Error: {error || "Could not load user"}</div>;
+  if (loading) {
+    return <div className="flex justify-center p-20 text-zinc-700 dark:text-zinc-300">Loading...</div>;
+  }
+
+  if (error || !user) {
+    return <div className="flex justify-center p-20 text-red-500">Error: {error || "Could not load user"}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 transition-colors">

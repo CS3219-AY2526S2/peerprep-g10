@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { User } from '@/src/user/types';
+import { updateProfile } from '@/src/user/userApi';
 
 interface Props {
   isOpen: boolean;
@@ -30,22 +31,13 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
     e.preventDefault();
     setSaving(true);
     setError('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3004/api/users/update-profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: form.newEmail, username: form.newUsername, password: form.password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      onSuccess(data.user);
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    updateProfile({ email: form.newEmail, username: form.newUsername, password: form.password })
+      .then((updatedUser) => {
+        onSuccess(updatedUser);
+        onClose();
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setSaving(false));
   };
 
   const inputClass = `border dark:border-zinc-600 p-3 w-full rounded-xl
