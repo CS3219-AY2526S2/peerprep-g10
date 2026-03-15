@@ -1,23 +1,20 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
+import { User } from '@/src/user/types';
+import { updateProfile } from '@/src/user/userApi';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   username: string;
   userEmail: string;
-  onSuccess: (userData: any) => void;
+  onSuccess: (userData: User) => void;
 }
 
 export default function EditProfileModal({ isOpen, onClose, userEmail, username, onSuccess }: Props) {
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({
-    newEmail: '',
-    newUsername: '',
-    password: ''
-  });
+  const [form, setForm] = useState({ newEmail: '', newUsername: '', password: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,72 +31,64 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
     e.preventDefault();
     setSaving(true);
     setError('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3004/api/users/update-profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          email: form.newEmail,
-          username: form.newUsername,
-          password: form.password
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      onSuccess(data.user);
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+    updateProfile({ email: form.newEmail, username: form.newUsername, password: form.password })
+      .then((updatedUser) => {
+        onSuccess(updatedUser);
+        onClose();
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setSaving(false));
   };
+
+  const inputClass = `border dark:border-zinc-600 p-3 w-full rounded-xl
+    bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white
+    placeholder:text-gray-400 dark:placeholder:text-zinc-500
+    focus:ring-2 focus:ring-blue-500 outline-none transition-all`;
+
+  const labelClass = "text-xs font-semibold text-gray-500 dark:text-zinc-400 ml-1 uppercase";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl p-10 w-full max-w-[500px] relative shadow-2xl">
-        <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-black transition-colors">
+      <div className="bg-white dark:bg-zinc-800 rounded-3xl p-10 w-full max-w-[500px] relative shadow-2xl">
+        <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
           <X size={24} />
         </button>
-        <h2 className="text-2xl font-bold mb-2">Edit Profile</h2>
-        <p className="text-gray-500 mb-6 text-sm">Update your account information below.</p>
+
+        <h2 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-white">Edit Profile</h2>
+        <p className="text-gray-500 dark:text-zinc-400 mb-6 text-sm">Update your account information below.</p>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm border border-red-100">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl mb-4 text-sm border border-red-100 dark:border-red-800">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-gray-500 ml-1 uppercase">Username</label>
+            <label className={labelClass}>Username</label>
             <input
               required
               placeholder="New Username"
               value={form.newUsername}
               onChange={(e) => setForm({ ...form, newUsername: e.target.value })}
-              className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-500 ml-1 uppercase">Email Address</label>
+            <label className={labelClass}>Email Address</label>
             <input
               required
               type="email"
               placeholder="New Email"
               value={form.newEmail}
               onChange={(e) => setForm({ ...form, newEmail: e.target.value.toLowerCase() })}
-              className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-500 ml-1 uppercase">Confirm Password</label>
+            <label className={labelClass}>Confirm Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -107,12 +96,12 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
                 placeholder="Enter current password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="border p-3 w-full rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12"
+                className={`${inputClass} pr-12`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 bottom-3 text-gray-400 hover:text-blue-600"
+                className="absolute right-4 bottom-3 text-gray-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -127,11 +116,7 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
           >
             {saving ? 'Verifying & Saving...' : 'Save Changes'}
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full text-gray-500 text-sm font-medium hover:underline"
-          >
+          <button type="button" onClick={onClose} className="w-full text-gray-500 dark:text-zinc-400 text-sm font-medium hover:underline">
             Cancel
           </button>
         </form>
