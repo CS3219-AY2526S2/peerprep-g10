@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route';
-import { LayoutDashboard, LogOut } from 'lucide-react';
+import { LayoutDashboard, LogOut, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -12,6 +12,7 @@ export default function AdminSidebar() {
 
   const navItems = [
     { label: 'Dashboard', href: ROUTES.ADMIN, icon: LayoutDashboard },
+    { label: 'My Profile', href: ROUTES.ADMIN_PROFILE, icon: UserIcon },
   ];
 
   return (

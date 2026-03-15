@@ -47,7 +47,7 @@ export const UserDB = {
 
   async updateProfile(id: string, username: string, email: string) {
     const result = await pool.query(
-      'UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email',
+      'UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email, profile_icon',
       [username, email, id]
     );
     return result.rows[0];
