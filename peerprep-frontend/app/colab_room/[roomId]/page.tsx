@@ -2,229 +2,283 @@
 
 import CodeEditor from "@/colab_components/CodeEditor";
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
 
 type ChatMessage = {
-	id?: string;
-	roomId: string;
-	userId: string;
-	message: string;
-	createdAt?: string;
+  id?: string;
+  roomId: string;
+  userId: string;
+  message: string;
+  createdAt?: string;
 };
 
 type PresenceUser = {
-	userId: string;
-	displayName: string;
+  userId: string;
+  displayName: string;
+};
+
+type TestCase = {
+  input: string;
+  expectedOutput: string;
+};
+
+type RoomData = {
+  id: string;
+  title: string;
+  topic: string | null;
+  difficulty: string | null;
+  description: string;
+  codeExample: string | null;
+  starterCode: string;
+  currentCode: string;
+  testCases: TestCase[];
+  createdAt: string;
 };
 
 export default function RoomPage() {
-	const params = useParams();
-	const searchParams = useSearchParams();
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-	const roomId = params.roomId as string;
-	const userId = searchParams.get("user") ?? "user1";
-	const displayName = userId;
+  const roomId = params.roomId as string;
+  const userId = searchParams.get("user") ?? "user1";
+  const displayName = userId;
 
-	const [messages, setMessages] = useState<ChatMessage[]>([]);
-	const [users, setUsers] = useState<PresenceUser[]>([]);
-	const [text, setText] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [users, setUsers] = useState<PresenceUser[]>([]);
+  const [text, setText] = useState("");
+  const [room, setRoom] = useState<RoomData | null>(null);
+  const [loadingRoom, setLoadingRoom] = useState(true);
 
-	const [socket] = useState(() => io("http://localhost:3001"));
+  const [socket] = useState(() => io("http://localhost:3001"));
 
-	useEffect(() => {
-		async function loadChatHistory() {
-			try {
-				const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
-				const data = await res.json();
-				setMessages(data);
-			} catch (err) {
-				console.error("Failed to load chat history:", err);
-			}
-		}
+  useEffect(() => {
+    async function loadRoom() {
+      try {
+        const res = await fetch(`http://localhost:3001/rooms/${roomId}`);
+        const data = await res.json();
 
-		loadChatHistory();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load room");
+        }
 
-		socket.emit("room:join", {
-			roomId,
-			userId,
-			displayName
-		});
+        setRoom(data);
+      } catch (err) {
+        console.error("Failed to load room:", err);
+      } finally {
+        setLoadingRoom(false);
+      }
+    }
 
-		socket.on("presence:update", (payload: { roomId: string; users: PresenceUser[] }) => {
-			setUsers(payload.users);
-		});
+    async function loadChatHistory() {
+      try {
+        const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
+        const data = await res.json();
+        setMessages(data);
+      } catch (err) {
+        console.error("Failed to load chat history:", err);
+      }
+    }
 
-		socket.on("chat:new", (msg: ChatMessage) => {
-			setMessages((prev) => [...prev, msg]);
-		});
+    loadRoom();
+    loadChatHistory();
 
-		socket.on("chat:error", (err: { message: string }) => {
-			console.error("Chat error:", err.message);
-		});
+    socket.emit("room:join", {
+      roomId,
+      userId,
+      displayName,
+    });
 
-		return () => {
-			socket.emit("room:leave", { roomId, userId });
+    const handlePresenceUpdate = (payload: { roomId: string; users: PresenceUser[] }) => {
+      setUsers(payload.users);
+    };
 
-			socket.off("presence:update");
-			socket.off("chat:new");
-			socket.off("chat:error");
+    const handleChatNew = (msg: ChatMessage) => {
+      setMessages((prev) => [...prev, msg]);
+    };
 
-			socket.disconnect();
-		};
-	}, [roomId, socket, displayName, userId]);
+    const handleChatError = (err: {message: string }) => {
+      console.error("Chat error:", err.message);
+    };
 
-	function sendMessage() {
-		const trimmed = text.trim();
-		if (!trimmed) return;
+    const handleRoomError = (err: {message: string }) => {
+      console.error("Room error:", err.message);
+      alert(err.message);
+      router.push("/");
+    };
 
-		socket.emit("chat:send", {
-			roomId,
-			userId,
-			message: trimmed
-		});
+    socket.on("presence:update", handlePresenceUpdate);
+    socket.on("chat:new", handleChatNew);
+    socket.on("chat:error", handleChatError);
+    socket.on("room:error", handleRoomError);
 
-		setText("");
-	}
+    return () => {
+      socket.emit("room:leave", { roomId, userId });
 
-	return (
-		<main className={styles.page}>
-			<div className={styles.topBar}>
-				<div className={styles.logo}>PeerPrep</div>
-				<button className={styles.leaveButton}>Leave Session</button>
-			</div>
+      socket.off("presence:update", handlePresenceUpdate);
+      socket.off("chat:new", handleChatNew);
+      socket.off("chat:error", handleChatError);
+      socket.off("room:error", handleRoomError);
 
-			<div className={styles.roomInfo}>
-				Room ID: <span>{roomId}</span>
-			</div>
+      socket.disconnect();
+    };
+  }, [roomId, socket, displayName, userId, router]);
 
-			<div className={styles.workspace}>
+  function sendMessage() {
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
-				<section className={styles.questionPanel}>
-					<div className={styles.metaRow}>
-						<span className={styles.metaItem}>Topic: Hash Table</span>
-						<span className={styles.metaItem}>Difficulty: Easy</span>
-					</div>
+    socket.emit("chat:send", {
+      roomId,
+      userId,
+      message: trimmed,
+    });
 
-					<h1 className={styles.questionTitle}>Two Sums</h1>
+    setText("");
+  }
 
-					<p className={styles.description}>
-						Given an array of integers and a specific integer, target, your task is to identify
-						the indices of the two numbers such that they add up to the target value.
-					</p>
+  if (loadingRoom) {
+    return <main className={styles.page}>Loading room...</main>;
+  }
 
-					<div className={styles.section}>
-						<h2 className={styles.sectionTitle}>Code Example</h2>
+  if (!room) {
+    return <main className={styles.page}>Room not found.</main>;
+  }
 
-						<div className={styles.codeExample}>
-							<pre>
-								{`input = [1, 2, 4, 8]
-								expected_output = two_sum(input)
-								print(expected_output)
-								# expected_output = 123`}
-							</pre>
-						</div>
-					</div>
+  return (
+    <main className={styles.page}>
+      <div className={styles.topBar}>
+        <div className={styles.logo}>PeerPrep</div>
+        <button className={styles.leaveButton} onClick={() => router.push("/")}>
+          Leave Session
+        </button>
+      </div>
 
-					<div className={styles.section}>
-						<h2 className={styles.sectionTitle}>Images</h2>
+      <div className={styles.roomInfo}>
+        Room ID: <span>{roomId}</span>
+      </div>
 
-						<div className={styles.imagePlaceholder}>
-							<div className={styles.imageX}>✕</div>
-						</div>
-					</div>
-				</section>
+      <div className={styles.workspace}>
+        <section className={styles.questionPanel}>
+          <div className={styles.metaRow}>
+            <span className={styles.metaItem}>Topic: {room.topic ?? "N/A"}</span>
+            <span className={styles.metaItem}>Difficulty: {room.difficulty ?? "N/A"}</span>
+          </div>
 
-				<section className={styles.editorPanel}>
+          <h1 className={styles.questionTitle}>{room.title}</h1>
+
+          <p className={styles.description}>{room.description}</p>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Code Example</h2>
+
+            <div className={styles.codeExample}>
+              <pre>{room.codeExample ?? "No example provided."}</pre>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Test Cases</h2>
+
+            <div className={styles.testCaseList}>
+              {room.testCases.length === 0 ? (
+                <div>No test cases available.</div>
+              ) : (
+                room.testCases.map((testCase, index) => (
+                  <div key={index} className={styles.testCaseCard}>
+                    <div>
+                      <strong>Input:</strong> {testCase.input}
+                    </div>
+                    <div>
+                      <strong>Expected:</strong> {testCase.expectedOutput}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.editorPanel}>
           <div className={styles.editorArea}>
             <CodeEditor
               roomId={roomId}
               socket={socket}
               userId={userId}
-              initialCode={`def two_sum(nums, target): pass`} />
+              initialCode={room.currentCode}
+            />
           </div>
         </section>
 
-				<section className={styles.chatPanel}>
-					<div className={styles.chatHeader}>
-						<strong>Chat</strong>
-					</div>
+        <section className={styles.chatPanel}>
+          <div className={styles.chatHeader}>
+            <strong>Chat</strong>
+          </div>
 
-					<div className={styles.messages}>
-						{messages.map((msg, idx) => {
-							const isOwn = msg.userId === userId;
+          <div className={styles.messages}>
+            {messages.map((msg, idx) => {
+              const isOwn = msg.userId === userId;
 
-							return (
-								<div
-									key={msg.id ?? `${msg.userId}-${idx}`}
-									className={isOwn ? styles.messageRowRight : styles.messageRowLeft}
-								>
-									<div
-										className={
-											isOwn
-												? styles.messageBubbleRight
-												: styles.messageBubbleLeft
-										}
-									>
-										<strong>{msg.userId}</strong>
-										<div>{msg.message}</div>
-									</div>
+              return (
+                <div
+                  key={msg.id ?? `${msg.userId}-${idx}`}
+                  className={isOwn ? styles.messageRowRight : styles.messageRowLeft}
+                >
+                  <div className={isOwn ? styles.messageBubbleRight : styles.messageBubbleLeft}>
+                    <strong>{msg.userId}</strong>
+                    <div>{msg.message}</div>
+                  </div>
 
-									{msg.createdAt && (
-										<span className={styles.messageTime}>
-											{new Date(msg.createdAt).toLocaleTimeString()}
-										</span>
-									)}
-								</div>
-							);
-						})}
-					</div>
+                  {msg.createdAt && (
+                    <span className={styles.messageTime}>
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-					<div className={styles.chatInputRow}>
-						<input
-							className={styles.chatInput}
-							placeholder="Write message"
-							type="text"
-							value={text}
-							onChange={(e) => setText(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") sendMessage();
-							}}
-						/>
+          <div className={styles.chatInputRow}>
+            <input
+              className={styles.chatInput}
+              placeholder="Write message"
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
+            />
 
-						<button
-							className={styles.sendButton}
-							onClick={sendMessage}
-						>
-							Send
-						</button>
-					</div>
-				</section>
+            <button className={styles.sendButton} onClick={sendMessage}>
+              Send
+            </button>
+          </div>
+        </section>
+      </div>
 
-			</div>
+      <div className={styles.footerBar}>
+        <div className={styles.footerLeft}>
+          <button className={styles.iconButton}>🎤</button>
+          <button className={styles.iconButton}>📷</button>
+        </div>
 
-			<div className={styles.footerBar}>
+        <div className={styles.timer}>20 : 30</div>
 
-				<div className={styles.footerLeft}>
-					<button className={styles.iconButton}>🎤</button>
-					<button className={styles.iconButton}>📷</button>
-				</div>
+        <div className={styles.participants}>
+          {users.map((user) => (
+            <div key={user.userId} className={styles.participant}>
+              <div className={styles.avatar}>◯</div>
+              <span>{user.displayName}</span>
+            </div>
+          ))}
+        </div>
 
-				<div className={styles.timer}>20 : 30</div>
-
-				<div className={styles.participants}>
-					{users.map((user) => (
-						<div key={user.userId} className={styles.participant}>
-							<div className={styles.avatar}>◯</div>
-							<span>{user.displayName}</span>
-						</div>
-					))}
-				</div>
-
-				<button className={styles.saveButton}>Save</button>
-
-			</div>
-		</main>
-	);
+        <button className={styles.saveButton}>Save</button>
+      </div>
+    </main>
+  );
 }
