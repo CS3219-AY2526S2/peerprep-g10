@@ -1,9 +1,12 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
+import { getDefaultAvatar } from '../config/avatar';
 
 export const UserService = {
   async getUserById(id: string) {
-    return await UserDB.getUserById(id);
+    const user = await UserDB.getUserById(id);
+    user.profile_icon = user.profile_icon ?? getDefaultAvatar();
+    return user;
   },
 
   async getAllUser() {

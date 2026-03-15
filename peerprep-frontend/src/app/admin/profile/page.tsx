@@ -28,7 +28,6 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto p-10">
         <h1 className="text-3xl font-bold mb-8 text-zinc-900 dark:text-white">My Profile</h1>
         <ProfileCard user={user} onSuccess={setUser} />
-        {/* Attempt History */}
       </div>
     </div>
   );

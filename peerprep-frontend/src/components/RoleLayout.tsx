@@ -2,11 +2,12 @@
 
 import { useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
-import { useAuth } from '@/src/auth/AuthContext';
+import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route'
+import { Role } from '@/src/user/types';
 
 interface RoleLayoutProps {
-  role: 'admin' | 'user';
+  role: Role | Role[];
   children: React.ReactNode;
 }
 
@@ -20,9 +21,10 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
     console.log("Current Auth State:", { isLoggedIn, role, isLoading });
     if (!isLoggedIn) {
       router.push(ROUTES.LOGIN);
+      return;
     }
     
-  }, [isLoggedIn, isLoading, role, requiredRole, router]);
+  }, [isLoggedIn, isLoading, router]);
 
   if (isLoading || role === null) {
     return (
@@ -34,7 +36,9 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
     );
   }
 
-  if (role !== requiredRole) {
+  // Check if role matches
+  const allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+  if (!allowed.includes(role)) {
     notFound();
   }
 
