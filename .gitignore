@@ -1,0 +1,22 @@
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# dump files
+dump.rdb
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE folders
+.vscode/
+.idea/
+
+# Helper docs
+docs

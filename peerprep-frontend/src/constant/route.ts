@@ -1,0 +1,10 @@
+export const ROUTES = {
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  USER_PROFILE: '/user/profile',
+  USER: '/user',
+  ADMIN: '/admin',
+  ADMIN_PROFILE: '/admin/profile',
+  ADMIN_QUESTIONS_CREATE: '/admin/questions/create',
+  ADMIN_QUESTIONS_EDIT: (id: number) => `/admin/questions/${id}/edit`,
+};

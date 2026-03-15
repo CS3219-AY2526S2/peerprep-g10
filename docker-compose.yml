@@ -1,0 +1,35 @@
+services:
+  question-db:
+    image: postgres:17
+    container_name: question-db
+    environment:
+      POSTGRES_DB: question_service
+      POSTGRES_USER: peerprep
+      POSTGRES_PASSWORD: peerprep_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - question-db-data:/var/lib/postgresql/data
+
+  user-db:
+    image: postgres:17
+    container_name: user-db
+    environment:
+      POSTGRES_DB: user_service
+      POSTGRES_USER: peerprep
+      POSTGRES_PASSWORD: peerprep_dev
+    ports:
+      - "5434:5432"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+      - ./user-service/src/database:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7-alpine
+    container_name: matching-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  question-db-data:
+  user-db-data:
