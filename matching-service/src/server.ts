@@ -1,6 +1,10 @@
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { connectRedis } from './config/redis';
 import app from './app';
+import { matchingService } from './services/matching.service';
+import { queueService } from './services/queue.service';
+import jwt from 'jsonwebtoken';
 
 const PORT = process.env.PORT || 3002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -18,11 +22,48 @@ async function startServer() {
     },
   });
 
+  // Connect to Redis Data Client
+  await connectRedis();
+
+  // SocketIO Middleware
+  io.use((socket, next) => {
+    try {
+      const query = socket.handshake.query;
+      const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
+
+      if (!token) {
+        return next(new Error("Authentication error: Missing token"));
+      }
+
+      // Verify the JWT
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+
+      // Verify all required query fields are present
+      if (!query.topic || !query.difficulty) {
+        return next(new Error("Connection error: Missing topic or difficulty"));
+      }
+
+      // Assign to socket.data
+      socket.data.userId = String(decoded.userId);
+      socket.data.topic = query.topic;
+      socket.data.difficulty = query.difficulty;
+
+      next();
+  
+    } catch (error) {
+      // JWT verification error
+      console.error("Socket authentication failed:", error);
+      return next(new Error("Authentication error: Invalid or expired token"));
+    }
+  });
+
   // Handle SocketIO Connections
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId})`);
 
-    // TO-DO
+    // Add user to queue
+    await queueService.addUserToMatchPool(socket.data.userId, socket.id, socket.data.topic, socket.data.difficulty);
+    await matchingService.findMatch(io, socket.data.userId, socket.data.topic, socket.data.difficulty);
 
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);

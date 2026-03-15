@@ -17,9 +17,10 @@ From the project root:
 ```bash
 docker compose up -d
 ```
-This starts two PostgreSQL containers:
+This starts two PostgreSQL containers and one Redis container:
 - **question-db** on port `5433`
 - **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
+- **redis** on port `6379`
 
 **Default admin account** (seeded automatically):
 - Email: `admin@peerprep.com`
@@ -45,7 +46,15 @@ cp .env.example .env
 npm run dev        # starts on port 3004
 ```
 
-#### 4. Frontend Set Up
+#### 4. Matching Service Set Up
+```bash
+cd matching-service
+npm install
+cp .env.example .env
+npm run dev        # starts on port 3002
+```
+
+#### 5. Frontend Set Up
 ```bash
 cd peerprep-frontend
 npm install
@@ -56,8 +65,9 @@ npm run dev        # starts on port 3000
 1. Start databases: `docker compose up -d`
 2. Start question-service: `cd question-service && npm run dev`
 3. Start user-service: `cd user-service && npm run dev`
-4. Start frontend: `cd peerprep-frontend && npm run dev`
-5. Open http://localhost:3000
+4. Start matching-service: `cd matching-service && npm run dev`
+5. Start frontend: `cd peerprep-frontend && npm run dev`
+6. Open http://localhost:3000
 
 ### Available Pages
 | Route | Description |
