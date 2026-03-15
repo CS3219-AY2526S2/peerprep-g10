@@ -1,13 +1,13 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/src/user/types';
+import { Role, User } from '@/src/user/types';
 import { verifyToken } from '../user/userApi';
 
 interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
-  role: string | null;
+  role: Role | null;
   user: User | null;
   setUser: (user: User | null) => void;
   login: (token: string, user: User) => string | null;
@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
