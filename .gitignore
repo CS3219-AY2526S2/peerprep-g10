@@ -7,6 +7,9 @@ node_modules/
 .env.*
 !.env.example
 
+# dump files
+dump.rdb
+
 # OS generated files
 .DS_Store
 Thumbs.db

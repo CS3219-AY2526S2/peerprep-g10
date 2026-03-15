@@ -1,23 +1,21 @@
-import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
+import { createApp } from "./app";
+import { registerRealtime } from "./realtime";
 
-// Load environment variables from .env file
 dotenv.config();
 
-const app: Express = express();
 const port = process.env.PORT || 3001;
+const app = createApp();
+const server = http.createServer(app);
 
-// Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse incoming JSON payloads
-
-// Basic Health Check Route
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'Collaboration Service is running perfectly.' });
+const io = new SocketIOServer(server, {
+  cors: { origin: "*", credentials: true },
 });
 
-// Start the server
-app.listen(port, () => {
+registerRealtime(io);
+
+server.listen(port, () => {
   console.log(`[server]: Collaboration Service is running at http://localhost:${port}`);
 });

@@ -24,6 +24,12 @@ services:
       - user-db-data:/var/lib/postgresql/data
       - ./user-service/src/database:/docker-entrypoint-initdb.d
 
+  redis:
+    image: redis:7-alpine
+    container_name: matching-redis
+    ports:
+      - "6379:6379"
+
 volumes:
   question-db-data:
   user-db-data:
