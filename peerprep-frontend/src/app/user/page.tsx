@@ -6,12 +6,23 @@ import { fetchTopics } from '@/src/services/questionApi';
 import { io } from "socket.io-client";
 import { API_BASE } from "@/src/constant/api"
 import { useAuth } from '@/src/auth/AuthContext';
+import Notification, { NotificationProps } from '@/src/components/Notification';
+
+enum MatchState {
+  NOT_STARTED,
+  FINDING,
+  TIMEOUT,
+  FOUND,
+  ERROR
+}
 
 export default function UserDashboard() {
   const [topics, setTopics] = useState<string[]>([]);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Easy');
   const [isLoading, setIsLoading] = useState(true);
+  const [matchState, setMatchState] = useState<MatchState>(MatchState.NOT_STARTED);
+  const [activeNotification, setActiveNotification] = useState<NotificationProps | null>(null);
 
   const { logout } = useAuth();
 
@@ -26,6 +37,7 @@ export default function UserDashboard() {
       return;
     }
 
+    // TO-REMOVE
     console.log(`Find Match with Topic: ${selectedTopic}, Difficulty: ${selectedDifficulty}`);
 
     const token = localStorage.getItem("token");
@@ -41,15 +53,35 @@ export default function UserDashboard() {
     });
 
     socket.on('connect', () => {
+      setMatchState(MatchState.FINDING);
+
+      setActiveNotification({
+        type: 'info',
+        title: 'Finding you a coding partner ...',
+        message: 'Time Elapsed: 0s',
+        rightAction: 'spinner',
+        actionButton: {
+          label: 'Cancel',
+          variant: 'outlined',
+          onClick: () => {
+            socket.disconnect();
+            setActiveNotification(null);
+          },
+        }
+      });
+
       socket.on('MATCH_FOUND', (payload) => {
+        setMatchState(MatchState.FOUND);
         console.log(`MATCH FOUND: ${JSON.stringify(payload)}`);
       });
 
       socket.on('MATCH_ERROR', (error) => {
+        setMatchState(MatchState.ERROR);
         console.log(`MATCH ERROR: ${error.message}`);
       });
     });
 
+    // TO-DO: Error use code instead
     socket.on("connect_error", (err) => {
       console.error("❌ Connection rejected:", err.message);
       if (err.message === "Authentication error: Invalid or expired token") {
@@ -60,9 +92,19 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
+
+      {activeNotification && (
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Notification 
+            {...activeNotification} 
+            onClose={() => setActiveNotification(null)} 
+          />
+        </div>
+      )}
+
       <main className="max-w-7xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-20">
-          
+
           {/* Left Column */}
           <div className="flex flex-col justify-center">
             <h1 className="text-[2.5rem] font-bold mb-8">Start a Session</h1>
@@ -116,7 +158,7 @@ export default function UserDashboard() {
               })}
             </div>
 
-            <button onClick={findMatch} className="mt-8 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors">
+            <button onClick={findMatch} className="cursor-pointer mt-8 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors">
               Match Now <ArrowRight size={20} strokeWidth={2.5} />
             </button>
           </div>
