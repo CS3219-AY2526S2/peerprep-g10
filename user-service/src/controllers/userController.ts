@@ -137,5 +137,10 @@ export const updateProfileIcon = async (req: Request, res: Response) => {
 };
 
 export const getAvatarOptions = (_req: Request, res: Response) => {
-  res.json({ avatars: AVATAR_OPTIONS });
+  res.set('Cache-Control', 'public, max-age=21600, immutable');
+  const avatars = AVATAR_OPTIONS.map((key) => ({
+    key,
+    url: `${process.env.GCS_BUCKET_URL}/${key}.png`,
+  }));
+  res.json({ avatars });
 };

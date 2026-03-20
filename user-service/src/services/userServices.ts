@@ -1,9 +1,12 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
+import { getDefaultAvatar } from '../config/avatar';
 
 export const UserService = {
   async getUserById(id: string) {
-    return await UserDB.getUserById(id);
+    const user = await UserDB.getUserById(id);
+    user.profile_icon = user.profile_icon ?? getDefaultAvatar();
+    return user;
   },
 
   async getAllUser() {
@@ -29,14 +32,27 @@ export const UserService = {
     // Check password first
     await this.verifyUserPassword(userId, password);
 
-    // Check if email or username is taken by another user
-    const existing = await UserDB.findByEmailOrUsername(email, username);
-    if (existing && existing.id !== userId) {
-      if (existing.email === email) throw new Error('EMAIL_EXISTS');
-      if (existing.username === username) throw new Error('USERNAME_EXISTS');
+    const lowercaseEmail = email.toLowerCase().trim();
+    const currentUser = await UserDB.getUserById(userId);
+
+    const emailChanged = lowercaseEmail != currentUser.email;
+    const usernameChanged = username != currentUser.username;
+
+    // Find existing user only if changes are made to the email or username
+    if (emailChanged || usernameChanged) {
+      const existing = await UserDB.findByEmailOrUsername(
+        emailChanged ? lowercaseEmail : "",
+        usernameChanged ? username : ""
+      );
+
+      // Check if email or username is taken by another user
+      if (existing && String(existing.id) !== userId) {
+        if (existing.email === lowercaseEmail) throw new Error('EMAIL_EXISTS');
+        if (existing.username === username) throw new Error('USERNAME_EXISTS');
+      }
     }
 
-    return await UserDB.updateProfile(userId, username, email);
+    return await UserDB.updateProfile(userId, username, lowercaseEmail);
   },
 
   async updatePassword(userId: string, currentPassword: string, newPassword: string) {

@@ -28,14 +28,14 @@ export const AuthService = {
     if (!isValid) throw new Error("INVALID_PASSWORD");
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.access_role },
+      { userId: user.id, username: user.username, access_role: user.access_role },
       process.env.JWT_SECRET as string,
       { expiresIn: '6h' }
     );
     
     return { 
       token, 
-      user: { id: user.id, username: user.username, email: user.email, role: user.access_role, profile_icon: user.profile_icon } 
+      user: { id: user.userId, username: user.username, email: user.email, access_role: user.access_role, profile_icon: user.profile_icon } 
     };
   }
 };

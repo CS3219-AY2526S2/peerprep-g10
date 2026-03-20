@@ -75,7 +75,8 @@ npm run dev        # starts on port 3000
 | `/auth/login` | Login page |
 | `/auth/register` | User registration |
 | `/user` | User dashboard (requires user role) |
-| `/user/profile` | User profile (requires user role) |
+| `/user/profile` | User profile |
 | `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
+| `/admin/profile` | Admin profile |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
