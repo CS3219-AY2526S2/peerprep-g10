@@ -15,20 +15,27 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  /* :root {
+  :root {
     --background: #0a0a0a;
     --foreground: #ededed;
     --primary: #1A66FF;
-  } */
-   :root {
+  }
+  /* :root {
     --background: #ffffff;
     --foreground: #171717;
     --primary: #1A66FF;
-  }
+  } */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+select,
+select option,
+select optgroup {
+  background-color: var(--background);
+  color: var(--foreground);
 }

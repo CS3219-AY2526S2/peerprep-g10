@@ -5,10 +5,10 @@ import { Book, ChevronDown, ArrowRight } from 'lucide-react';
 import { fetchTopics } from '@/src/services/questionApi';
 import { io, Socket } from "socket.io-client";
 import { API_BASE } from "@/src/constant/api"
-import { useAuth } from '@/src/auth/AuthContext';
 import Notification, { NotificationProps } from '@/src/components/Notification';
 import Image from 'next/image';
 import findingPartnerSvg from '../../../public/images/finding-partner.svg'
+import { useAuth } from '@/src/context/AuthContext';
 
 
 export default function UserDashboard() {
@@ -107,7 +107,7 @@ export default function UserDashboard() {
                 </div>
 
                 <select
-                  className="w-full bg-gray-50 border border-gray-200 rounded-sm py-4 pl-12 pr-10 text-[15px] text-foreground cursor-pointer appearance-none hover:bg-gray-100 transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
+                  className="w-full border border-gray-200 rounded-sm py-4 pl-12 pr-10 text-[15px] text-foreground cursor-pointer appearance-none transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
                   value={selectedTopic}
                   onChange={(e) => {
                     setSelectedTopic(e.target.value);
@@ -143,7 +143,7 @@ export default function UserDashboard() {
                 return (
                 <label 
                   key={level} 
-                  className={`flex-1 flex items-center justify-center gap-3 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:text-black transition-colors ${
                     idx !== 2 ? 'border-r border-gray-400' : ''
                   }`}
                 >
