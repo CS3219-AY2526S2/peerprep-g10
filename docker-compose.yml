@@ -24,6 +24,24 @@ services:
       - user-db-data:/var/lib/postgresql/data
       - ./user-service/src/database:/docker-entrypoint-initdb.d
 
+  collaboration-db:
+    image: postgres:15
+    container_name: collaboration-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: peerprep
+    ports:
+      - "5435:5432"
+    volumes:
+      - collaboration_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d peerprep"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: matching-redis
@@ -33,3 +51,4 @@ services:
 volumes:
   question-db-data:
   user-db-data:
+  collaboration_db_data:
