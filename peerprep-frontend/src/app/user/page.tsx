@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Book, ChevronDown, ArrowRight } from 'lucide-react';
 import { fetchTopics } from '@/src/services/questionApi';
-import { io, Socket } from "socket.io-client";
-import { API_BASE } from "@/src/constant/api"
-import Notification, { NotificationProps } from '@/src/components/Notification';
+import Notification from '@/src/components/Notification';
 import Image from 'next/image';
 import findingPartnerSvg from '../../../public/images/finding-partner.svg'
 import { useAuth } from '@/src/context/AuthContext';
+import { useMatchingSession } from '@/src/hooks/useMatchingSession';
 
 
 export default function UserDashboard() {
@@ -16,21 +15,18 @@ export default function UserDashboard() {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Easy');
   const [isLoading, setIsLoading] = useState(true);
-  const [activeNotification, setActiveNotification] = useState<NotificationProps | null>(null);
   const [topicFieldError, setTopicFieldError] = useState('');
 
   const { logout } = useAuth();
+  const { activeNotification, isMatching, startMatch, setActiveNotification } = useMatchingSession({
+    onAuthError: logout,
+  });
 
   useEffect(() => {
     fetchTopics().then(setTopics)
     .catch(console.error)
     .finally(() => setIsLoading(false));
   }, []);
-
-  const cancelFindMatch = (socket: Socket) => {
-    socket.disconnect();
-    setActiveNotification(null);
-  }
 
   const findMatch = () => {
     if (!selectedTopic) {
@@ -39,47 +35,12 @@ export default function UserDashboard() {
     }
 
     const token = localStorage.getItem("token");
-
-    const socket = io(API_BASE.MATCHING_SERIVCE, {
-      auth: {
-        token: token, 
-      },
-      query: {
-        topic: selectedTopic,
-        difficulty: selectedDifficulty.toLowerCase(),
-      },
+    startMatch({
+      topic: selectedTopic,
+      difficulty: selectedDifficulty,
+      token,
     });
-
-    socket.on('connect', () => {
-      setActiveNotification({
-        type: 'info',
-        title: 'Finding you a coding partner ...',
-        message: '',
-        rightAction: 'spinner',
-        actionButton: {
-          label: 'Cancel',
-          variant: 'outlined',
-          onClick: () => cancelFindMatch(socket),
-        }
-      });
-
-      socket.on('MATCH_FOUND', (payload) => {
-        console.log(`MATCH FOUND: ${JSON.stringify(payload)}`);
-      });
-
-      socket.on('MATCH_ERROR', (error) => {
-        console.log(`MATCH ERROR: ${error.message}`);
-      });
-    });
-
-    // TO-DO: Error use code instead
-    socket.on("connect_error", (err) => {
-      console.error("❌ Connection rejected:", err.message);
-      if (err.message === "Authentication error: Invalid or expired token") {
-        logout();
-      }
-    });
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
@@ -160,7 +121,11 @@ export default function UserDashboard() {
               })}
             </div>
 
-            <button onClick={findMatch} className="cursor-pointer mt-8 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors">
+            <button
+              onClick={findMatch}
+              disabled={isMatching}
+              className="cursor-pointer mt-8 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               Match Now <ArrowRight size={20} strokeWidth={2.5} />
             </button>
           </div>
