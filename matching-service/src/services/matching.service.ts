@@ -76,7 +76,7 @@ class MatchingService {
       const question = await QuestionClient.getRandomQuestion(topic, difficulty);
 
       // Create a new session from the Collaboration Service
-      const session = await CollabClient.createSession(userA, userB, question.id);
+      const session = await CollabClient.createSession(userA, userB, question);
 
       // Broadcast the success event to both users.
       const payload = {
