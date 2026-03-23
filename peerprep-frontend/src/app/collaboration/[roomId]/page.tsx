@@ -1,6 +1,6 @@
 "use client";
 
-import CodeEditor from "@/colab_components/CodeEditor";
+import CodeEditor from "@/src/components/collaboration/CodeEditor";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
