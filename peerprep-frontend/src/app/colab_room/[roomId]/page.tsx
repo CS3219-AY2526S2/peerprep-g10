@@ -1,10 +1,11 @@
 "use client";
 
 import CodeEditor from "@/colab_components/CodeEditor";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
+import { Navbar } from "@/src/components/navbar/Navbar";
 
 type ChatMessage = {
   id?: string;
@@ -46,11 +47,23 @@ export default function RoomPage() {
   const userId = searchParams.get("user") ?? "user1";
   const displayName = userId;
 
+  const [isChatOpen, setIsChatOpen] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [users, setUsers] = useState<PresenceUser[]>([]);
   const [text, setText] = useState("");
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loadingRoom, setLoadingRoom] = useState(true);
+
+  const [chatWidth, setChatWidth] = useState(360);
+  const [isDraggingChat, setIsDraggingChat] = useState(false);
+
+  const [questionWidth, setQuestionWidth] = useState(420);
+  const [isDraggingQuestion, setIsDraggingQuestion] = useState(false);
+
+  const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
 
   const [socket] = useState(() => io("http://localhost:3001"));
 
@@ -65,6 +78,7 @@ export default function RoomPage() {
         }
 
         setRoom(data);
+        setSessionStartedAt(Date.now());
       } catch (err) {
         console.error("Failed to load room:", err);
       } finally {
@@ -76,9 +90,14 @@ export default function RoomPage() {
       try {
         const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load chat history");
+        }
         setMessages(data);
       } catch (err) {
         console.error("Failed to load chat history:", err);
+        setMessages([]);
       }
     }
 
@@ -126,6 +145,90 @@ export default function RoomPage() {
     };
   }, [roomId, socket, displayName, userId, router]);
 
+  useEffect(() => {
+    if (!sessionStartedAt) return;
+
+    const updateElapsed = () => {
+      const now = Date.now();
+      const seconds = Math.max(0, Math.floor((now - sessionStartedAt) / 1000));
+      setElapsedSeconds(seconds);
+    };
+
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionStartedAt]);
+
+  useEffect(() => {
+    if (!isDraggingChat) return;
+
+    function handleMouseMove(e: MouseEvent) {
+      if (!workspaceRef.current) return;
+
+      const workspaceRect = workspaceRef.current.getBoundingClientRect();
+
+      const minChatWidth = 0;
+      const maxChatWidth = Math.max(280, workspaceRect.width - 500);
+
+      const newWidth = workspaceRect.right - e.clientX;
+      const clampedWidth = Math.min(Math.max(newWidth, minChatWidth), maxChatWidth);
+
+      setChatWidth(clampedWidth);
+
+      if (clampedWidth < 40) {
+        setIsChatOpen(false);
+      } else {
+        setIsChatOpen(true);
+      }
+    }
+
+    function handleMouseUp() {
+      setIsDraggingChat(false);
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingChat]);
+
+  useEffect(() => {
+    if (!isDraggingQuestion) return;
+
+    function handleMouseMove(e: MouseEvent) {
+      if (!workspaceRef.current) return;
+
+      const workspaceRect = workspaceRef.current.getBoundingClientRect();
+
+      const minQuestionWidth = 280;
+      const maxQuestionWidth = Math.max(420, workspaceRect.width - chatWidth - 450);
+
+      const newWidth = e.clientX - workspaceRect.left;
+      const clampedWidth = Math.min(
+        Math.max(newWidth, minQuestionWidth),
+        maxQuestionWidth
+      );
+
+      setQuestionWidth(clampedWidth);
+    }
+
+    function handleMouseUp() {
+      setIsDraggingQuestion(false);
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingQuestion, chatWidth]);
+
   function sendMessage() {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -139,146 +242,224 @@ export default function RoomPage() {
     setText("");
   }
 
+  function toggleChatPanel() {
+    if (isChatOpen) {
+      setIsChatOpen(false);
+      setChatWidth(0);
+    } else {
+      setIsChatOpen(true);
+      setChatWidth(360);
+    }
+  }
+
+  function formatElapsedTime(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const hh = String(hours).padStart(2, "0");
+    const mm = String(minutes).padStart(2, "0");
+    const ss = String(seconds).padStart(2, "0");
+
+    return `${hh}:${mm}:${ss}`;
+  }
+
   if (loadingRoom) {
-    return <main className={styles.page}>Loading room...</main>;
+    return (
+      <>
+        <Navbar />
+        <main className={styles.page}>Loading room...</main>
+      </>
+    );
   }
 
   if (!room) {
-    return <main className={styles.page}>Room not found.</main>;
+    return (
+      <>
+        <Navbar />
+        <main className={styles.page}>Room not found.</main>
+      </>
+    );
   }
 
+  const safeMessages = Array.isArray(messages) ? messages : [];
+
   return (
-    <main className={styles.page}>
-      <div className={styles.topBar}>
-        <div className={styles.logo}>PeerPrep</div>
-        <button className={styles.leaveButton} onClick={() => router.push("/")}>
-          Leave Session
-        </button>
-      </div>
-
-      <div className={styles.roomInfo}>
-        Room ID: <span>{roomId}</span>
-      </div>
-
-      <div className={styles.workspace}>
-        <section className={styles.questionPanel}>
-          <div className={styles.metaRow}>
-            <span className={styles.metaItem}>Topic: {room.topic ?? "N/A"}</span>
-            <span className={styles.metaItem}>Difficulty: {room.difficulty ?? "N/A"}</span>
-          </div>
-
-          <h1 className={styles.questionTitle}>{room.title}</h1>
-
-          <p className={styles.description}>{room.description}</p>
-
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Code Example</h2>
-
-            <div className={styles.codeExample}>
-              <pre>{room.codeExample ?? "No example provided."}</pre>
+    <>
+      <Navbar />
+      <main className={styles.page}>
+        <div className={styles.topBar}>
+          <div className={styles.topBarLeft}>
+            <div className={styles.logo}>PeerPrep</div>
+            <div className={styles.roomInfo}>
+              Room ID: <span>{roomId}</span>
             </div>
           </div>
 
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Test Cases</h2>
+          <div className={styles.topBarRight}>
+            <button
+              type="button"
+              className={styles.chatToggleTopButton}
+              onClick={toggleChatPanel}
+            >
+              {isChatOpen ? "Hide Chat" : "Show Chat"}
+            </button>
 
-            <div className={styles.testCaseList}>
-              {room.testCases.length === 0 ? (
-                <div>No test cases available.</div>
-              ) : (
-                room.testCases.map((testCase, index) => (
-                  <div key={index} className={styles.testCaseCard}>
-                    <div>
-                      <strong>Input:</strong> {testCase.input}
-                    </div>
-                    <div>
-                      <strong>Expected:</strong> {testCase.expectedOutput}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.editorPanel}>
-          <div className={styles.editorArea}>
-            <CodeEditor
-              roomId={roomId}
-              socket={socket}
-              userId={userId}
-              initialCode={room.currentCode}
-            />
-          </div>
-        </section>
-
-        <section className={styles.chatPanel}>
-          <div className={styles.chatHeader}>
-            <strong>Chat</strong>
-          </div>
-
-          <div className={styles.messages}>
-            {messages.map((msg, idx) => {
-              const isOwn = msg.userId === userId;
-
-              return (
-                <div
-                  key={msg.id ?? `${msg.userId}-${idx}`}
-                  className={isOwn ? styles.messageRowRight : styles.messageRowLeft}
-                >
-                  <div className={isOwn ? styles.messageBubbleRight : styles.messageBubbleLeft}>
-                    <strong>{msg.userId}</strong>
-                    <div>{msg.message}</div>
-                  </div>
-
-                  {msg.createdAt && (
-                    <span className={styles.messageTime}>
-                      {new Date(msg.createdAt).toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className={styles.chatInputRow}>
-            <input
-              className={styles.chatInput}
-              placeholder="Write message"
-              type="text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
-              }}
-            />
-
-            <button className={styles.sendButton} onClick={sendMessage}>
-              Send
+            <button className={styles.leaveButton} onClick={() => router.push("/")}>
+              Leave Session
             </button>
           </div>
-        </section>
-      </div>
-
-      <div className={styles.footerBar}>
-        <div className={styles.footerLeft}>
-          <button className={styles.iconButton}>🎤</button>
-          <button className={styles.iconButton}>📷</button>
         </div>
 
-        <div className={styles.timer}>20 : 30</div>
-
-        <div className={styles.participants}>
-          {users.map((user) => (
-            <div key={user.userId} className={styles.participant}>
-              <div className={styles.avatar}>◯</div>
-              <span>{user.displayName}</span>
+        <div className={styles.workspace} 
+        ref={workspaceRef} 
+        style={{
+          "--question-width": `${questionWidth}px`,
+          "--chat-width": `${isChatOpen ? chatWidth : 0}px`,} as React.CSSProperties}>
+          <section className={styles.questionPanel}>
+            <div className={styles.metaRow}>
+              <span className={styles.metaItem}>Topic: {room.topic ?? "N/A"}</span>
+              <span className={styles.metaItem}>Difficulty: {room.difficulty ?? "N/A"}</span>
             </div>
-          ))}
+
+            <h1 className={styles.questionTitle}>{room.title}</h1>
+
+            <p className={styles.description}>{room.description}</p>
+
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Code Example</h2>
+
+              <div className={styles.codeExample}>
+                <pre>{room.codeExample ?? "No example provided."}</pre>
+              </div>
+            </div>
+
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Test Cases</h2>
+
+              <div className={styles.testCaseList}>
+                {room.testCases.length === 0 ? (
+                  <div>No test cases available.</div>
+                ) : (
+                  room.testCases.map((testCase, index) => (
+                    <div key={index} className={styles.testCaseCard}>
+                      <div>
+                        <strong>Input:</strong> {testCase.input}
+                      </div>
+                      <div>
+                        <strong>Expected:</strong> {testCase.expectedOutput}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+
+          <div
+            className={styles.questionResizeHandle}
+            onMouseDown={() => setIsDraggingQuestion(true)}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize question panel"
+          />
+
+          <section className={styles.editorPanel}>
+            <div className={styles.editorArea}>
+              <CodeEditor
+                roomId={roomId}
+                socket={socket}
+                userId={userId}
+                initialCode={room.currentCode}
+              />
+            </div>
+          </section>
+
+          <div
+            className={`${styles.chatResizeHandle} ${!isChatOpen ? styles.chatResizeHandleCollapsed : ""}`}
+            onMouseDown={() => setIsDraggingChat(true)}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize chat panel"
+          />
+
+          <section className={`${styles.chatPanel} ${!isChatOpen ? styles.chatPanelCollapsed : ""}`}>
+            <div className={styles.chatHeader}>
+              <strong>Chat</strong>
+              <button
+                type="button"
+                className={styles.chatToggleButton}
+                onClick={toggleChatPanel}
+              >
+                {isChatOpen ? "Hide" : "Show"}
+              </button>
+            </div>
+            {isChatOpen && (
+              <>
+                <div className={styles.messages}>
+                  {safeMessages.map((msg, idx) => {
+                    const isOwn = msg.userId === userId;
+
+                    return (
+                      <div
+                        key={msg.id ?? `${msg.userId}-${idx}`}
+                        className={isOwn ? styles.messageRowRight : styles.messageRowLeft}
+                      >
+                        <div className={isOwn ? styles.messageBubbleRight : styles.messageBubbleLeft}>
+                          <strong>{msg.userId}</strong>
+                          <div>{msg.message}</div>
+                        </div>
+
+                        {msg.createdAt && (
+                          <span className={styles.messageTime}>
+                            {new Date(msg.createdAt).toLocaleTimeString()}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.chatInputRow}>
+                  <input
+                    className={styles.chatInput}
+                    placeholder="Write message"
+                    type="text"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") sendMessage();
+                    }}
+                  />
+
+                  <button className={styles.sendButton} onClick={sendMessage}>
+                    Send
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
         </div>
 
-        <button className={styles.saveButton}>Save</button>
-      </div>
-    </main>
+        <div className={styles.footerBar}>
+          <div className={styles.footerLeft}>
+            <button className={styles.iconButton}>🎤</button>
+          </div>
+
+          <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>
+
+          <div className={styles.participants}>
+            {users.map((user) => (
+              <div key={user.userId} className={styles.participant}>
+                <div className={styles.avatar}>◯</div>
+                <span>{user.displayName}</span>
+              </div>
+            ))}
+          </div>
+
+          <button className={styles.saveButton}>Save</button>
+        </div>
+      </main>
+    </>
   );
 }
