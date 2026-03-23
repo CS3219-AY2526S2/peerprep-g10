@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { createQuestion } from '@/src/admin/questionApi';
-import { QuestionFormData } from '@/src/admin/types';
+import { createQuestion } from '@/src/services/questionApi';
+import { QuestionFormData } from '@/src/services/types';
 import { ROUTES } from '@/src/constant/route';
 import QuestionForm from '@/src/components/admin/QuestionForm';
 import { ArrowLeft } from 'lucide-react';
