@@ -3,10 +3,9 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  topic TEXT,
+  topics TEXT[],
   difficulty TEXT,
   description TEXT NOT NULL,
-  code_example TEXT,
   starter_code TEXT NOT NULL,
   current_code TEXT NOT NULL DEFAULT '',
   test_cases JSONB NOT NULL DEFAULT '[]'::jsonb,

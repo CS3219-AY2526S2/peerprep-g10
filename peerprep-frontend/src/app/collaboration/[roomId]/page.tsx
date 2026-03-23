@@ -30,10 +30,9 @@ type TestCase = {
 type RoomData = {
   id: string;
   title: string;
-  topic: string | null;
+  topics: string[];
   difficulty: string | null;
   description: string;
-  codeExample: string | null;
   starterCode: string;
   currentCode: string;
   testCases: TestCase[];
@@ -67,13 +66,11 @@ export default function RoomPage() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  // const [socket] = useState(() => io("http://localhost:3001"));
   const [socket] = useState(() => io(BACKEND_URL));
 
   useEffect(() => {
     async function loadRoom() {
       try {
-        //const res = await fetch(`http://localhost:3001/rooms/${roomId}`);
         const res = await fetch(`${BACKEND_URL}/rooms/${roomId}`);
         const data = await res.json();
 
@@ -92,7 +89,6 @@ export default function RoomPage() {
 
     async function loadChatHistory() {
       try {
-        //const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
         const res = await fetch(`${BACKEND_URL}/rooms/${roomId}/chat`);
         const data = await res.json();
 
@@ -323,21 +319,15 @@ export default function RoomPage() {
           "--chat-width": `${isChatOpen ? chatWidth : 0}px`,} as React.CSSProperties}>
           <section className={styles.questionPanel}>
             <div className={styles.metaRow}>
-              <span className={styles.metaItem}>Topic: {room.topic ?? "N/A"}</span>
+              <span className={styles.metaItem}>
+                Topics: {room.topics?.length ? room.topics.join(", ") : "N/A"}
+              </span>
               <span className={styles.metaItem}>Difficulty: {room.difficulty ?? "N/A"}</span>
             </div>
 
             <h1 className={styles.questionTitle}>{room.title}</h1>
 
             <p className={styles.description}>{room.description}</p>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Code Example</h2>
-
-              <div className={styles.codeExample}>
-                <pre>{room.codeExample ?? "No example provided."}</pre>
-              </div>
-            </div>
 
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Test Cases</h2>
