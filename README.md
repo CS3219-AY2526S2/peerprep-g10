@@ -23,7 +23,7 @@ This starts two PostgreSQL containers and one Redis container:
 - **redis** on port `6379`
 
 **Default admin account** (seeded automatically):
-- Email: `admin@peerprep.com`
+- Email: `admin@peerprep.com` 
 - Password: `Admin123!`
 
 > To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
@@ -38,12 +38,22 @@ npm run seed       # populates the database with sample questions
 ```
 Verify: `curl localhost:3003/questions/topics`
 
-#### 3. User Service Set Up
+#### 3.1 Option 1: User Service Set Up (Local)
 ```bash
 cd user-service
 npm install
 cp .env.example .env
+# In .env, set DATABASE_URL=postgresql://peerprep:peerprep_dev@localhost:5434/user_service
 npm run dev        # starts on port 3004
+```
+
+#### 3.2 Option 2: User Service Set Up (Docker)
+```bash
+cd user-service
+cp .env.example .env
+# In .env, set DATABASE_URL=postgresql://peerprep:peerprep_dev@user-db:5432/user_service
+cd ..
+docker compose up --build
 ```
 
 #### 4. Matching Service Set Up
