@@ -35,7 +35,7 @@ export const AuthService = {
     
     return { 
       token, 
-      user: { id: user.userId, username: user.username, email: user.email, access_role: user.access_role, profile_icon: user.profile_icon } 
+      user: { id: user.id, username: user.username, email: user.email, access_role: user.access_role, profile_icon: user.profile_icon } 
     };
   }
 };
