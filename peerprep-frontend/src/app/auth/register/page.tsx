@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
 import { ROUTES } from '@/src/constant/route';
-import { register } from '@/src/user/userApi';
+import { register } from '@/src/services/user/userApi';
 
 export default function RegisterPage() {
   const router = useRouter();

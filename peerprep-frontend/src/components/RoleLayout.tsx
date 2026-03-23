@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route'
-import { Role } from '@/src/user/types';
+import { Role } from '@/src/services/user/types';
 
 interface RoleLayoutProps {
   role: Role | Role[];

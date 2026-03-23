@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   password TEXT NOT NULL,
   access_role VARCHAR(10) DEFAULT 'user' CHECK (access_role IN ('admin', 'user')),
   is_verified BOOLEAN DEFAULT FALSE,
+  is_banned BOOLEAN DEFAULT FALSE,
   profile_icon TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

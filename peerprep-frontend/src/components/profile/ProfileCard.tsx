@@ -4,7 +4,7 @@ import { Pencil, User as UserIcon } from 'lucide-react';
 import EditProfileModal from '@/src/components/profile/EditProfileModal';
 import ChangePasswordModal from '@/src/components/profile/ChangePasswordModal';
 import ChangeIconModal from '@/src/components/profile/ChangeIconModal';
-import { User } from '@/src/user/types';
+import { User } from '@/src/services/user/types';
 
 interface Props {
   user: User;

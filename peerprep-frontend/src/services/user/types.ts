@@ -5,6 +5,7 @@ export interface User {
   access_role: Role;
   profile_icon: string;
   is_verified: boolean;
+  is_banned: boolean;
   created_at: string;
 }
 

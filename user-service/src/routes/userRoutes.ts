@@ -16,7 +16,7 @@ router.patch('/update-profile', updateUserProfile);
 router.patch('/change-password', updatePassword);
 
 // Admin only
-router.get('/', authorizeRoles('admin'), getAllUsers);
+router.get('/all-users', authorizeRoles('admin'), getAllUsers);
 router.delete('/:id', authorizeRoles('admin'), deleteUser);
 
 export default router;

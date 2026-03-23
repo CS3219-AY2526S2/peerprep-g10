@@ -10,7 +10,7 @@ export const UserDB = {
   },
 
   async findByEmail(email: string) {
-    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE email = $1', [email]);
     return result.rows[0];
   },
 
@@ -24,7 +24,7 @@ export const UserDB = {
 
   async getUserById(id: string) {
     const result = await pool.query(
-      'SELECT id, username, email, password, access_role, profile_icon FROM users WHERE id = $1',
+      'SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE id = $1',
       [id]
     );
     return result.rows[0];
@@ -32,7 +32,7 @@ export const UserDB = {
 
   async getAllUsers() {
     const result = await pool.query(
-      'SELECT id, username, email, access_role, profile_icon created_at FROM users'
+      'SELECT id, username, email, access_role, profile_icon, is_banned created_at FROM users'
     );
     return result.rows;
   },
