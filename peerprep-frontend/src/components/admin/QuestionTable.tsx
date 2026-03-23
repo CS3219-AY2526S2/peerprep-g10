@@ -1,6 +1,6 @@
 'use client';
 
-import { Question } from '@/src/admin/types';
+import { Question } from '@/src/services/types';
 import { ROUTES } from '@/src/constant/route';
 import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';

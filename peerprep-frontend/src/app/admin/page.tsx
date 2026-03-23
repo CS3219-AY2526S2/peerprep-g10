@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Question } from '@/src/admin/types';
-import { fetchAllQuestions, deleteQuestion } from '@/src/admin/questionApi';
+import { Question } from '@/src/services/types';
+import { fetchAllQuestions, deleteQuestion } from '@/src/services/questionApi';
 import { ROUTES } from '@/src/constant/route';
 import Link from 'next/link';
 import { Plus, Search } from 'lucide-react';

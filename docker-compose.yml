@@ -84,6 +84,17 @@ services:
     depends_on:
       collaboration-backend:
         condition: service_healthy
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    env_file:
+      - ./user-service/.env
+    ports:
+      - "3004:3004"
+    depends_on:
+      - user-db
+    restart: unless-stopped
 
 volumes:
   question-db-data:
