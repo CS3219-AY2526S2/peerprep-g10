@@ -49,6 +49,41 @@ services:
     ports:
       - "6379:6379"
 
+  collaboration-backend:
+    build:
+      context: ./collaboration-service
+      dockerfile: Dockerfile
+    container_name: collaboration-backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://postgres:admin123@collaboration-db:5432/peerprep
+    depends_on:
+      collaboration-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  collaboration-frontend:
+    build:
+      context: ./peerprep-frontend
+      dockerfile: Dockerfile
+    container_name: collaboration-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_COLLAB_BACKEND_URL: http://collaboration-backend:3001
+    depends_on:
+      collaboration-backend:
+        condition: service_healthy
+
 volumes:
   question-db-data:
   user-db-data:

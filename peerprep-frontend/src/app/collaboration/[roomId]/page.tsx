@@ -7,6 +7,8 @@ import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "http://localhost:3001";
+
 type ChatMessage = {
   id?: string;
   roomId: string;
@@ -65,12 +67,14 @@ export default function RoomPage() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  const [socket] = useState(() => io("http://localhost:3001"));
+  // const [socket] = useState(() => io("http://localhost:3001"));
+  const [socket] = useState(() => io(BACKEND_URL));
 
   useEffect(() => {
     async function loadRoom() {
       try {
-        const res = await fetch(`http://localhost:3001/rooms/${roomId}`);
+        //const res = await fetch(`http://localhost:3001/rooms/${roomId}`);
+        const res = await fetch(`${BACKEND_URL}/rooms/${roomId}`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -88,7 +92,8 @@ export default function RoomPage() {
 
     async function loadChatHistory() {
       try {
-        const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
+        //const res = await fetch(`http://localhost:3001/rooms/${roomId}/chat`);
+        const res = await fetch(`${BACKEND_URL}/rooms/${roomId}/chat`);
         const data = await res.json();
 
         if (!res.ok) {
