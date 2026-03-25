@@ -47,6 +47,28 @@ services:
     container_name: matching-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  matching-service:
+    build:
+      context: ./matching-service
+    container_name: matching-service
+    env_file:
+      - ./matching-service/.env
+    environment:
+      REDIS_URL: redis://matching-redis:6379
+      QUESTION_SERVICE_URL: http://host.docker.internal:3003
+      COLLAB_SERVICE_URL: http://host.docker.internal:3001
+    ports:
+      - "3002:3002"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   user-service:
     build:
@@ -54,6 +76,8 @@ services:
     container_name: user-service
     env_file:
       - ./user-service/.env
+    environment:
+      DATABASE_URL: postgresql://peerprep:peerprep_dev@user-db:5432/user_service
     ports:
       - "3004:3004"
     depends_on:
