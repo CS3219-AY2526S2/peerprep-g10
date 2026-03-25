@@ -12,21 +12,25 @@
 - NodeJS >= v20.9 (recommend using `nvm use 22`)
 - Docker Desktop installed and running
 
-#### 1. Database Set Up
+#### 1. Database, User Service and Matching Set Up
 From the project root:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
-This starts two PostgreSQL containers and one Redis container:
+This starts databases container, user-service container and matching-service container:
 - **question-db** on port `5433`
 - **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
 - **redis** on port `6379`
+- **user-service** on port `3004`
+- **matching-service** on port `3002`
 
 **Default admin account** (seeded automatically):
 - Email: `admin@peerprep.com` 
 - Password: `Admin123!`
 
 > To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
+
+> ⚠️ Note: Please update your .env file in user-service and matching-service before building and starting up the containers
 
 #### 2. Question Service Set Up
 ```bash
@@ -53,7 +57,7 @@ npm run dev        # starts on port 3004
 cd user-service
 cp .env.example .env
 cd ..
-docker compose up --build
+docker compose up --build user-service
 ```
 
 For dockerized user-service, `docker-compose.yml` overrides network-dependent values so container-to-container communication works correctly.
@@ -73,7 +77,7 @@ npm run dev        # starts on port 3002
 cd matching-service
 cp .env.example .env
 cd ..
-docker compose up --build
+docker compose up --build redis matching-service
 ```
 
 For dockerized matching-service, `docker-compose.yml` overrides network-dependent values (for example `REDIS_URL=redis://matching-redis:6379`) so container-to-container communication works correctly.
