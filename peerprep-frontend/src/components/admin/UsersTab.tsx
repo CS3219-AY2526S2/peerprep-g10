@@ -45,25 +45,25 @@ export default function UsersTab() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleBanToggle = async (user: User) => {
-    try {
-      const updated = user.is_banned ? await unbanUser(user.id) : await banUser(user.id);
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // const handleBanToggle = async (user: User) => {
+  //   try {
+  //     const updated = user.is_banned ? await unbanUser(user.id) : await banUser(user.id);
+  //     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await deleteUser(deleteTarget.id);
-      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-    } catch (err) {
-      console.error(err);
-    }
-    setDeleteTarget(null);
-  };
+  // const handleDelete = async () => {
+  //   if (!deleteTarget) return;
+  //   try {
+  //     await deleteUser(deleteTarget.id);
+  //     setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  //   setDeleteTarget(null);
+  // };
 
   return (
     <div>
