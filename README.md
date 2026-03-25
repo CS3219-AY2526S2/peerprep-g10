@@ -12,15 +12,20 @@
 - NodeJS >= v20.9 (recommend using `nvm use 22`)
 - Docker Desktop installed and running
 
-#### 1. Database Set Up
+#### 1. Database, User Service and Matching Set Up
 From the project root:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
-This starts two PostgreSQL containers and one Redis container:
+
+> ⚠️ Note: Please update your .env file in user-service and matching-service before building and starting up the containers with this command.
+
+This starts databases container, user-service container and matching-service container:
 - **question-db** on port `5433`
 - **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
 - **redis** on port `6379`
+- **user-service** on port `3004`
+- **matching-service** on port `3002`
 
 **Default admin account** (seeded automatically):
 - Email: `admin@peerprep.com` 
@@ -38,12 +43,13 @@ npm run seed       # populates the database with sample questions
 ```
 Verify: `curl localhost:3003/questions/topics`
 
+#### 3. User Service Set Up
+
 #### 3.1 Option 1: User Service Set Up (Local)
 ```bash
 cd user-service
 npm install
 cp .env.example .env
-# In .env, set DATABASE_URL=postgresql://peerprep:peerprep_dev@localhost:5434/user_service
 npm run dev        # starts on port 3004
 ```
 
@@ -51,18 +57,31 @@ npm run dev        # starts on port 3004
 ```bash
 cd user-service
 cp .env.example .env
-# In .env, set DATABASE_URL=postgresql://peerprep:peerprep_dev@user-db:5432/user_service
 cd ..
-docker compose up --build
+docker compose up --build user-service
 ```
 
+For dockerized user-service, `docker-compose.yml` overrides network-dependent values so container-to-container communication works correctly.
+
 #### 4. Matching Service Set Up
+
+#### 4.1 Option 1: Matching Service Set Up (Local)
 ```bash
 cd matching-service
 npm install
 cp .env.example .env
 npm run dev        # starts on port 3002
 ```
+
+#### 4.2 Option 2: Matching Service Set Up (Docker)
+```bash
+cd matching-service
+cp .env.example .env
+cd ..
+docker compose up --build redis matching-service
+```
+
+For dockerized matching-service, `docker-compose.yml` overrides network-dependent values (for example `REDIS_URL=redis://matching-redis:6379`) so container-to-container communication works correctly.
 
 #### 5. Frontend Set Up
 ```bash
