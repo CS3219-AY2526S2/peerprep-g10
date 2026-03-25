@@ -17,6 +17,9 @@ From the project root:
 ```bash
 docker compose up -d --build
 ```
+
+> ⚠️ Note: Please update your .env file in user-service and matching-service before building and starting up the containers with this command.
+
 This starts databases container, user-service container and matching-service container:
 - **question-db** on port `5433`
 - **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
@@ -29,8 +32,6 @@ This starts databases container, user-service container and matching-service con
 - Password: `Admin123!`
 
 > To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
-
-> ⚠️ Note: Please update your .env file in user-service and matching-service before building and starting up the containers
 
 #### 2. Question Service Set Up
 ```bash
