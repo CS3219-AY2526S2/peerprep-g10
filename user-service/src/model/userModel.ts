@@ -81,4 +81,12 @@ export const UserDB = {
     );
     return result.rows[0];
   },
+
+  async updateUserBanStatus(id: number, isBanned: boolean) {
+    const result = await pool.query(
+      'UPDATE users SET is_banned = $1 WHERE id = $2 RETURNING id, username, email, access_role, profile_icon, is_banned',
+      [isBanned, id]
+    );
+    return result.rows[0];
+  },
 };

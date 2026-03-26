@@ -51,26 +51,27 @@ export default function UserTable({ users, onBan, onDelete, currentUserId }: Use
                   : <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-600">Active</span>
                 }
               </td>
+              {user.id != currentUserId && (
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => onBan(user)}
-                    disabled={user.access_role === 'admin'}
-                    className="rounded p-1.5 text-zinc-400 hover:bg-yellow-50 hover:text-yellow-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    {user.is_banned ? 'Unban' : 'Ban'}
-                  </button>
-                  {user.id != currentUserId && (
+                  {user.access_role !== 'admin' && (
                     <button
-                      onClick={() => onDelete(user)}
-                      className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      onClick={() => onBan(user)}
+                      className="rounded p-1.5 text-zinc-400 hover:bg-yellow-50 hover:text-yellow-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <Trash2 size={16} />
+                      {user.is_banned ? 'Unban' : 'Ban'}
                     </button>
                   )}
                   
+                  <button
+                    onClick={() => onDelete(user)}
+                    className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </td>
+              )}
             </tr>
           ))}
         </tbody>

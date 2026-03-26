@@ -158,3 +158,35 @@ export const createAdmin = async (req: Request, res: Response) => {
     res.status(400).json({ error: error.errors || "Server Error" });
   }
 };
+
+export const banUser = async (req: Request, res: Response) => {
+  try {
+    const id = req.params['id'] as string;
+    const requesterId = (req as any).user.userId;
+
+    const { is_banned } = req.body;
+
+    const user = await UserService.banUser(id, is_banned, requesterId);
+
+    const action = is_banned ? 'banned' : 'unbanned';
+
+    res.json({
+      message: `User ${action} successfully`,
+      user
+    });
+
+  } catch (error: any) {
+    console.log(error);
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (error.message === 'CANNOT_BAN_ADMIN') {
+      return res.status(403).json({ message: 'Cannot ban an admin account' });
+    }
+    if (error.message === 'SELF_DELETE') {
+      return res.status(400).json({ message: 'You cannot ban yourself' });
+    }
+
+    res.status(500).json({ message: 'Error updating ban status' });
+  }
+};

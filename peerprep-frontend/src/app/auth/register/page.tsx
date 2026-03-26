@@ -87,7 +87,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 font-bold">
+            <Link href={ROUTES.LOGIN} className="text-blue-600 font-bold">
               Login
             </Link>
           </p>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { User } from '@/src/services/user/types';
-import { fetchAllUsers, deleteUser } from '@/src/services/user/adminApi';
+import { fetchAllUsers, deleteUser, banUser } from '@/src/services/user/adminApi';
 import { Plus, Search } from 'lucide-react';
 import UserTable from '@/src/components/admin/UserTable';
 import Pagination from '@/src/components/admin/Pagination';
@@ -56,12 +56,14 @@ export default function UsersTab() {
   );
 
   const handleBanToggle = async (user: User) => {
-    try {
-      const updated = user.is_banned ? await unbanUser(user.id) : await banUser(user.id);
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-    } catch (err) {
-      console.error(err);
-    }
+    banUser(user.id, !user.is_banned)
+    .then((updated) => {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updated.id ? updated : u))
+      );
+    })
+    .catch((err) => setError(err.message))
+    .finally(() => setDeleteTarget(null));
   };
 
   const handleDelete = async () => {

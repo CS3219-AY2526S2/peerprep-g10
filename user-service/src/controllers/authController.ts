@@ -39,6 +39,9 @@ export const loginUser = async (req: Request, res: Response) => {
       ...authData 
     });
   } catch (error: any) {
+    if (error.message === "USER_BANNED") {
+      return res.status(403).json({ message: "Your account has been banned." });
+    }
     if (error.message === "USER_NOT_FOUND") {
       return res.status(401).json({ message: "This email is not registered. Please sign up first." });
     }

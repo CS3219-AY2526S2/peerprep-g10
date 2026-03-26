@@ -86,5 +86,17 @@ export const UserService = {
 
     return await UserDB.createAdmin(username, lowercaseEmail, hashed, randomIcon);
   },
+
+  async banUser(userId: string, isBanned: boolean, requesterId: string) {
+    // Prevent self-deletion
+    if (userId === requesterId) throw new Error("SELF_DELETE");
+
+    const user = await UserDB.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    if (user.access_role === 'admin') throw new Error('CANNOT_BAN_ADMIN');
+
+    return await UserDB.updateUserBanStatus(Number(userId), isBanned);
+  },
 };
 
