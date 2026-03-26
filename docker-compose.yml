@@ -61,13 +61,27 @@ services:
       - ./matching-service/.env
     environment:
       REDIS_URL: redis://matching-redis:6379
-      QUESTION_SERVICE_URL: http://host.docker.internal:3003
+      QUESTION_SERVICE_URL: http://question-service:3003
       COLLAB_SERVICE_URL: http://host.docker.internal:3001
     ports:
       - "3002:3002"
     depends_on:
       redis:
         condition: service_healthy
+    restart: unless-stopped
+
+  question-service:
+    build:
+      context: ./question-service
+    container_name: question-service
+    env_file:
+      - ./question-service/.env
+    environment:
+      DATABASE_URL: postgresql://peerprep:peerprep_dev@question-db:5432/question_service
+    ports:
+      - "3003:3003"
+    depends_on:
+      - question-db
     restart: unless-stopped
 
   user-service:
