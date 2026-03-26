@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import isEmail from 'validator/lib/isEmail';
 import { UserService } from '../services/userServices';
 import { AVATAR_OPTIONS } from '../config/avatar';
+import { registerSchema, updateProfileSchema, changePasswordSchema } from '../validator/userSchema';
+import { request } from 'node:http';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -29,26 +30,26 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const deletedCount = await UserService.deleteUser(id as string);
-    
+    const id = parseInt(req.params['id'] as string);
+    const requesterId = (req as any).user.userId;
+  
+    const deletedCount = await UserService.deleteUser(id, requesterId);
+
     if (deletedCount === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ message: `User with ID ${id} deleted successfully.` });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting user" });
+
+    res.json({ message: `User deleted successfully` });
+  } catch (error: any) {
+    if (error.message === 'SELF_DELETE') {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+    if (error.message.includes('LAST_ADMIN')) {
+      return res.status(400).json({ message: 'Cannot delete the last admin account' });
+    }
+    res.status(500).json({ message: 'Error deleting user' });
   }
 };
-
-// validate username and email
-const updateProfileSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.email()
-    .refine((val) => isEmail(val), { 
-        message: "Invalid email format. Please follow RFC5322 standards."
-    }),
-});
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
@@ -82,17 +83,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error updating profile" });
   }
 };
-
-// validate pasword
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(8, "Current password must be at least 8 characters"),
-  newPassword: z.string()
-    .min(8, "New password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password needs an uppercase letter")
-    .regex(/[a-z]/, "Password needs a lowercase letter")
-    .regex(/[0-9]/, "Password needs a number")
-    .regex(/[^A-Za-z0-9]/, "Password needs a special character"),
-});
 
 export const updatePassword = async (req: Request, res: Response) => {
   try {
@@ -144,21 +134,6 @@ export const getAvatarOptions = (_req: Request, res: Response) => {
   }));
   res.json({ avatars });
 };
-
-// Validate admin
-const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.email()
-    .refine((val) => isEmail(val), { 
-        message: "Invalid email format. Please follow RFC5322 standards."
-    }),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password needs an uppercase letter")
-    .regex(/[a-z]/, "Passowrd needs a lowercase letter")
-    .regex(/[0-9]/, "Password needs a number")
-    .regex(/[^A-Za-z0-9]/, "Password needs a special character"),
-});
 
 export const createAdmin = async (req: Request, res: Response) => {
   try {

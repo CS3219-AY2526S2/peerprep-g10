@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { User } from '@/src/services/user/types';
-import { fetchAllUsers } from '@/src/services/user/adminApi';
+import { fetchAllUsers, deleteUser } from '@/src/services/user/adminApi';
 import { Plus, Search } from 'lucide-react';
 import UserTable from '@/src/components/admin/UserTable';
 import Pagination from '@/src/components/admin/Pagination';
 import DeleteConfirmModal from '@/src/components/admin/DeleteConfirmModal';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/src/constant/route';
+import { useAuth } from '@/src/context/AuthContext';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,11 +20,13 @@ export default function UsersTab() {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [error, setError] = useState('');
+  const { user: currentUser } = useAuth();
 
   const loadUsers = () => {
     fetchAllUsers()
       .then(setUsers)
-      .catch(console.error)
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
@@ -63,13 +66,11 @@ export default function UsersTab() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    try {
-      await deleteUser(deleteTarget.id);
-      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-    } catch (err) {
-      console.error(err);
-    }
-    setDeleteTarget(null);
+
+    deleteUser(deleteTarget.id)
+      .then(() => setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id)))
+      .catch((err) => setError(err.message))
+      .finally(() => setDeleteTarget(null));
   };
 
   return (
@@ -95,13 +96,17 @@ export default function UsersTab() {
         </button>
       </div>
 
+      {error && (
+            <p className="mb-4 text-red-500 text-sm text-center mx-auto font-bold">{error}</p>
+      )}
+
       {/* User Table */}
       {loading ? (
         <p className="py-12 text-center text-sm text-zinc-500">Loading users...</p>
       ) : (
         <>
           <div className="mt-4">
-            <UserTable users={paginated} onBan={handleBanToggle} onDelete={setDeleteTarget} />
+            <UserTable users={paginated} onBan={handleBanToggle} onDelete={setDeleteTarget} currentUserId={currentUser?.id} />
           </div>
           <Pagination
             currentPage={currentPage}

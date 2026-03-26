@@ -13,7 +13,9 @@ export const UserService = {
     return await UserDB.getAllUsers();
   },
 
-  async deleteUser(id: string) {
+  async deleteUser(id: number, requesterId: number) {
+    // Prevent self-deletion
+    if (id === requesterId) throw new Error("SELF_DELETE");
     return await UserDB.deleteUser(id);
   },
   

@@ -37,7 +37,7 @@ export const UserDB = {
     return result.rows;
   },
 
-  async deleteUser(id: string) {
+  async deleteUser(id: number) {
     const result = await pool.query(
       'DELETE FROM users WHERE id = $1 RETURNING id', 
       [id]

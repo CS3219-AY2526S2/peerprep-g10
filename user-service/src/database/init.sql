@@ -9,3 +9,21 @@ CREATE TABLE IF NOT EXISTS users (
   profile_icon TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Trigger to prevent deleting the last admin
+CREATE OR REPLACE FUNCTION prevent_last_admin_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.access_role = 'admin' THEN
+    IF (SELECT COUNT(*) FROM users WHERE access_role = 'admin') <= 1 THEN
+      RAISE EXCEPTION 'LAST_ADMIN';
+    END IF;
+  END IF;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER check_last_admin
+BEFORE DELETE ON users
+FOR EACH ROW
+EXECUTE FUNCTION prevent_last_admin_delete();

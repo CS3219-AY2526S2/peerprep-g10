@@ -1,22 +1,8 @@
 import { Request, Response } from 'express';
-import isEmail from 'validator/lib/isEmail';
 import { z } from 'zod';
 import { AuthService } from '../services/authServices';
 import { UserService } from '../services/userServices';
-
-const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.email()
-    .refine((val) => isEmail(val), { 
-        message: "Invalid email format. Please follow RFC5322 standards."
-    }),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password needs an uppercase letter")
-    .regex(/[a-z]/, "Passowrd needs a lowercase letter")
-    .regex(/[0-9]/, "Password needs a number")
-    .regex(/[^A-Za-z0-9]/, "Password needs a special character"),
-});
+import { registerSchema } from '../validator/userSchema';
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -34,7 +20,7 @@ export const registerUser = async (req: Request, res: Response) => {
     }
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      const message = error.issues[0]?.message || "Inalid input data";
+      const message = error.issues[0]?.message || "Invalid input data";
       return res.status(400).json({ message });
     }
     

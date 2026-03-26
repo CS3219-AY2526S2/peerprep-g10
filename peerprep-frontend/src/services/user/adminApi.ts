@@ -38,3 +38,14 @@ export async function createAdmin(username: string, email: string, password: str
     throw new Error('Admin creation failed');
   }
 }
+
+export async function deleteUser(id: number): Promise<void> {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json.message || 'Failed to delete user');
+}

@@ -7,9 +7,10 @@ interface UserTableProps {
   users: User[];
   onBan: (user: User) => void;
   onDelete: (user: User) => void;
+  currentUserId?: number;
 }
 
-export default function UserTable({ users, onBan, onDelete }: UserTableProps) {
+export default function UserTable({ users, onBan, onDelete, currentUserId }: UserTableProps) {
   if (users.length === 0) {
     return (
       <p className="py-12 text-center text-sm text-zinc-500">No users found.</p>
@@ -59,12 +60,15 @@ export default function UserTable({ users, onBan, onDelete }: UserTableProps) {
                   >
                     {user.is_banned ? 'Unban' : 'Ban'}
                   </button>
-                  <button
-                    onClick={() => onDelete(user)}
-                    className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {user.id != currentUserId && (
+                    <button
+                      onClick={() => onDelete(user)}
+                      className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                  
                 </div>
               </td>
             </tr>

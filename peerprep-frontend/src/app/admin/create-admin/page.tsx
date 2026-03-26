@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/src/components/Inputs';
@@ -27,8 +26,9 @@ export default function CreateAdminPage() {
     }
 
     setLoading(true);
+
     createAdmin(username, email, password)
-      .then(() => router.push(`${ROUTES.ADMIN}?tab=users`))
+      .then(() => router.push(ROUTES.ADMIN))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -50,15 +50,18 @@ export default function CreateAdminPage() {
       <div className="mt-6 rounded-xl bg-white border border-zinc-200 p-8">
         {error && <p className="mb-4 text-red-500 text-sm">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form id="createAdminForm" onSubmit={handleSubmit} className="space-y-5">
           <Input id="username" name="username" label="Username" required />
           <Input id="email" name="email" label="Email" type="email" required />
           <Input id="password" name="password" label="Password" type="password" isPassword required />
           <Input id="confirmPassword" name="confirmPassword" label="Confirm Password" type="password" isPassword required />
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Creating...' : 'Add Admin'}
-          </Button>
         </form>
+
+        <div className="flex justify-end">
+            <Button type="submit" disabled={loading} form="createAdminForm">
+              {loading ? 'Creating...' : 'Add Admin'}
+            </Button>
+          </div>
       </div>
     </div>
   );
