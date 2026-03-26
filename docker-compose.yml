@@ -63,6 +63,7 @@ services:
       REDIS_URL: redis://matching-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
       COLLAB_SERVICE_URL: http://host.docker.internal:3001
+      # FRONTEND_URL: http://peerprep-frontend:3000
     ports:
       - "3002:3002"
     depends_on:
