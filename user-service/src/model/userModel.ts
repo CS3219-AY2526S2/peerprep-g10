@@ -68,4 +68,17 @@ export const UserDB = {
     );
     return result.rows[0];
   },
+
+  async createAdmin(username: string, email: string, hashedPassword: string, profileIcon: string) {
+    const accessRole = 'admin';
+    const isVerified = true;
+
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password, access_role, is_verified, profile_icon) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
+      RETURNING id, username, access_role`,
+      [username, email, hashedPassword, accessRole, isVerified, profileIcon]
+    );
+    return result.rows[0];
+  },
 };

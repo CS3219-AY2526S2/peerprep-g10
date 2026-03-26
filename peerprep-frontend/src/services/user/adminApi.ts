@@ -13,3 +13,28 @@ export async function fetchAllUsers(): Promise<User[]> {
 
   return res.json();
 }
+
+export async function createAdmin(username: string, email: string, password: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/create-admin`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ username, email, password }),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (data?.message) {
+        throw new Error(data.message);
+    }
+
+    if (data?.errors) {
+      const firstErrorKey = Object.keys(data.errors)[0];
+      throw new Error(data.errors[firstErrorKey]);
+    }
+    throw new Error('Admin creation failed');
+  }
+}

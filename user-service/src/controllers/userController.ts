@@ -144,3 +144,42 @@ export const getAvatarOptions = (_req: Request, res: Response) => {
   }));
   res.json({ avatars });
 };
+
+// Validate admin
+const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.email()
+    .refine((val) => isEmail(val), { 
+        message: "Invalid email format. Please follow RFC5322 standards."
+    }),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password needs an uppercase letter")
+    .regex(/[a-z]/, "Passowrd needs a lowercase letter")
+    .regex(/[0-9]/, "Password needs a number")
+    .regex(/[^A-Za-z0-9]/, "Password needs a special character"),
+});
+
+export const createAdmin = async (req: Request, res: Response) => {
+  try {
+    const { username, email, password } = registerSchema.parse(req.body);
+    const admin = await UserService.createAdmin(username, email, password);
+
+    res.status(201).json({ message: 'Admin created successfully', user: admin });
+  } catch (error: any) {
+    if (error.message === "EMAIL_EXISTS") {
+      return res.status(400).json({ message: "This email is already registered." });
+    }
+    if (error.message === "USERNAME_EXISTS") {
+      return res.status(400).json({ message: "This username is already taken. Please choose another." });
+    }
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      const message = error.issues[0]?.message || "Inalid input data";
+      return res.status(400).json({ message });
+    }
+    
+    console.error("FAILED TO CREATE ADMIN:", error);
+    res.status(400).json({ error: error.errors || "Server Error" });
+  }
+};

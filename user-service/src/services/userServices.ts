@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
-import { getDefaultAvatar } from '../config/avatar';
+import { getDefaultAvatar, getRandomAvatar } from '../config/avatar';
 
 export const UserService = {
   async getUserById(id: string) {
@@ -67,6 +67,22 @@ export const UserService = {
 
   async updateProfileIcon(userId: string, profileIcon: string) {
     return await UserDB.updateProfileIcon(userId, profileIcon);
+  },
+
+  async createAdmin(username: string, email: string, password: string) {
+    const lowercaseEmail = email.toLowerCase().trim();
+    const existing = await UserDB.findByEmailOrUsername(lowercaseEmail, username);
+
+    if (existing) {
+      if (existing.email === lowercaseEmail) throw new Error('EMAIL_EXISTS');
+      if (existing.username === username) throw new Error('USERNAME_EXISTS');
+    }
+
+    const saltRounds = 12;
+    const hashed = await bcrypt.hash(password, saltRounds);
+    const randomIcon = getRandomAvatar();
+
+    return await UserDB.createAdmin(username, lowercaseEmail, hashed, randomIcon);
   },
 };
 

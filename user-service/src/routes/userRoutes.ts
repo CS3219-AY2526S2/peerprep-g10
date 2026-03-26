@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions } from '../controllers/userController';
+import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 import { authorizeRoles } from '../middleware/roleMiddleware';
 
@@ -18,5 +18,6 @@ router.patch('/change-password', updatePassword);
 // Admin only
 router.get('/all-users', authorizeRoles('admin'), getAllUsers);
 router.delete('/:id', authorizeRoles('admin'), deleteUser);
+router.post('/create-admin', authorizeRoles('admin'), createAdmin);
 
 export default router;

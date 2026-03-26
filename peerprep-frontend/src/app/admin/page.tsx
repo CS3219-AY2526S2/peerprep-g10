@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import QuestionsTab from '@/src/components/admin/QuestionsTab';
 import UsersTab from '@/src/components/admin/UsersTab';
 
@@ -13,6 +14,12 @@ const tabs: { key: Tab; label: string }[] = [
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('questions');
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'users') setActiveTab('users');
+  }, [searchParams]);
 
   return (
     <div>
