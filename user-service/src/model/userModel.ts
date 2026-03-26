@@ -32,7 +32,7 @@ export const UserDB = {
 
   async getAllUsers() {
     const result = await pool.query(
-      'SELECT id, username, email, access_role, profile_icon, is_banned created_at FROM users'
+      'SELECT id, username, email, access_role, profile_icon, is_banned FROM users'
     );
     return result.rows;
   },

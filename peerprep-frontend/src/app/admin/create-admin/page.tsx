@@ -28,7 +28,7 @@ export default function CreateAdminPage() {
     setLoading(true);
 
     createAdmin(username, email, password)
-      .then(() => router.push(ROUTES.ADMIN))
+      .then(() => router.push(ROUTES.ADMIN_TAB('users')))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -39,7 +39,7 @@ export default function CreateAdminPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-zinc-900">Create Admin Account</h2>
         <button
-          onClick={() => router.push(`${ROUTES.ADMIN}?tab=users`)}
+          onClick={() => router.push(`${ROUTES.ADMIN_TAB('users')}`)}
           className="text-sm text-blue-600 hover:underline"
         >
           Back to Dashboard
