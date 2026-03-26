@@ -18,12 +18,13 @@ From the project root:
 docker compose up -d --build
 ```
 
-> ⚠️ Note: Please update your .env file in user-service and matching-service before building and starting up the containers with this command.
+> ⚠️ Note: Please update your .env file in question-service, user-service and matching-service before building and starting up the containers with this command.
 
-This starts databases container, user-service container and matching-service container:
+This starts databases container, question-service container, user-service container and matching-service container:
 - **question-db** on port `5433`
 - **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
 - **redis** on port `6379`
+- **question-service** on port `3003`
 - **user-service** on port `3004`
 - **matching-service** on port `3002`
 
@@ -34,6 +35,8 @@ This starts databases container, user-service container and matching-service con
 > To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
 
 #### 2. Question Service Set Up
+
+#### 2.1 Option 1: Question Service Set Up (Local)
 ```bash
 cd question-service
 npm install
@@ -42,6 +45,16 @@ npm run dev        # starts on port 3003, creates tables automatically
 npm run seed       # populates the database with sample questions
 ```
 Verify: `curl localhost:3003/questions/topics`
+
+#### 2.2 Option 2: Question Service Set Up (Docker)
+```bash
+cd question-service
+cp .env.example .env
+cd ..
+docker compose up --build question-service
+```
+
+For dockerized question-service, `docker-compose.yml` overrides network-dependent values (for example `DATABASE_URL`) so container-to-container communication works correctly.
 
 #### 3. User Service Set Up
 
@@ -91,7 +104,14 @@ npm run dev        # starts on port 3000
 ```
 
 ### Running the App
-1. Start databases: `docker compose up -d`
+
+#### Option 1: All services via Docker (recommended)
+1. Start all services: `docker compose up -d --build`
+2. Start frontend: `cd peerprep-frontend && npm run dev`
+3. Open http://localhost:3000
+
+#### Option 2: Services locally
+1. Start databases: `docker compose up -d question-db user-db redis`
 2. Start question-service: `cd question-service && npm run dev`
 3. Start user-service: `cd user-service && npm run dev`
 4. Start matching-service: `cd matching-service && npm run dev`
