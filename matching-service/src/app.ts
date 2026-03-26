@@ -7,28 +7,15 @@ import helmet from 'helmet';
 dotenv.config();
 
 const app: Express = express();
-const frontendOrigins = (
-  process.env.FRONTEND_URLS ||
-  'http://localhost:3000,http://peerprep-frontend:3000'
-).split(',')
-.map((origin) => origin.trim())
-.filter(Boolean);
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Middleware
 // Set HTTP headers to secure app
 app.use(helmet());
 
 // Configure CORS to allow only PeerPrep frontend to communicate with this service
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || frontendOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error('Not allowed by CORS'));
-    },
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   })

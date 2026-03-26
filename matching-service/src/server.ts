@@ -7,13 +7,7 @@ import { queueService } from './services/queue.service';
 import jwt from 'jsonwebtoken';
 
 const PORT = process.env.PORT || 3002
-const frontendOrigins = (
-  process.env.FRONTEND_URLS ||
-  'http://localhost:3000,http://peerprep-frontend:3000'
-)
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 async function startServer() {
   // Create HTTP server wrapping the Express app
@@ -22,7 +16,7 @@ async function startServer() {
   // Initialize Socket.io with CORS allowing the PeerPrep frontend
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: frontendOrigins,
+      origin: FRONTEND_URL,
       methods: ['GET', 'POST'],
       credentials: true,
     },
