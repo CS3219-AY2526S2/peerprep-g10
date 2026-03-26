@@ -16,6 +16,7 @@ interface MatchErrorPayload {
 interface UseMatchingSessionOptions {
   onAuthError?: () => void;
   onMatchFound?: (payload: MatchFoundPayload) => void;
+  matchingTimeoutSeconds?: number;
 }
 
 interface StartMatchParams {
@@ -24,17 +25,42 @@ interface StartMatchParams {
   token?: string | null;
 }
 
-export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSessionOptions = {}) {
+const DEFAULT_MATCHING_TIMEOUT_SECONDS = 120;
+
+export function useMatchingSession({
+  onAuthError,
+  onMatchFound,
+  matchingTimeoutSeconds = DEFAULT_MATCHING_TIMEOUT_SECONDS,
+}: UseMatchingSessionOptions = {}) {
+  const timeoutInSeconds = Math.max(1, matchingTimeoutSeconds);
   const socketRef = useRef<Socket | null>(null);
+  const matchingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const elapsedIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedSecondsRef = useRef(0);
   const [isMatching, setIsMatching] = useState(false);
   const [activeNotification, setActiveNotification] = useState<NotificationProps | null>(null);
 
+  const clearTimers = useCallback(() => {
+    if (matchingTimeoutRef.current) {
+      clearTimeout(matchingTimeoutRef.current);
+      matchingTimeoutRef.current = null;
+    }
+
+    if (elapsedIntervalRef.current) {
+      clearInterval(elapsedIntervalRef.current);
+      elapsedIntervalRef.current = null;
+    }
+
+    elapsedSecondsRef.current = 0;
+  }, []);
+
   const cancelMatch = useCallback(() => {
+    clearTimers();
     socketRef.current?.disconnect();
     socketRef.current = null;
     setIsMatching(false);
     setActiveNotification(null);
-  }, []);
+  }, [clearTimers]);
 
   const startMatch = useCallback(({ topic, difficulty, token }: StartMatchParams) => {
     if (isMatching) {
@@ -55,10 +81,13 @@ export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSes
     setIsMatching(true);
 
     socket.on('connect', () => {
+      clearTimers();
+      elapsedSecondsRef.current = 0;
+
       setActiveNotification({
         type: 'info',
         title: 'Finding you a coding partner ...',
-        message: '',
+        message: `Time Elaspe: ${elapsedSecondsRef.current}s`,
         rightAction: 'spinner',
         actionButton: {
           label: 'Cancel',
@@ -66,6 +95,30 @@ export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSes
           onClick: cancelMatch,
         },
       });
+
+      elapsedIntervalRef.current = setInterval(() => {
+        elapsedSecondsRef.current += 1;
+        setActiveNotification((current) => {
+          if (!current || current.type !== 'info' || current.rightAction !== 'spinner') {
+            return current;
+          }
+
+          return {
+            ...current,
+            message: `Time Elaspe: ${elapsedSecondsRef.current}s`,
+          };
+        });
+      }, 1000);
+
+      matchingTimeoutRef.current = setTimeout(() => {
+        cancelMatch();
+        setActiveNotification({
+          type: 'warning',
+          title: 'No coding partner available now',
+          message: 'Try again with another sets of criteria',
+          rightAction: 'close',
+        });
+      }, timeoutInSeconds * 1000);
     });
 
     socket.on('MATCH_FOUND', (payload: MatchFoundPayload) => {
@@ -76,6 +129,7 @@ export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSes
 
     socket.on('MATCH_ERROR', (error: MatchErrorPayload) => {
       console.log(`MATCH ERROR: ${error.message}`);
+      clearTimers();
       setActiveNotification({
         type: 'error',
         title: 'Unable to find a match right now',
@@ -89,6 +143,7 @@ export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSes
 
     socket.on('connect_error', (err: Error) => {
       console.error('Connection rejected:', err.message);
+      clearTimers();
       setIsMatching(false);
       socket.disconnect();
       socketRef.current = null;
@@ -105,14 +160,15 @@ export function useMatchingSession({ onAuthError, onMatchFound }: UseMatchingSes
         rightAction: 'close',
       });
     });
-  }, [cancelMatch, isMatching, onAuthError, onMatchFound]);
+  }, [cancelMatch, clearTimers, isMatching, onAuthError, onMatchFound, timeoutInSeconds]);
 
   useEffect(() => {
     return () => {
+      clearTimers();
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, []);
+  }, [clearTimers]);
 
   return {
     activeNotification,
