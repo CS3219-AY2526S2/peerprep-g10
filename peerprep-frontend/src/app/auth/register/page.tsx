@@ -13,6 +13,7 @@ export default function RegisterPage() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     register(username, email, password)
-      .then(() => router.push(ROUTES.LOGIN))
+      .then(() => setRegistered(true))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -94,6 +95,12 @@ export default function RegisterPage() {
 
         </div>
       </div>
+
+      {registered && (
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
+          Registration successful! Please check your email to verify your account.
+        </div>
+      )}
 
     </div>
   );

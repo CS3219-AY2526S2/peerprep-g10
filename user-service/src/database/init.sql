@@ -27,3 +27,12 @@ CREATE OR REPLACE TRIGGER check_last_admin
 BEFORE DELETE ON users
 FOR EACH ROW
 EXECUTE FUNCTION prevent_last_admin_delete();
+
+-- Email Verification Table
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -89,4 +89,12 @@ export const UserDB = {
     );
     return result.rows[0];
   },
+
+  async markVerified(id: number) {
+    const result = await pool.query(
+      'UPDATE users SET is_verified = TRUE WHERE id = $1 RETURNING id, username, email, access_role, profile_icon, is_banned',
+      [id]
+    );
+    return result.rows[0];
+  },
 };

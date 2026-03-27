@@ -113,3 +113,22 @@ export async function verifyToken(): Promise<{ user: User }> {
   
   return res.json();
 }
+
+export async function verifyEmail(token: string): Promise<{ token: string; user: User }> {
+  const res = await fetch(`${AUTH_BASE_URL}/verify-email?token=${token}`);
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.message || 'Failed to verify email');
+  
+  return data;
+}
+
+// export async function resendVerification(email: string): Promise<void> {
+//   const res = await fetch(`${AUTH_BASE_URL}/resend-verification`, {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({ email }),
+//   });
+//   const data = await res.json().catch(() => null);
+//   if (!res.ok) throw new Error(data?.message || 'Failed to resend verification email');
+// }
