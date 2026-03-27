@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
@@ -32,13 +33,27 @@ export default function VerifyEmailPage() {
       setStatus('error');
       setMessage(err.message);
     });
-  }, []);
+  }, [searchParams, login, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      {status === 'loading' && <p className="text-zinc-500 animate-pulse">Verifying your email...</p>}
-      {status === 'success' && <p className="text-green-600">Email verified! Redirecting...</p>}
-      {status === 'error' && <p className="text-red-500">{message}</p>}
+      {status === 'loading' && (
+        <p className="text-zinc-500 animate-pulse">Verifying your email...</p>
+      )}
+      {status === 'success' && (
+        <p className="text-green-600">Email verified! Redirecting...</p>
+      )}
+      {status === 'error' && (
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{message}</p>
+          <button
+            onClick={() => router.push(ROUTES.LOGIN)}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Back to Login
+          </button>
+        </div>
+      )}
     </div>
   );
 }
