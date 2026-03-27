@@ -6,6 +6,7 @@ import { NotificationProps } from '@/src/components/Notification';
 interface MatchFoundPayload {
   roomId: string;
   question: unknown;
+  userId: string;
   partnerId: string;
 }
 
@@ -15,7 +16,7 @@ interface MatchErrorPayload {
 
 interface UseMatchingSessionOptions {
   onAuthError?: () => void;
-  onMatchFound?: (payload: MatchFoundPayload) => void;
+  onMatchFound?: (roomId: string, userId: string) => void;
   matchingTimeoutSeconds?: number;
 }
 
@@ -123,8 +124,9 @@ export function useMatchingSession({
 
     socket.on('MATCH_FOUND', (payload: MatchFoundPayload) => {
       console.log(`MATCH FOUND: ${JSON.stringify(payload)}`);
-      onMatchFound?.(payload);
+      
       cancelMatch();
+      onMatchFound?.(payload.roomId, payload.userId);
     });
 
     socket.on('MATCH_ERROR', (error: MatchErrorPayload) => {
