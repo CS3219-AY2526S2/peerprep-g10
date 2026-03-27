@@ -22,6 +22,7 @@ export const AuthService = {
     
     // Create verification token and send email
     const token = await VerificationDB.createToken(user.id);
+
     await sendVerificationEmail(lowercaseEmail, token);
 
     return user;

@@ -25,6 +25,7 @@ export default function VerifyEmailPage() {
     .then((data) => {
       login(data.token, data.user);
       setStatus('success');
+      sessionStorage.removeItem('pendingEmail');
       setTimeout(() => router.push(ROUTES.USER), 2000);
     })
     .catch((err) => {

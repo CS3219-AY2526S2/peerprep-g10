@@ -33,7 +33,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     register(username, email, password)
-      .then(() => setRegistered(true))
+      .then(() => {
+        setRegistered(true)
+        sessionStorage.setItem('pendingEmail', email);
+        router.push(ROUTES.CHECK_EMAIL);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };

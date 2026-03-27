@@ -1,15 +1,12 @@
 import { Resend } from 'resend';
 
-console.log('All Env Vars:', process.env.JWT_SECRET);
-console.log('API KEY:', process.env.RESEND_API_KEY);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationUrl = `${process.env.APP_URL}/auth/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
-    from: 'PeerPrep <noreply@yourdomain.com>',
+    // Currently only able to send email to monkiorbital@gmail.com
+    from: 'PeerPrep <onboarding@resend.dev>',
     to: email,
     subject: 'Verify your PeerPrep account',
     html: `
@@ -27,4 +24,5 @@ export const sendVerificationEmail = async (email: string, token: string) => {
       </div>
     `,
   });
+  console.log("Sending email: " + email)
 };

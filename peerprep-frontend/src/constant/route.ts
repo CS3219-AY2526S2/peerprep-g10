@@ -1,6 +1,7 @@
 export const ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  CHECK_EMAIL: '/auth/check-email',
   USER_PROFILE: '/user/profile',
   USER: '/user',
   ROOM: (roomId: string, userId: string) => `/collaboration/${roomId}?user=${userId}`,
