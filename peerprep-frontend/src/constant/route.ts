@@ -3,6 +3,7 @@ export const ROUTES = {
   REGISTER: '/auth/register',
   USER_PROFILE: '/user/profile',
   USER: '/user',
+  ROOM: (roomId: string, userId: string) => `/collaboration/${roomId}?user=${userId}`,
   ADMIN: '/admin',
   ADMIN_PROFILE: '/admin/profile',
   ADMIN_TAB: (tab: 'questions' | 'users') => `/admin?tab=${tab}`,

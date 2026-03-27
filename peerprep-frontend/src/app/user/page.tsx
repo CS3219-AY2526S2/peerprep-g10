@@ -8,6 +8,8 @@ import Image from 'next/image';
 import findingPartnerSvg from '../../../public/images/finding-partner.svg'
 import { useAuth } from '@/src/context/AuthContext';
 import { useMatchingSession } from '@/src/hooks/useMatchingSession';
+import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/src/constant/route';
 
 
 export default function UserDashboard() {
@@ -17,9 +19,16 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [topicFieldError, setTopicFieldError] = useState('');
 
+  const router = useRouter();
   const { logout } = useAuth();
+
+  const enterCollaborationRoom = (roomId: string, userId: string) => {
+    router.push(ROUTES.ROOM(roomId, userId));
+  }
+
   const { activeNotification, isMatching, startMatch, setActiveNotification } = useMatchingSession({
     onAuthError: logout,
+    onMatchFound: enterCollaborationRoom
   });
 
   useEffect(() => {

@@ -82,13 +82,16 @@ class MatchingService {
       const payload = {
         roomId: session.id,
         question: question,
+        userId: userA,
         partnerId: userB, // For User A
       };
 
       // Emit Match Found to User A
       io.to(ticketA.socketId).emit('MATCH_FOUND', payload);
       
+      payload.userId = userB;
       payload.partnerId = userA; // Swap partner ID for User B
+      
       // Emit Match Found to User B
       io.to(ticketB.socketId).emit('MATCH_FOUND', payload);
 
