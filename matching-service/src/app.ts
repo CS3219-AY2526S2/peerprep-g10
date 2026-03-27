@@ -2,8 +2,6 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import { queueService } from './services/queue.service';
-import { matchingService } from './services/matching.service';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -11,7 +9,6 @@ dotenv.config();
 const app: Express = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Middleware
 // Set HTTP headers to secure app
 app.use(helmet());
 
