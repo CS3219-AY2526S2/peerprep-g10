@@ -35,7 +35,7 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - collaboration_db_data:/var/lib/postgresql/data
+      - collaboration-db-data:/var/lib/postgresql/data
       - ./collaboration-service/src/database:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d peerprep"]
@@ -86,11 +86,11 @@ services:
       - question-db
     restart: unless-stopped
 
-  collaboration-backend:
+  collaboration-service:
     build:
       context: ./collaboration-service
       dockerfile: Dockerfile
-    container_name: collaboration-backend
+    container_name: collaboration-service
     ports:
       - "3001:3001"
     environment:
@@ -107,20 +107,27 @@ services:
       timeout: 5s
       retries: 5
 
-  collaboration-frontend:
+  frontend:
     build:
       context: ./peerprep-frontend
       dockerfile: Dockerfile
-    container_name: collaboration-frontend
+    container_name: peerprep-frontend
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_COLLAB_BACKEND_URL: http://collaboration-backend:3001
+      NEXT_PUBLIC_COLLAB_BACKEND_URL: ${NEXT_PUBLIC_COLLAB_BACKEND_URL:-http://localhost:3001}
+      NEXT_PUBLIC_MATCHING_SERVICE_URL: ${NEXT_PUBLIC_MATCHING_SERVICE_URL:-http://localhost:3002}
+      NEXT_PUBLIC_USER_SERVICE_URL: ${NEXT_PUBLIC_USER_SERVICE_URL:-http://localhost:3004}
     depends_on:
-      collaboration-backend:
+      collaboration-service:
         condition: service_healthy
+      matching-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+  
   user-service:
     build:
       context: ./user-service
@@ -138,4 +145,4 @@ services:
 volumes:
   question-db-data:
   user-db-data:
-  collaboration_db_data:
+  collaboration-db-data:
