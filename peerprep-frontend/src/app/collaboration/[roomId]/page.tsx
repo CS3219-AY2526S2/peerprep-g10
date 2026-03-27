@@ -6,8 +6,9 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
+import { API_BASE } from "@/src/constant/api";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = API_BASE.COLLAB_SERVICE;
 
 type ChatMessage = {
   id?: string;
