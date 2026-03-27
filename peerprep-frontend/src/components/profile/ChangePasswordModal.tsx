@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { updatePassword } from '@/src/user/userApi';
+import { updatePassword } from '@/src/services/user/userApi';
 
 interface Props {
   isOpen: boolean;

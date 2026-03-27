@@ -10,7 +10,7 @@ export const UserDB = {
   },
 
   async findByEmail(email: string) {
-    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE email = $1', [email]);
     return result.rows[0];
   },
 
@@ -24,7 +24,7 @@ export const UserDB = {
 
   async getUserById(id: string) {
     const result = await pool.query(
-      'SELECT id, username, email, password, access_role, profile_icon FROM users WHERE id = $1',
+      'SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE id = $1',
       [id]
     );
     return result.rows[0];
@@ -32,12 +32,12 @@ export const UserDB = {
 
   async getAllUsers() {
     const result = await pool.query(
-      'SELECT id, username, email, access_role, profile_icon created_at FROM users'
+      'SELECT id, username, email, access_role, profile_icon, is_banned FROM users'
     );
     return result.rows;
   },
 
-  async deleteUser(id: string) {
+  async deleteUser(id: number) {
     const result = await pool.query(
       'DELETE FROM users WHERE id = $1 RETURNING id', 
       [id]
@@ -65,6 +65,27 @@ export const UserDB = {
     const result = await pool.query(
       'UPDATE users SET profile_icon = $1 WHERE id = $2 RETURNING id, username, email, profile_icon',
       [profileIcon, id]
+    );
+    return result.rows[0];
+  },
+
+  async createAdmin(username: string, email: string, hashedPassword: string, profileIcon: string) {
+    const accessRole = 'admin';
+    const isVerified = true;
+
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password, access_role, is_verified, profile_icon) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
+      RETURNING id, username, access_role`,
+      [username, email, hashedPassword, accessRole, isVerified, profileIcon]
+    );
+    return result.rows[0];
+  },
+
+  async updateUserBanStatus(id: number, isBanned: boolean) {
+    const result = await pool.query(
+      'UPDATE users SET is_banned = $1 WHERE id = $2 RETURNING id, username, email, access_role, profile_icon, is_banned',
+      [isBanned, id]
     );
     return result.rows[0];
   },
