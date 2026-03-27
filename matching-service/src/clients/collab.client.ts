@@ -4,7 +4,7 @@ import { Question } from './question.client';
 const COLLAB_SERVICE_URL = process.env.COLLAB_SERVICE_URL || 'http://localhost:3001';
 
 export interface CollabSessionResponse {
-  roomId: string;
+  id: string;
 }
 
 class CollaborationClient {
@@ -12,19 +12,13 @@ class CollaborationClient {
    * Provisions a new collaborative coding room for the two matched users.
    * @param userA The ID of the first user
    * @param userB The ID of the second user
-   * @param question The full question object fetched from the Question Service
+   * @param questionId The question ID fetched from the Question Service
    * @returns The session details, crucially including the generated roomId
    */
-  public async createSession(userA: string, userB: string, question: Question): Promise<CollabSessionResponse> {
+  public async createSession(userA: string, userB: string, questionId: string): Promise<CollabSessionResponse> {
     try {
       const payload = {
-        title: question.title,
-        topic: question.topics[0],
-        difficulty: question.difficulty,
-        description: question.description,
-        codeExample: question.examples || "",
-        starterCode: question.pseudocode || "",
-        testCases: [], 
+        questionId: questionId, 
         user1Id: userA,
         user2Id: userB,
       };
