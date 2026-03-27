@@ -147,8 +147,7 @@ npm run dev        # starts on port 3000
 
 #### Option 1: All services via Docker (recommended)
 1. Start all services: `docker compose up -d --build`
-2. Start frontend: `cd peerprep-frontend && npm run dev`
-3. Open http://localhost:3000
+2. Open http://localhost:3000
 
 #### Option 2: Services locally
 1. Start databases: `docker compose up -d question-db user-db collaboration-db redis`
