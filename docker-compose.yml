@@ -59,11 +59,11 @@ services:
       context: ./matching-service
     container_name: matching-service
     env_file:
-      - ./matching-service/.env
+      - ./matching-service/.env.example
     environment:
       REDIS_URL: redis://matching-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
-      COLLAB_SERVICE_URL: http://host.docker.internal:3001
+      COLLAB_SERVICE_URL: http://collaboration-service:3001
       # FRONTEND_URL: http://peerprep-frontend:3000
     ports:
       - "3002:3002"
@@ -97,7 +97,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgres://postgres:admin123@collaboration-db:5432/peerprep
-      QUESTION_SERVICE_URL: http://host.docker.internal:3003
+      QUESTION_SERVICE_URL: http://question-service:3003
     depends_on:
       collaboration-db:
         condition: service_healthy

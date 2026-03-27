@@ -27,6 +27,7 @@ This starts databases container, question-service container, user-service contai
 - **question-service** on port `3003`
 - **user-service** on port `3004`
 - **matching-service** on port `3002`
+- **collaboration-service** on port `3001`
 
 **Default admin account** (seeded automatically):
 - Email: `admin@peerprep.com` 
@@ -96,7 +97,46 @@ docker compose up --build redis matching-service
 
 For dockerized matching-service, `docker-compose.yml` overrides network-dependent values (for example `REDIS_URL=redis://matching-redis:6379`) so container-to-container communication works correctly.
 
-#### 5. Frontend Set Up
+#### 5. Collaboration Service Set Up
+
+#### 5.1 Option 1: Collaboration Service Set Up (Local)
+```bash
+cd collaboration-service
+npm install
+cp .env.example .env
+npm run dev        # starts on port 3001
+```
+
+#### 5.2 Option 2: Collaboration Service Set Up (Docker)
+```bash
+cd collaboration-service
+cp .env.example .env
+cd ..
+docker compose up --build collaboration-service
+```
+
+For dockerized collaboration-service, `docker-compose.yml` overrides network-dependent values so container-to-container communication works correctly.
+
+#### 5.3 Create Collaboration Service room manually
+If Collaboration Service is run independently, you may need to request a collaboration service room manually. The question service needs to be run for collaboration service to create a room as the collaboration service needs to retrieve a question in the room creation process. Afterwards you can create a room by running the following commands:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://localhost:3001/rooms" -ContentType "application/json" -Body (@{questionId=351;user1Id="user1";user2Id="user2"} | ConvertTo-Json)
+```
+
+or 
+
+```powershell
+ curl.exe -X POST "http://localhost:3001/rooms" -H "Content-Type: application/json" --data-raw '{\"questionId\":351,\"user1Id\":\"user1\",\"user2Id\":\"user2\"}'
+```
+
+These commands should provide you with the roomId as part of the response. After running the frontend you can use the roomId to access the room at http://localhost:3000/collaboration/[roomId]?user=user1
+
+and 
+
+http://localhost:3000/collaboration/[roomId]?user=user2
+
+#### 6. Frontend Set Up
 ```bash
 cd peerprep-frontend
 npm install
@@ -111,12 +151,13 @@ npm run dev        # starts on port 3000
 3. Open http://localhost:3000
 
 #### Option 2: Services locally
-1. Start databases: `docker compose up -d question-db user-db redis`
+1. Start databases: `docker compose up -d question-db user-db collaboration-db redis`
 2. Start question-service: `cd question-service && npm run dev`
 3. Start user-service: `cd user-service && npm run dev`
 4. Start matching-service: `cd matching-service && npm run dev`
-5. Start frontend: `cd peerprep-frontend && npm run dev`
-6. Open http://localhost:3000
+5. Start collaboration-service: `cd collaboration-service && npm run dev`
+6. Start frontend: `cd peerprep-frontend && npm run dev`
+7. Open http://localhost:3000
 
 ### Available Pages
 | Route | Description |
@@ -129,3 +170,4 @@ npm run dev        # starts on port 3000
 | `/admin/profile` | Admin profile |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
+| `/collaboration/[roomId]?user=[userId]` | Access the collaboration page |
