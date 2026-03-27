@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
-import { getDefaultAvatar } from '../config/avatar';
+import { getDefaultAvatar, getRandomAvatar } from '../config/avatar';
 
 export const UserService = {
   async getUserById(id: string) {
@@ -13,7 +13,9 @@ export const UserService = {
     return await UserDB.getAllUsers();
   },
 
-  async deleteUser(id: string) {
+  async deleteUser(id: number, requesterId: number) {
+    // Prevent self-deletion
+    if (id === requesterId) throw new Error("SELF_DELETE");
     return await UserDB.deleteUser(id);
   },
   
@@ -67,6 +69,34 @@ export const UserService = {
 
   async updateProfileIcon(userId: string, profileIcon: string) {
     return await UserDB.updateProfileIcon(userId, profileIcon);
+  },
+
+  async createAdmin(username: string, email: string, password: string) {
+    const lowercaseEmail = email.toLowerCase().trim();
+    const existing = await UserDB.findByEmailOrUsername(lowercaseEmail, username);
+
+    if (existing) {
+      if (existing.email === lowercaseEmail) throw new Error('EMAIL_EXISTS');
+      if (existing.username === username) throw new Error('USERNAME_EXISTS');
+    }
+
+    const saltRounds = 12;
+    const hashed = await bcrypt.hash(password, saltRounds);
+    const randomIcon = getRandomAvatar();
+
+    return await UserDB.createAdmin(username, lowercaseEmail, hashed, randomIcon);
+  },
+
+  async banUser(userId: string, isBanned: boolean, requesterId: string) {
+    // Prevent self-deletion
+    if (userId === requesterId) throw new Error("SELF_DELETE");
+
+    const user = await UserDB.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    if (user.access_role === 'admin') throw new Error('CANNOT_BAN_ADMIN');
+
+    return await UserDB.updateUserBanStatus(Number(userId), isBanned);
   },
 };
 

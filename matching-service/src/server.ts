@@ -67,8 +67,8 @@ async function startServer() {
 
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);
-      // TO-DO: Handle logic to remove this user from the Redis queue
-      // if they disconnect before a match is found.
+      // Remove user from queue if user disconnects
+      queueService.removeUserFromMatchPool(socket.data.userId);
     });
   });
 

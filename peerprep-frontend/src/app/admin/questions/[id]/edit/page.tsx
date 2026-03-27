@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchQuestion, updateQuestion } from '@/src/admin/questionApi';
-import { Question, QuestionFormData } from '@/src/admin/types';
+import { fetchQuestion, updateQuestion } from '@/src/services/questionApi';
+import { Question, QuestionFormData } from '@/src/services/types';
 import { ROUTES } from '@/src/constant/route';
 import QuestionForm from '@/src/components/admin/QuestionForm';
 import { ArrowLeft } from 'lucide-react';

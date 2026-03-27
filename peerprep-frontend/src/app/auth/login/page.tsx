@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
 import { ROUTES } from '@/src/constant/route';
-import { login as loginApi} from '@/src/user/userApi';
+import { login as loginApi} from '@/src/services/user/userApi';
 
 export default function LoginPage() {
   const { login } = useAuth();

@@ -24,6 +24,7 @@ export const AuthService = {
     const user = await UserDB.findByEmail(lowercaseEmail);
     
     if (!user) throw new Error("USER_NOT_FOUND");
+    if (user.is_banned) throw new Error("USER_BANNED");
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new Error("INVALID_PASSWORD");
 
@@ -35,7 +36,7 @@ export const AuthService = {
     
     return { 
       token, 
-      user: { id: user.userId, username: user.username, email: user.email, access_role: user.access_role, profile_icon: user.profile_icon } 
+      user: { id: user.id, username: user.username, email: user.email, access_role: user.access_role, profile_icon: user.profile_icon } 
     };
   }
 };
