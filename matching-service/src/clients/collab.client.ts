@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { Question } from './question.client';
 
 const COLLAB_SERVICE_URL = process.env.COLLAB_SERVICE_URL || 'http://localhost:3001';
 
