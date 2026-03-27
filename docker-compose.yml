@@ -10,6 +10,11 @@ services:
       - "5433:5432"
     volumes:
       - question-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peerprep -d question_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   user-db:
     image: postgres:17
@@ -23,6 +28,11 @@ services:
     volumes:
       - user-db-data:/var/lib/postgresql/data
       - ./user-service/src/database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peerprep -d user_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   collaboration-db:
     image: postgres:15
@@ -35,7 +45,8 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - collaboration_db_data:/var/lib/postgresql/data
+      - collaboration-db-data:/var/lib/postgresql/data
+      - ./collaboration-service/src/database:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d peerprep"]
       interval: 5s
@@ -62,13 +73,22 @@ services:
     environment:
       REDIS_URL: redis://matching-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
-      COLLAB_SERVICE_URL: http://host.docker.internal:3001
-      # FRONTEND_URL: http://peerprep-frontend:3000
+      COLLAB_SERVICE_URL: http://collaboration-service:3001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "3002:3002"
     depends_on:
       redis:
         condition: service_healthy
+      question-service:
+        condition: service_healthy
+      collaboration-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   question-service:
@@ -79,11 +99,40 @@ services:
       - ./question-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@question-db:5432/question_service
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "3003:3003"
     depends_on:
-      - question-db
+      question-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+
+  collaboration-service:
+    build:
+      context: ./collaboration-service
+      dockerfile: Dockerfile
+    container_name: collaboration-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:admin123@collaboration-db:5432/peerprep
+      QUESTION_SERVICE_URL: http://question-service:3003
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      collaboration-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   user-service:
     build:
@@ -93,13 +142,50 @@ services:
       - ./user-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@user-db:5432/user_service
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "3004:3004"
     depends_on:
-      - user-db
+      user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+
+  peerprep-frontend:
+    build:
+      context: ./peerprep-frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_COLLAB_SERVICE_URL: http://localhost:3001
+        NEXT_PUBLIC_MATCHING_SERVICE_URL: http://localhost:3002
+        NEXT_PUBLIC_QUESTION_SERVICE_URL: http://localhost:3003
+        NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:3004
+    container_name: peerprep-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_COLLAB_SERVICE_URL: http://localhost:3001
+      NEXT_PUBLIC_MATCHING_SERVICE_URL: http://localhost:3002
+      NEXT_PUBLIC_QUESTION_SERVICE_URL: http://localhost:3003
+      NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:3004
+    depends_on:
+      collaboration-service:
+        condition: service_healthy
+      matching-service:
+        condition: service_healthy
+      question-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+  
 
 volumes:
   question-db-data:
   user-db-data:
-  collaboration_db_data:
+  collaboration-db-data:
