@@ -8,7 +8,7 @@ import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
 import VoiceChat from "@/src/components/collaboration/VoiceChat";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "/api/collab";
 
 type ChatMessage = {
   id?: string;
@@ -67,7 +67,7 @@ export default function RoomPage() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  const [socket] = useState(() => io(BACKEND_URL));
+  const [socket] = useState(() => io("/", { path: "/api/collab/socket.io",}));
 
   useEffect(() => {
     async function loadRoom() {
