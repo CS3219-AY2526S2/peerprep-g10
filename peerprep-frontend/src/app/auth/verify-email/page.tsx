@@ -27,7 +27,20 @@ export default function VerifyEmailPage() {
       login(data.token, data.user);
       setStatus('success');
       sessionStorage.removeItem('pendingEmail');
-      setTimeout(() => router.push(ROUTES.USER), 2000);
+
+      if (data.isEmailchange) {
+        // Redirect to correct profile based on role
+        const profileRoute = data.user.access_role === 'admin'
+          ? ROUTES.ADMIN_PROFILE
+          : ROUTES.USER_PROFILE;
+        setTimeout(() => router.push(profileRoute), 2000);
+      } else {
+        // Registration verification — redirect to home
+        const homeRoute = data.user.access_role === 'admin'
+          ? ROUTES.ADMIN
+          : ROUTES.USER;
+        setTimeout(() => router.push(homeRoute), 2000);
+      }
     })
     .catch((err) => {
       setStatus('error');

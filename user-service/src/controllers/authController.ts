@@ -77,9 +77,14 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
     if (!token) return res.status(400).json({ message: 'Token is required' });
 
-    const authData = await AuthService.verifyEmail(token);
-
-    res.json({ message: 'Email verified successfully', ...authData });
+    const result = await AuthService.verifyEmail(token);
+    
+    res.json({
+      message: result.isEmailChange
+        ? 'Email updated successfully'
+        : 'Email verified successfully',
+      ...result,
+    });
   } catch (error: any) {
     if (error.message === 'INVALID_TOKEN') return res.status(400).json({ message: 'Invalid verification link' });
     if (error.message === 'TOKEN_EXPIRED') return res.status(400).json({ message: 'Verification link has expired. Please request a new one.' });

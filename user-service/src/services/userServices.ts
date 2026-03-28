@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
+import { VerificationDB } from '../model/verificationModel';
 import { getDefaultAvatar, getRandomAvatar } from '../config/avatar';
+import { sendEmailChangeVerification } from '../config/email';
 
 export const UserService = {
   async getUserById(id: string) {
@@ -54,7 +56,18 @@ export const UserService = {
       }
     }
 
-    return await UserDB.updateProfile(userId, username, lowercaseEmail);
+    if (emailChanged) {
+      // Send verification to new email — don't update email yet
+      const token = await VerificationDB.createEmailChangeToken(Number(userId), lowercaseEmail);
+      await sendEmailChangeVerification(lowercaseEmail, token);
+
+      // Only update username
+      const updatedUser = await UserDB.updateProfile(userId, username, currentUser.email);
+      return { user: updatedUser, emailChanged: true };
+    }
+
+    const updatedUser = await UserDB.updateProfile(userId, username, lowercaseEmail);
+    return { user: updatedUser, emailChanged: false };
   },
 
   async updatePassword(userId: string, currentPassword: string, newPassword: string) {

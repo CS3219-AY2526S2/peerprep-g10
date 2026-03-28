@@ -17,7 +17,7 @@ export async function fetchProfile(): Promise<User> {
   return res.json();
 }
 
-export async function updateProfile(data: UpdateProfileData): Promise<User> {
+export async function updateProfile(data: UpdateProfileData): Promise<{ user: User; emailChanged: boolean }> {
   const res = await fetch(`${BASE_URL}/update-profile`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
@@ -28,7 +28,7 @@ export async function updateProfile(data: UpdateProfileData): Promise<User> {
   
   if (!res.ok) throw new Error(json.message || 'Failed to update profile');
   
-  return json.user;
+  return json;
 }
 
 export async function updatePassword(currentPassword: string, newPassword: string): Promise<void> {
@@ -114,7 +114,7 @@ export async function verifyToken(): Promise<{ user: User }> {
   return res.json();
 }
 
-export async function verifyEmail(token: string): Promise<{ token: string; user: User }> {
+export async function verifyEmail(token: string): Promise<{ isEmailchange: boolean; token: string; user: User }> {
   const res = await fetch(`${AUTH_BASE_URL}/verify-email?token=${token}`);
   const data = await res.json();
 

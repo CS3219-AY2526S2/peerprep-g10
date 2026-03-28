@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS email_verifications (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token TEXT NOT NULL UNIQUE,
+  type VARCHAR(20) NOT NULL DEFAULT 'registration' CHECK (type IN ('registration', 'email_change')),
+  new_email TEXT,
   expires_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -97,4 +97,13 @@ export const UserDB = {
     );
     return result.rows[0];
   },
+
+  async updateEmail(id: number, newEmail: string) {
+    const result = await pool.query(
+      `UPDATE users SET email = $1 WHERE id = $2
+      RETURNING id, username, email, access_role, profile_icon, is_banned`,
+      [newEmail, id]
+    );
+    return result.rows[0];
+  },
 };

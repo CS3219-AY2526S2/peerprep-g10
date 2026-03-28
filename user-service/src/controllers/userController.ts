@@ -63,13 +63,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       return res.status(400).json({ message: parseProfile.error.issues[0]?.message });
     }
 
-    const updatedUser = await UserService.updateProfile(userId, username, email, password);
+    const result = await UserService.updateProfile(userId, username, email, password);
     
-    if (!updatedUser) {
+    if (!result.user) {
         return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "Profile updated successfully", user: updatedUser });
+    res.json({
+      message: result.emailChanged
+        ? 'Profile updated. Please check your new email to verify the change.'
+        : 'Profile updated successfully',
+      emailChanged: result.emailChanged,
+      user: result.user,
+    });
   } catch (error: any) {
     if (error.message === "Incorrect password") {
       return res.status(401).json({ message: error.message });

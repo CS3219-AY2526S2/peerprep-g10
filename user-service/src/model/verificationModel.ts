@@ -18,6 +18,25 @@ export const VerificationDB = {
     return result.rows[0].token;
   },
 
+  async createEmailChangeToken(userId: number, newEmail: string) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await pool.query(
+      'DELETE FROM email_verifications WHERE user_id = $1 AND type = $2',
+      [userId, 'email_change']
+    );
+
+    const result = await pool.query(
+      `INSERT INTO email_verifications (user_id, token, type, new_email, expires_at)
+       VALUES ($1, $2, 'email_change', $3, $4)
+       RETURNING token`,
+      [userId, token, newEmail, expiresAt]
+    );
+    return result.rows[0].token;
+  },
+
+
   async findToken(token: string) {
     const result = await pool.query(
       `SELECT ev.*, u.email, u.username 
@@ -30,6 +49,8 @@ export const VerificationDB = {
   },
 
   async deleteToken(token: string) {
-    await pool.query('DELETE FROM email_verifications WHERE token = $1', [token]);
+    await pool.query('DELETE FROM email_verifications WHERE token = $1',
+      [token]
+    );
   },
 };

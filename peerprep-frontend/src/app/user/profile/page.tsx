@@ -3,32 +3,50 @@ import { useState, useEffect } from 'react';
 import { User } from '@/src/services/user/types';
 import { fetchProfile } from '@/src/services/user/userApi';
 import ProfileCard from '@/src/components/profile/ProfileCard';
+import Notification from '@/src/components/Notification';
+import { useProfileNotifications } from '@/src/hooks/useProfileNotifications';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const {
+    activeNotification,
+    setActiveNotification,
+    handleProfileSuccess,
+    handlePasswordSuccess,
+    handleIconSuccess,
+  } = useProfileNotifications();
+
   useEffect(() => {
     fetchProfile()
       .then(setUser)
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return <div>Loading Profile...</div>;
-  }
-  if (error || !user) {
-    return <div>Error...</div>;
-  }
+  if (loading) return <div>Loading Profile...</div>;
+  if (error || !user) return <div>Error...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {activeNotification && (
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Notification
+            {...activeNotification}
+            onClose={() => setActiveNotification(null)}
+          />
+        </div>
+      )}
       <div className="max-w-5xl mx-auto p-10">
         <h1 className="text-3xl font-bold mb-8 text-zinc-900 dark:text-white">My Profile</h1>
-        <ProfileCard user={user} onSuccess={setUser} />
-        {/* Attempt History */}
+        <ProfileCard
+          user={user!}
+          onProfileSuccess={(updatedUser, emailChanged) => handleProfileSuccess(updatedUser, emailChanged, setUser)}
+          onPasswordSuccess={handlePasswordSuccess}
+          onIconSuccess={(updatedUser) => handleIconSuccess(updatedUser, setUser)}
+        />
       </div>
     </div>
   );

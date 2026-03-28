@@ -5,6 +5,22 @@ import { sendVerificationEmail } from '../config/email';
 import { VerificationDB } from '../model/verificationModel';
 import { UserDB } from '../model/userModel';
 
+const generateJWT = (user: any) => {
+  return jwt.sign(
+    { userId: user.id, username: user.username, access_role: user.access_role },
+    process.env.JWT_SECRET as string,
+    { expiresIn: '6h' }
+  );
+};
+
+const formatUser = (user: any) => ({
+  id: user.id,
+  username: user.username,
+  email: user.email,
+  access_role: user.access_role,
+  profile_icon: user.profile_icon,
+});
+
 export const AuthService = {
   async register(username: string, email: string, password: string) {
     const lowercaseEmail = email.toLowerCase().trim();
@@ -38,22 +54,10 @@ export const AuthService = {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new Error("INVALID_PASSWORD");
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username, access_role: user.access_role },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '6h' }
-    );
     
     return { 
-      token, 
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        access_role: user.access_role,
-        profile_icon: user.profile_icon 
-      } 
+      token: generateJWT(user), 
+      user: formatUser(user),
     };
   },
 
@@ -68,28 +72,20 @@ export const AuthService = {
       throw new Error('TOKEN_EXPIRED');
     }
 
-    // Mark user as verified
-    const user = await UserDB.markVerified(record.user_id);
+    // Mark user as verified or update email to new email
+    const user = await (
+      record.type === 'email_change'
+        ? UserDB.updateEmail(record.user_id, record.new_email)
+        : UserDB.markVerified(record.user_id)
+    );
 
     // Delete used token
     await VerificationDB.deleteToken(token);
 
-    // Auto login — generate JWT
-    const jwtToken = jwt.sign(
-      { userId: user.id, username: user.username, access_role: user.access_role },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '6h' }
-    );
-
     return {
-      token: jwtToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        access_role: user.access_role,
-        profile_icon: user.profile_icon,
-      }
+      token: generateJWT(user),
+      user: formatUser(user),
+      isEmailChange: record.type === 'email_change',
     };
   },
 

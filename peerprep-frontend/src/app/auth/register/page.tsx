@@ -13,11 +13,9 @@ export default function RegisterPage() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
 
     const form = new FormData(e.currentTarget);
 
@@ -34,7 +32,6 @@ export default function RegisterPage() {
 
     register(username, email, password)
       .then(() => {
-        setRegistered(true)
         sessionStorage.setItem('pendingEmail', email);
         router.push(ROUTES.CHECK_EMAIL);
       })
@@ -99,13 +96,6 @@ export default function RegisterPage() {
 
         </div>
       </div>
-
-      {registered && (
-        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
-          Registration successful! Please check your email to verify your account.
-        </div>
-      )}
-
     </div>
   );
 }
