@@ -16,11 +16,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const token = searchParams.get('token');
 
-    if (!token) {
-      setStatus('error');
-      setMessage('Invalid verification link');
-      return;
-    }
+    if (!token) return;
 
     verifyEmail(token)
     .then((data) => {
