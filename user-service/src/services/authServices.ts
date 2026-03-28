@@ -4,6 +4,7 @@ import { getRandomAvatar } from '../config/avatar';
 import { sendVerificationEmail } from '../config/email';
 import { VerificationDB } from '../model/verificationModel';
 import { UserDB } from '../model/userModel';
+import { Errors } from '../errors/AppError';
 
 const generateJWT = (user: any) => {
   return jwt.sign(
@@ -24,10 +25,12 @@ const formatUser = (user: any) => ({
 export const AuthService = {
   async register(username: string, email: string, password: string) {
     const lowercaseEmail = email.toLowerCase().trim();
+
+    // Check for duplicate email or username before creating
     const existing = await UserDB.findByEmailOrUsername(lowercaseEmail, username);
     if (existing) {
-      if (existing.email === lowercaseEmail) throw new Error("EMAIL_EXISTS");
-      if (existing.username === username) throw new Error("USERNAME_EXISTS");
+      if (existing.email === lowercaseEmail) throw Errors.EMAIL_EXISTS;
+      if (existing.username === username) throw Errors.USERNAME_EXISTS;
     }
 
     const saltRounds = 12;
@@ -36,9 +39,8 @@ export const AuthService = {
 
     const user = await UserDB.createUser(username, lowercaseEmail, hashedPassword, randomIcon);
     
-    // Create verification token and send email
+    // Create verification token and send email to user
     const token = await VerificationDB.createToken(user.id);
-
     await sendVerificationEmail(lowercaseEmail, token);
 
     return user;
@@ -48,12 +50,12 @@ export const AuthService = {
     const lowercaseEmail = email.toLowerCase().trim();
     const user = await UserDB.findByEmail(lowercaseEmail);
     
-    if (!user) throw new Error("USER_NOT_FOUND");
-    if (user.is_banned) throw new Error("USER_BANNED");
-    if (!user.is_verified) throw new Error('EMAIL_NOT_VERIFIED');
+    if (!user) throw Errors.USER_NOT_FOUND;
+    if (user.is_banned) throw Errors.USER_BANNED;
+    if (!user.is_verified) throw Errors.EMAIL_NOT_VERIFIED;
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) throw new Error("INVALID_PASSWORD");
+    if (!isValid) throw Errors.INVALID_PASSWORD;
     
     return { 
       token: generateJWT(user), 
@@ -64,15 +66,16 @@ export const AuthService = {
   async verifyEmail(token: string) {
     const record = await VerificationDB.findToken(token);
 
-    if (!record) throw new Error('INVALID_TOKEN');
+    if (!record) throw Errors.INVALID_TOKEN;
 
-    const expired = new Date() > new Date(record.expires_at);
-    if (expired) {
+    const isExpired = new Date() > new Date(record.expires_at);
+    if (isExpired) {
       await VerificationDB.deleteToken(token);
-      throw new Error('TOKEN_EXPIRED');
+      throw Errors.TOKEN_EXPIRED;
     }
 
-    // Mark user as verified or update email to new email
+    // Email change token upadate email
+    // Registration token mark the user verified
     const user = await (
       record.type === 'email_change'
         ? UserDB.updateEmail(record.user_id, record.new_email)
@@ -93,8 +96,8 @@ export const AuthService = {
     const lowercaseEmail = email.toLowerCase().trim();
     const user = await UserDB.findByEmail(lowercaseEmail);
 
-    if (!user) throw new Error('USER_NOT_FOUND');
-    if (user.is_verified) throw new Error('ALREADY_VERIFIED');
+    if (!user) throw Errors.USER_NOT_FOUND;
+    if (user.is_verified) throw Errors.ALREADY_VERIFIED;
 
     const token = await VerificationDB.createToken(user.id);
     await sendVerificationEmail(lowercaseEmail, token);

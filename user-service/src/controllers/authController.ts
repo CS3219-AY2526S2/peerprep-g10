@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { AuthService } from '../services/authServices';
 import { UserService } from '../services/userServices';
 import { registerSchema } from '../validator/userSchema';
+import { handleAppError } from '../errors/handleAppError';
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -12,20 +12,7 @@ export const registerUser = async (req: Request, res: Response) => {
     res.status(201).json({ message: "Registration successful! Please check your email to verify your account." });
 
   } catch (error: any) {
-    if (error.message === "EMAIL_EXISTS") {
-      return res.status(400).json({ message: "This email is already registered." });
-    }
-    if (error.message === "USERNAME_EXISTS") {
-      return res.status(400).json({ message: "This username is already taken. Please choose another." });
-    }
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      const message = error.issues[0]?.message || "Invalid input data";
-      return res.status(400).json({ message });
-    }
-    
-    console.error("REGISTRATION ERROR:", error);
-    res.status(400).json({ error: error.errors || "Server Error" });
+    handleAppError(error, res, 'registerUser', 'Error registering user');
   }
 };
 
@@ -39,20 +26,7 @@ export const loginUser = async (req: Request, res: Response) => {
       ...authData 
     });
   } catch (error: any) {
-    if (error.message === "USER_BANNED") {
-      return res.status(403).json({ message: "Your account has been banned." });
-    }
-    if (error.message === "USER_NOT_FOUND") {
-      return res.status(401).json({ message: "This email is not registered. Please sign up first." });
-    }
-    if (error.message === "INVALID_PASSWORD") {
-      return res.status(401).json({ message: "Incorrect password. Please try again." });
-    }
-    if (error.message === 'EMAIL_NOT_VERIFIED') {
-      return res.status(403).json({ message: 'Please verify your email before logging in.' });
-    }
-    console.error("DEBUG LOGIN ERROR:", error.message);
-    res.status(500).json({ message: "Server Error during login" });
+    handleAppError(error, res, 'loginUser', 'Error logging in');
   }
 };
 
@@ -67,7 +41,7 @@ export const verifyToken = async (req: Request, res: Response) => {
 
     res.json({ user });
   } catch (error) {
-    res.status(500).json({ message: "Error verifying token" });
+    handleAppError(error, res, 'verifyToken', 'Error verifying token');
   }
 };
 
@@ -78,7 +52,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
     if (!token) return res.status(400).json({ message: 'Token is required' });
 
     const result = await AuthService.verifyEmail(token);
-    
+
     res.json({
       message: result.isEmailChange
         ? 'Email updated successfully'
@@ -86,10 +60,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
       ...result,
     });
   } catch (error: any) {
-    if (error.message === 'INVALID_TOKEN') return res.status(400).json({ message: 'Invalid verification link' });
-    if (error.message === 'TOKEN_EXPIRED') return res.status(400).json({ message: 'Verification link has expired. Please request a new one.' });
-
-    res.status(500).json({ message: 'Error verifying email' });
+    handleAppError(error, res, 'verifyEmail', 'Error verifying email');
   }
 };
 
@@ -99,9 +70,6 @@ export const resendVerification = async (req: Request, res: Response) => {
     await AuthService.resendVerification(email);
     res.json({ message: 'Verification email sent' });
   } catch (error: any) {
-    if (error.message === 'USER_NOT_FOUND') return res.status(404).json({ message: 'Email not found' });
-    if (error.message === 'ALREADY_VERIFIED') return res.status(400).json({ message: 'Email is already verified' });
-    
-    res.status(500).json({ message: 'Error sending verification email' });
+    handleAppError(error, res, 'resendVerification', 'Error sending verification email');
   }
 };
