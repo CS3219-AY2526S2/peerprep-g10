@@ -174,6 +174,102 @@ export function registerRealtime(io: SocketIOServer) {
       }
     });
 
+    socket.on(
+      "voice:offer",
+      (payload: { roomId: string; offer: RTCSessionDescriptionInit }) => {
+        try {
+          const { roomId, offer } = payload;
+
+          if (!roomId || !offer) {
+            socket.emit("voice:error", { message: "Invalid voice offer payload" });
+            return;
+          }
+
+          if (!isAuthorizedSocket(socket, roomId)) {
+            socket.emit("voice:error", { message: "Not authorized for this room" });
+            return;
+          }
+
+          socket.to(roomId).emit("voice:offer", { offer });
+        } catch (err) {
+          console.error("voice:offer failed:", err);
+          socket.emit("voice:error", { message: "Failed to relay voice offer" });
+        }
+      }
+    );
+
+    socket.on(
+      "voice:answer",
+      (payload: { roomId: string; answer: RTCSessionDescriptionInit }) => {
+        try {
+          const { roomId, answer } = payload;
+
+          if (!roomId || !answer) {
+            socket.emit("voice:error", { message: "Invalid voice answer payload" });
+            return;
+          }
+
+          if (!isAuthorizedSocket(socket, roomId)) {
+            socket.emit("voice:error", { message: "Not authorized for this room" });
+            return;
+          }
+
+          socket.to(roomId).emit("voice:answer", { answer });
+        } catch (err) {
+          console.error("voice:answer failed:", err);
+          socket.emit("voice:error", { message: "Failed to relay voice answer" });
+        }
+      }
+    );
+
+    socket.on(
+      "voice:ice-candidate",
+      (payload: { roomId: string; candidate: RTCIceCandidateInit }) => {
+        try {
+          const { roomId, candidate } = payload;
+
+          if (!roomId || !candidate) {
+            socket.emit("voice:error", { message: "Invalid ICE candidate payload" });
+            return;
+          }
+
+          if (!isAuthorizedSocket(socket, roomId)) {
+            socket.emit("voice:error", { message: "Not authorized for this room" });
+            return;
+          }
+
+          socket.to(roomId).emit("voice:ice-candidate", { candidate });
+        } catch (err) {
+          console.error("voice:ice-candidate failed:", err);
+          socket.emit("voice:error", { message: "Failed to relay ICE candidate" });
+        }
+      }
+    );
+
+    socket.on(
+      "voice:hangup",
+      (payload: { roomId: string }) => {
+        try {
+          const { roomId } = payload;
+
+          if (!roomId) {
+            socket.emit("voice:error", { message: "Invalid hangup payload" });
+            return;
+          }
+
+          if (!isAuthorizedSocket(socket, roomId)) {
+            socket.emit("voice:error", { message: "Not authorized for this room" });
+            return;
+          }
+
+          socket.to(roomId).emit("voice:hangup");
+        } catch (err) {
+          console.error("voice:hangup failed:", err);
+          socket.emit("voice:error", { message: "Failed to relay hangup" });
+        }
+      }
+    );
+
     socket.on("room:leave", (payload: {roomId: string; userId: string}) => {
       const { roomId, userId } = payload;
 

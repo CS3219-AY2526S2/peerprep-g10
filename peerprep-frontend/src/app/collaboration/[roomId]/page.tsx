@@ -6,6 +6,7 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
+import VoiceChat from "@/src/components/collaboration/VoiceChat";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "http://localhost:3001";
 
@@ -438,7 +439,7 @@ export default function RoomPage() {
 
         <div className={styles.footerBar}>
           <div className={styles.footerLeft}>
-            <button className={styles.iconButton}>🎤</button>
+            {socket && roomId && userId && (<VoiceChat socket={socket} roomId={roomId} userId={userId} />)}
           </div>
 
           <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>
