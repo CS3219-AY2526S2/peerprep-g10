@@ -76,19 +76,22 @@ class MatchingService {
       const question = await QuestionClient.getRandomQuestion(topic, difficulty);
 
       // Create a new session from the Collaboration Service
-      const session = await CollabClient.createSession(userA, userB, question.id);
+      const session = await CollabClient.createSession(userA, userB, question.id.toString());
 
       // Broadcast the success event to both users.
       const payload = {
-        roomId: session.roomId,
+        roomId: session.id,
         question: question,
+        userId: userA,
         partnerId: userB, // For User A
       };
 
       // Emit Match Found to User A
       io.to(ticketA.socketId).emit('MATCH_FOUND', payload);
       
+      payload.userId = userB;
       payload.partnerId = userA; // Swap partner ID for User B
+      
       // Emit Match Found to User B
       io.to(ticketB.socketId).emit('MATCH_FOUND', payload);
 

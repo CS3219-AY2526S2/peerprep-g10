@@ -167,6 +167,7 @@ npm run dev        # starts on port 3000
 | `/user/profile` | User profile |
 | `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
 | `/admin/profile` | Admin profile |
+| `/admin/create-admin` | Create a new admin |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
 | `/collaboration/[roomId]?user=[userId]` | Access the collaboration page |

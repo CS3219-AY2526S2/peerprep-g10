@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { User } from '@/src/user/types';
-import { updateProfile } from '@/src/user/userApi';
+import { User } from '@/src/services/user/types';
+import { updateProfile } from '@/src/services/user/userApi';
 
 interface Props {
   isOpen: boolean;

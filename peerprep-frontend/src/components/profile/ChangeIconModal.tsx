@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
-import { User } from '@/src/user/types';
-import { fetchAvatarOptions, updateProfileIcon } from '@/src/user/userApi';
+import { User } from '@/src/services/user/types';
+import { fetchAvatarOptions, updateProfileIcon } from '@/src/services/user/userApi';
 
 interface Props {
   isOpen: boolean;

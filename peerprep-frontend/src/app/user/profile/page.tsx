@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { User } from '@/src/user/types';
-import { fetchProfile } from '@/src/user/userApi';
+import { User } from '@/src/services/user/types';
+import { fetchProfile } from '@/src/services/user/userApi';
 import ProfileCard from '@/src/components/profile/ProfileCard';
 
 export default function ProfilePage() {
