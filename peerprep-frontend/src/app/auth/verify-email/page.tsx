@@ -1,19 +1,36 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { verifyEmail } from '@/src/services/user/userApi';
 import { ROUTES } from '@/src/constant/route';
+import { User } from '@/src/services/user/types';
+
+const getRedirectRoute = (user: User, isEmailChange: boolean) => {
+  // Email updated and send to profile page
+  if (isEmailChange) {
+    return user.access_role === 'admin' ? ROUTES.ADMIN_PROFILE : ROUTES.USER_PROFILE;
+  }
+
+  // Auto login and send to the home page
+  return user.access_role === 'admin' ? ROUTES.ADMIN : ROUTES.USER;
+};
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { login } = useAuth();
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const hasRunRef = useRef(false);
 
   useEffect(() => {
+    // Effect only run once
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
     const token = searchParams.get('token');
 
     if (!token) {
@@ -28,23 +45,14 @@ function VerifyEmailContent() {
         setStatus('success');
         sessionStorage.removeItem('pendingEmail');
 
-        if (data.isEmailchange) {
-          const profileRoute = data.user.access_role === 'admin'
-            ? ROUTES.ADMIN_PROFILE
-            : ROUTES.USER_PROFILE;
-          setTimeout(() => router.push(profileRoute), 2000);
-        } else {
-          const homeRoute = data.user.access_role === 'admin'
-            ? ROUTES.ADMIN
-            : ROUTES.USER;
-          setTimeout(() => router.push(homeRoute), 2000);
-        }
+        const redirectRoute = getRedirectRoute(data.user, data.isEmailChange);
+        setTimeout(() => router.push(redirectRoute), 2000);
       })
       .catch((err) => {
         setStatus('error');
-        setMessage(err.message);
+        setMessage(err.message || 'Verification failed');
       });
-  }, [searchParams, login, router]);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -71,11 +79,13 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-zinc-500 animate-pulse">Loading...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-zinc-500 animate-pulse">Loading...</p>
+        </div>
+      }
+    >
       <VerifyEmailContent />
     </Suspense>
   );

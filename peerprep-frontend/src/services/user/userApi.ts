@@ -114,7 +114,7 @@ export async function verifyToken(): Promise<{ user: User }> {
   return res.json();
 }
 
-export async function verifyEmail(token: string): Promise<{ isEmailchange: boolean; token: string; user: User }> {
+export async function verifyEmail(token: string): Promise<{ isEmailChange: boolean; token: string; user: User }> {
   const res = await fetch(`${AUTH_BASE_URL}/verify-email?token=${token}`);
   const data = await res.json();
 
