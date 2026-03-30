@@ -5,8 +5,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
-    // Currently only able to send email to monkiorbital@gmail.com
-    from: 'PeerPrep <onboarding@resend.dev>',
+    from: 'PeerPrep <noreply@peerprep.site>',
     to: email,
     subject: 'Verify your PeerPrep account',
     html: `
@@ -32,8 +31,7 @@ export const sendEmailChangeVerification = async (newEmail: string, token: strin
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
-    // Currently only able to send email to monkiorbital@gmail.com
-    from: 'PeerPrep <onboarding@resend.dev>',
+    from: 'PeerPrep <noreply@peerprep.site>',
     to: newEmail,
     subject: 'Verify your new email address',
     html: `

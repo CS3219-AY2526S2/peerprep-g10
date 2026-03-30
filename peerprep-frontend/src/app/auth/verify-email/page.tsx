@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { verifyEmail } from '@/src/services/user/userApi';
 import { ROUTES } from '@/src/constant/route';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { login } = useAuth();
@@ -16,32 +16,34 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const token = searchParams.get('token');
 
-    if (!token) return;
+    if (!token) {
+      setStatus('error');
+      setMessage('Invalid verification link');
+      return;
+    }
 
     verifyEmail(token)
-    .then((data) => {
-      login(data.token, data.user);
-      setStatus('success');
-      sessionStorage.removeItem('pendingEmail');
+      .then((data) => {
+        login(data.token, data.user);
+        setStatus('success');
+        sessionStorage.removeItem('pendingEmail');
 
-      if (data.isEmailchange) {
-        // Redirect to correct profile based on role
-        const profileRoute = data.user.access_role === 'admin'
-          ? ROUTES.ADMIN_PROFILE
-          : ROUTES.USER_PROFILE;
-        setTimeout(() => router.push(profileRoute), 2000);
-      } else {
-        // Registration verification — redirect to home
-        const homeRoute = data.user.access_role === 'admin'
-          ? ROUTES.ADMIN
-          : ROUTES.USER;
-        setTimeout(() => router.push(homeRoute), 2000);
-      }
-    })
-    .catch((err) => {
-      setStatus('error');
-      setMessage(err.message);
-    });
+        if (data.isEmailchange) {
+          const profileRoute = data.user.access_role === 'admin'
+            ? ROUTES.ADMIN_PROFILE
+            : ROUTES.USER_PROFILE;
+          setTimeout(() => router.push(profileRoute), 2000);
+        } else {
+          const homeRoute = data.user.access_role === 'admin'
+            ? ROUTES.ADMIN
+            : ROUTES.USER;
+          setTimeout(() => router.push(homeRoute), 2000);
+        }
+      })
+      .catch((err) => {
+        setStatus('error');
+        setMessage(err.message);
+      });
   }, [searchParams, login, router]);
 
   return (
@@ -64,5 +66,17 @@ export default function VerifyEmailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-zinc-500 animate-pulse">Loading...</p>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
