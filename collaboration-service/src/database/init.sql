@@ -21,3 +21,14 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   message TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS attempts (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  partner_id TEXT,
+  question_id TEXT NOT NULL,
+  code TEXT,
+  started_at TIMESTAMP NOT NULL,
+  ended_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
