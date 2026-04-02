@@ -69,7 +69,7 @@ services:
       context: ./matching-service
     container_name: matching-service
     env_file:
-      - ./matching-service/.env
+      - ./matching-service/.env.example
     environment:
       REDIS_URL: redis://matching-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003

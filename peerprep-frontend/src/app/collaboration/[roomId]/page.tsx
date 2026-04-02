@@ -49,6 +49,8 @@ export default function RoomPage() {
   const userId = searchParams.get("user") ?? "user1";
   const displayName = userId;
 
+  const [joinedRoom, setJoinedRoom] = useState(false);
+
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [users, setUsers] = useState<PresenceUser[]>([]);
@@ -105,12 +107,13 @@ export default function RoomPage() {
 
     loadRoom();
     loadChatHistory();
-
-    socket.emit("room:join", {
-      roomId,
-      userId,
-      displayName,
-    });
+    setJoinedRoom(false);
+    
+    const handleRoomJoined = (payload: { roomId: string; userId: string }) => {
+      if (payload.roomId === roomId && payload.userId === userId) {
+        setJoinedRoom(true);
+      }
+    };
 
     const handlePresenceUpdate = (payload: { roomId: string; users: PresenceUser[] }) => {
       setUsers(payload.users);
@@ -130,17 +133,32 @@ export default function RoomPage() {
       router.push("/");
     };
 
+    const handleEditorError = (err: { message: string }) => {
+      console.error("Editor error:", err.message);
+    };
+
+    
+    socket.on("room:joined", handleRoomJoined);
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("chat:new", handleChatNew);
     socket.on("chat:error", handleChatError);
+    socket.on("editor:error", handleEditorError);
     socket.on("room:error", handleRoomError);
+
+    socket.emit("room:join", {
+      roomId,
+      userId,
+      displayName,
+    });
 
     return () => {
       socket.emit("room:leave", { roomId, userId });
 
+      socket.off("room:joined", handleRoomJoined);
       socket.off("presence:update", handlePresenceUpdate);
       socket.off("chat:new", handleChatNew);
       socket.off("chat:error", handleChatError);
+      socket.off("editor:error", handleEditorError);
       socket.off("room:error", handleRoomError);
 
       socket.disconnect();
@@ -362,12 +380,15 @@ export default function RoomPage() {
 
           <section className={styles.editorPanel}>
             <div className={styles.editorArea}>
-              <CodeEditor
-                roomId={roomId}
-                socket={socket}
-                userId={userId}
-                initialCode={room.currentCode}
-              />
+              {joinedRoom ? (
+                <CodeEditor
+                  roomId={roomId}
+                  socket={socket}
+                  userId={userId}
+                  initialCode={room.currentCode}
+                  displayName={displayName}
+                />
+              ) : (<div>Joining collaboration session</div>)}
             </div>
           </section>
 

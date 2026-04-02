@@ -1,5 +1,74 @@
 import {Server as SocketIOServer, Socket} from "socket.io";
 import {pool} from "./db";
+import * as Y from "yjs";
+import * as awarenessProtocol from "y-protocols/awareness.js";
+
+type RoomYState = {
+  doc: Y.Doc;
+  awareness: awarenessProtocol.Awareness;
+};
+
+const roomYStates = new Map<string, RoomYState>();
+const roomSaveTimers = new Map<string, NodeJS.Timeout>();
+
+function schedulePersistRoom(roomId: string, doc: Y.Doc) {
+  const existing = roomSaveTimers.get(roomId);
+  if (existing) {
+    clearTimeout(existing);
+  }
+
+  const timer = setTimeout(async () => {
+    try {
+      const currentCode = doc.getText("codemirror").toString();
+
+      await pool.query(
+        `UPDATE rooms
+         SET current_code = $2
+         WHERE id = $1`,
+        [roomId, currentCode]
+      );
+    } catch (err) {
+      console.error("Failed to persist room Yjs state:", err);
+    } finally {
+      roomSaveTimers.delete(roomId);
+    }
+  }, 500);
+
+  roomSaveTimers.set(roomId, timer);
+}
+
+async function getOrCreateRoomYState(roomId: string): Promise<RoomYState> {
+  
+  let state = roomYStates.get(roomId);
+  if (state) {
+    return state;
+  }
+
+  const doc = new Y.Doc();
+  const awareness = new awarenessProtocol.Awareness(doc);
+
+  const result = await pool.query(
+    `SELECT current_code
+     FROM rooms
+     WHERE id = $1`,
+    [roomId]
+  );
+
+  const currentCode = result.rows[0]?.current_code ?? "";
+
+  if (currentCode) {
+    doc.getText("codemirror").insert(0, currentCode);
+  }
+
+  doc.on("update", () => {
+    schedulePersistRoom(roomId, doc);
+  });
+
+  state = { doc, awareness };
+  roomYStates.set(roomId, state);
+
+  return state;
+}
 
 type PresenceUser = {
   userId: string;
@@ -21,6 +90,25 @@ function isAuthorizedSocket(socket: Socket, roomId: string, userId?: string) {
   }
 
   return true;
+}
+
+function removeAwarenessForSocket(roomId: string, socketId: string) {
+  const state = roomYStates.get(roomId);
+  if (!state) return;
+
+  const awareness = state.awareness;
+  const clientIdsToRemove: number[] = [];
+
+  awareness.getStates().forEach((_value, clientId) => {
+    const meta = awareness.meta.get(clientId) as { socketId?: string } | undefined;
+    if (meta?.socketId === socketId) {
+      clientIdsToRemove.push(clientId);
+    }
+  });
+
+  if (clientIdsToRemove.length > 0) {
+    awarenessProtocol.removeAwarenessStates(awareness, clientIdsToRemove, socketId);
+  }
 }
 
 function emitPresence(io: SocketIOServer, roomId: string) {
@@ -92,6 +180,7 @@ export function registerRealtime(io: SocketIOServer) {
 
           console.log(`User ${userId} joined room ${roomId}`);
           emitPresence(io, roomId);
+          socket.emit("room:joined", { roomId, userId });
         } catch (err) {
           console.error("room:join failed:", err);
           socket.emit("room:error", {message: "Failed to join room"});
@@ -147,11 +236,74 @@ export function registerRealtime(io: SocketIOServer) {
       }
     );
 
-    socket.on("editor:replace", async (payload: {roomId: string; code: string}) => {
-      try {
-        const { roomId, code } = payload;
+    // socket.on("editor:replace", async (payload: {roomId: string; code: string}) => {
+    //   try {
+    //     const { roomId, code } = payload;
 
-        if (!roomId || typeof code !== "string") {
+    //     if (!roomId || typeof code !== "string") {
+    //       return;
+    //     }
+
+    //     if (!isAuthorizedSocket(socket, roomId)) {
+    //       socket.emit("editor:error", { message: "Not authorized for this room" });
+    //       return;
+    //     }
+
+    //     await pool.query(
+    //       `UPDATE rooms
+    //        SET current_code = $2
+    //        WHERE id = $1`,
+    //       [roomId, code]
+    //     );
+
+    //     socket.to(roomId).emit("editor:replace", {code});
+    //   } catch (err) {
+    //     console.error("editor:replace failed:", err);
+    //     socket.emit("editor:error", {message: "Failed to update editor state"});
+    //   }
+    // });
+
+    socket.on("yjs:sync-step1", async (payload: { roomId: string; stateVector: number[] }) => {
+      try {
+        const { roomId, stateVector } = payload;
+
+        if (!roomId || !Array.isArray(stateVector)) {
+          socket.emit("editor:error", { message: "Invalid yjs sync-step1 payload" });
+          return;
+        }
+
+        if (!isAuthorizedSocket(socket, roomId)) {
+          console.log("Rejected yjs:sync-step1 because socket not authorized", {
+            socketId: socket.id,
+            roomId,
+            socketRoomId: socket.data.roomId,
+            socketUserId: socket.data.userId,
+            authorized: socket.data.authorized,
+          });
+          socket.emit("editor:error", { message: "Not authorized for this room" });
+          return;
+        }
+
+        const { doc } = await getOrCreateRoomYState(roomId);
+
+        const update = Y.encodeStateAsUpdate(doc, Uint8Array.from(stateVector));
+
+        socket.emit("yjs:sync-step2", {
+          roomId,
+          update: Array.from(update),
+        });
+      } catch (err) {
+        console.error("yjs:sync-step1 failed:", err);
+        socket.emit("editor:error", { message: "Failed to sync Yjs state" });
+      }
+    });
+
+    socket.on("yjs:update", async (payload: { roomId: string; update: number[] }) => {
+      try {
+        const { roomId, update } = payload;
+
+        if (!roomId || !Array.isArray(update)) {
+          socket.emit("editor:error", { message: "Invalid yjs update payload" });
           return;
         }
 
@@ -160,17 +312,47 @@ export function registerRealtime(io: SocketIOServer) {
           return;
         }
 
-        await pool.query(
-          `UPDATE rooms
-           SET current_code = $2
-           WHERE id = $1`,
-          [roomId, code]
-        );
+        const { doc } = await getOrCreateRoomYState(roomId);
+        const updateBytes = Uint8Array.from(update);
 
-        socket.to(roomId).emit("editor:replace", {code});
+        Y.applyUpdate(doc, updateBytes, socket.id);
+
+        socket.to(roomId).emit("yjs:update", {
+          roomId,
+          update,
+        });
       } catch (err) {
-        console.error("editor:replace failed:", err);
-        socket.emit("editor:error", {message: "Failed to update editor state"});
+        console.error("yjs:update failed:", err);
+        socket.emit("editor:error", { message: "Failed to apply Yjs update" });
+      }
+    });
+
+    socket.on("yjs:awareness", async (payload: { roomId: string; update: number[] }) => {
+      try {
+        const { roomId, update } = payload;
+
+        if (!roomId || !Array.isArray(update)) {
+          socket.emit("editor:error", { message: "Invalid awareness payload" });
+          return;
+        }
+
+        if (!isAuthorizedSocket(socket, roomId)) {
+          socket.emit("editor:error", { message: "Not authorized for this room" });
+          return;
+        }
+
+        const { awareness } = await getOrCreateRoomYState(roomId);
+        const updateBytes = Uint8Array.from(update);
+
+        awarenessProtocol.applyAwarenessUpdate(awareness, updateBytes, socket.id);
+
+        socket.to(roomId).emit("yjs:awareness", {
+          roomId,
+          update,
+        });
+      } catch (err) {
+        console.error("yjs:awareness failed:", err);
+        socket.emit("editor:error", { message: "Failed to apply awareness update" });
       }
     });
 
