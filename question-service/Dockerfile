@@ -20,9 +20,10 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY entrypoint.sh ./
 
 USER node
 
 EXPOSE 3003
 
-CMD ["node", "dist/server.js"]
+CMD ["sh", "entrypoint.sh"]
