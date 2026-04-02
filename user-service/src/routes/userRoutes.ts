@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser, getProfileForService } from '../controllers/userController';
+import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser, getProfilesForService } from '../controllers/userController';
 import { authenticateToken, authenticateServiceToken } from '../middleware/authMiddleware';
 import { authorizeRoles } from '../middleware/roleMiddleware';
 
@@ -9,7 +9,7 @@ const router = Router();
 router.get('/avatars', getAvatarOptions);
 
 // Service-to-service
-router.get('/services/profile/:id', authenticateServiceToken, getProfileForService);
+router.post('/services/profiles', authenticateServiceToken, getProfilesForService);
 
 // Protected
 router.use(authenticateToken);

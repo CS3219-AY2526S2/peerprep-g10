@@ -16,7 +16,7 @@ export type AttemptWithDetails = Attempt & {
   partner: {
     id: string;
     username: string;
-    profileIcon: string;
+    profile_icon: string;
   };
   question: Question;
 };

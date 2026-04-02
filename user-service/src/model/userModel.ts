@@ -30,6 +30,14 @@ export const UserDB = {
     return result.rows[0];
   },
 
+  async getUsersByIds(ids: string[]) {
+    const result = await pool.query(
+      'SELECT id, username, email, access_role, profile_icon, is_banned FROM users WHERE id = ANY($1)',
+      [ids]
+    );
+    return result.rows[0];
+  },
+
   async getAllUsers() {
     const result = await pool.query(
       'SELECT id, username, email, access_role, profile_icon, is_banned FROM users'

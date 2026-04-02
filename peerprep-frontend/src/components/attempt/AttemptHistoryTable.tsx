@@ -102,8 +102,8 @@ export default function AttemptHistoryTable({
                 <td className="px-4 py-3 text-zinc-600">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
-                      {attempt.partner.profileIcon ? (
-                        <img src={attempt.partner.profileIcon} alt={attempt.partner.username} className="w-full h-full object-cover" />
+                      {attempt.partner.profile_icon ? (
+                        <img src={attempt.partner.profile_icon} alt={attempt.partner.username} className="w-full h-full object-cover" />
                       ) : (
                         <UserIcon className="w-4 h-4 text-gray-400" />
                       )}

@@ -19,17 +19,15 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 };
 
-export const getProfileForService = async (req: Request, res: Response) => {
+export const getProfilesForService = async (req: Request, res: Response) => {
   try {
-    const userId = req.params['id'] as string;
-    const user = await UserService.getUserById(userId);
+    const ids: string[] = req.body.ids;
+    if (!ids?.length) return res.status(400).json({ message: 'No user IDs provided' });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(user);
+    const users = await UserService.getUsersByIds(ids);
+    res.json(users);
   } catch (error: any) {
-    res.status(500).json({ message: "Error fetching profile" });
+    res.status(500).json({ message: "Error fetching profiles" });
   }
 };
 

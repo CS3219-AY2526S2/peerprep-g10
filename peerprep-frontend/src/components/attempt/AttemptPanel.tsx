@@ -31,9 +31,9 @@ export default function AttemptPanel({ attempt }: AttemptPanelProps) {
         <h3 className="mb-3 text-sm font-semibold text-zinc-800">Coding Partner</h3>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
-            {attempt.partner.profileIcon ? (
+            {attempt.partner.profile_icon ? (
               <img
-                src={attempt.partner.profileIcon}
+                src={attempt.partner.profile_icon}
                 alt={attempt.partner.username}
                 className="w-full h-full object-cover"
               />
