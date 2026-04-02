@@ -2,6 +2,7 @@ export const ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   USER_PROFILE: '/user/profile',
+  USER_ATTEMPT_DETAILS: (attemptId: string) => `/user/attempts/${attemptId}`,
   USER: '/user',
   ROOM: (roomId: string, userId: string) => `/collaboration/${roomId}?user=${userId}`,
   ADMIN: '/admin',

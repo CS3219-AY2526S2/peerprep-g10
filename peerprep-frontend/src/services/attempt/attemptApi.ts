@@ -1,5 +1,5 @@
 import { API_BASE } from '@/src/constant/api';
-import { Attempt } from './type';
+import { Attempt } from './types';
 
 const BASE_URL = `${API_BASE.COLLAB_SERVICE}/attempts`;
 
@@ -17,7 +17,7 @@ export async function saveAttempt(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  
+
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || 'Failed to save attempt');
   return json;

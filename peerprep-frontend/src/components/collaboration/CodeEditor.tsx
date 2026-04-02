@@ -11,28 +11,35 @@ type Props = {
   socket: Socket;
   userId: string;
   initialCode: string;
+  onCodeChange?: (code: string) => void;
 };
 
-export default function CodeEditor({ roomId, socket, initialCode }: Props) {
+export default function CodeEditor({ roomId, socket, initialCode, onCodeChange }: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const applyingRemoteRef = useRef(false);
+  const onCodeChangeRef = useRef(onCodeChange);
+
+  useEffect(() => {
+    onCodeChangeRef.current = onCodeChange;
+  }, [onCodeChange]);
 
   useEffect(() => {
     if (!editorRef.current) {
       return;
     }
-      
+
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) {
         return;
       }
-        
+
       if (applyingRemoteRef.current) {
         return;
       }
 
       const code = update.state.doc.toString();
+      onCodeChangeRef.current?.(code);
 
       console.log("sending editor:replace", code);
 
@@ -66,7 +73,7 @@ export default function CodeEditor({ roomId, socket, initialCode }: Props) {
       if (currentCode === payload.code) {
         return;
       }
-      
+
       applyingRemoteRef.current = true;
 
       currentView.dispatch({
@@ -78,6 +85,8 @@ export default function CodeEditor({ roomId, socket, initialCode }: Props) {
       });
 
       applyingRemoteRef.current = false;
+
+      onCodeChangeRef.current?.(payload.code);
     };
 
     socket.on("editor:replace", handleRemoteReplace);

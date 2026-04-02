@@ -7,6 +7,8 @@ import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
 import { API_BASE } from "@/src/constant/api";
+import { saveAttempt } from '@/src/services/attempt/attemptApi';
+import { ROUTES } from '@/src/constant/route';
 
 const BACKEND_URL = API_BASE.COLLAB_SERVICE;
 
@@ -30,6 +32,9 @@ type TestCase = {
 
 type RoomData = {
   id: string;
+  questionId: string;
+  user1Id: string;
+  user2Id: string;
   title: string;
   topics: string[];
   difficulty: string | null;
@@ -69,6 +74,44 @@ export default function RoomPage() {
 
   const [socket] = useState(() => io(BACKEND_URL));
 
+  // Add ref to track current code without re-renders
+  const currentCodeRef = useRef<string>('');
+  const [attemptSaved, setAttemptSaved] = useState(false);
+
+  // Save attempt
+  const handleSaveAttempt = async () => {
+    if (!room) return;
+
+    const endedAt = new Date().toISOString();
+    const startedAt = sessionStartedAt
+      ? new Date(sessionStartedAt).toISOString()
+      : room.createdAt;
+
+    const partnerId = userId === room.user1Id
+      ? room.user2Id
+      : room.user1Id;
+  
+    return saveAttempt({
+      roomId: room.id,
+      userId,
+      partnerId,
+      questionId: room.questionId,
+      code: currentCodeRef.current,
+      startedAt,
+      endedAt,
+    })
+      .then(() => {
+        setAttemptSaved(true);
+        setTimeout(() => setAttemptSaved(false), 2000); // Reset button to save after 2 seconds
+      })
+      .catch((err) => console.error('Failed to save attempt:', err));
+  };
+
+  const handleLeaveSession = async () => {
+    await handleSaveAttempt();
+    router.push(ROUTES.USER);
+  };
+
   useEffect(() => {
     async function loadRoom() {
       try {
@@ -80,6 +123,9 @@ export default function RoomPage() {
         }
 
         setRoom(data);
+
+        // Initialise currentCodeRef
+        currentCodeRef.current = data.currentCode ?? '';
         setSessionStartedAt(Date.now());
       } catch (err) {
         console.error("Failed to load room:", err);
@@ -143,7 +189,7 @@ export default function RoomPage() {
       socket.off("chat:error", handleChatError);
       socket.off("room:error", handleRoomError);
 
-      socket.disconnect();
+      // socket.disconnect();
     };
   }, [roomId, socket, displayName, userId, router]);
 
@@ -307,9 +353,11 @@ export default function RoomPage() {
               {isChatOpen ? "Hide Chat" : "Show Chat"}
             </button>
 
-            <button className={styles.leaveButton} onClick={() => router.push("/")}>
+            {/* Leave Session button */}
+            <button className={styles.leaveButton} onClick={handleLeaveSession}>
               Leave Session
             </button>
+            
           </div>
         </div>
 
@@ -367,6 +415,7 @@ export default function RoomPage() {
                 socket={socket}
                 userId={userId}
                 initialCode={room.currentCode}
+                onCodeChange={(code) => { currentCodeRef.current = code; }}
               />
             </div>
           </section>
@@ -453,7 +502,10 @@ export default function RoomPage() {
             ))}
           </div>
 
-          <button className={styles.saveButton}>Save</button>
+          {/* Save attempt button */}
+          <button className={styles.saveButton} onClick={handleSaveAttempt} disabled={attemptSaved}>
+            {attemptSaved ? 'Saved ✓' : 'Save'}
+          </button>
         </div>
       </main>
     </>
