@@ -35,7 +35,7 @@ export const UserDB = {
       'SELECT id, username, email, access_role, profile_icon, is_banned FROM users WHERE id = ANY($1)',
       [ids]
     );
-    return result.rows[0];
+    return result.rows;
   },
 
   async getAllUsers() {

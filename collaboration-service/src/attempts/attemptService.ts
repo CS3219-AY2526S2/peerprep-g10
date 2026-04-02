@@ -12,11 +12,12 @@ interface Partner {
 async function fetchQuestion(questionId: string) {
   try {
     const res = await fetch(`${QUESTION_SERVICE_URL}/questions/${questionId}`);
-    if (!res.ok) throw new Error('Failed to fetch partner');
+    if (!res.ok) throw new Error('Failed to fetch question');
     const q = await res.json();
+
     return {
       id: String(q.id),
-      title: q.title,
+      title: q.title ?? '',
       topics: q.topics ?? [],
       difficulty: q.difficulty ?? '',
       description: q.description ?? '',
@@ -72,17 +73,18 @@ export const AttemptService = {
     const rows = await AttemptModel.getAttemptsByUser(userId);
 
     // Fetch partners in batch
-    const partnerIds = Array.from(new Set(rows.map(r => r.partnerId)));
+    const partnerIds = Array.from(new Set(rows.map(r => String(r.partnerId))));
     const partners = await fetchPartnersBatch(partnerIds);
     const partnerMap = new Map(partners.map(p => [String(p.id), p]));
 
     const attemptsWithData = await Promise.all(
       rows.map(async (row) => {
         const question = await fetchQuestion(row.questionId);
-        const partner = partnerMap.get(String(row.partnerId));
+        const partner = partnerMap.get(String(row.partnerId)) ?? null;
         return { ...row, question, partner };
       })
     );
+    console.log(attemptsWithData,":Attempt details");
 
     return attemptsWithData;
   },

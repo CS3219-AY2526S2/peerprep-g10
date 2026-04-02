@@ -26,6 +26,7 @@ export async function saveAttempt(data: {
 export async function fetchAttemptsByUser(userId: string): Promise<Attempt[]> {
   const res = await fetch(`${BASE_URL}/user/${userId}`);
   const json = await res.json();
+
   if (!res.ok) throw new Error(json.error || 'Failed to fetch attempts');
   return json;
 }
