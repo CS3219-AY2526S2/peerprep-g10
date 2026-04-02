@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser } from '../controllers/userController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser, getProfileForService } from '../controllers/userController';
+import { authenticateToken, authenticateServiceToken } from '../middleware/authMiddleware';
 import { authorizeRoles } from '../middleware/roleMiddleware';
 
 const router = Router();
 
 // Public
 router.get('/avatars', getAvatarOptions);
+
+// Service-to-service
+router.get('/services/profile/:id', authenticateServiceToken, getProfileForService);
 
 // Protected
 router.use(authenticateToken);

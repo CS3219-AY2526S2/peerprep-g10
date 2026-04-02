@@ -19,6 +19,20 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const getProfileForService = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params['id'] as string;
+    const user = await UserService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+};
+
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await UserService.getAllUser();
