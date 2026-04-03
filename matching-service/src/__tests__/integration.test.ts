@@ -77,8 +77,15 @@ describe("Matching Service Integration Tests", () => {
   afterAll(async () => {
     io.close();
     httpServer.close();
-    if (redisClient && redisClient.isOpen) {
-      await redisClient.quit();
+    const redisModule = require('../config/redis');
+    if (redisModule.redisClient && redisModule.redisClient.isOpen) {
+      await redisModule.redisClient.quit();
+    }
+    if (redisModule.pubClient && redisModule.pubClient.isOpen) {
+      await redisModule.pubClient.quit();
+    }
+    if (redisModule.subClient && redisModule.subClient.isOpen) {
+      await redisModule.subClient.quit();
     }
     if (redisContainer) {
       await redisContainer.stop();

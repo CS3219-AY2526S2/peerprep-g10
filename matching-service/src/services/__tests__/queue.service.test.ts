@@ -23,9 +23,16 @@ describe("QueueService Integration Logic", () => {
   }, 30000); // 30s timeout for container startup
 
   afterAll(async () => {
-    // Close redis client and stop container
-    if (redisClient && redisClient.isOpen) {
-      await redisClient.quit();
+    // Close redis clients and stop container
+    const redisModule = require('../../config/redis');
+    if (redisModule.redisClient && redisModule.redisClient.isOpen) {
+      await redisModule.redisClient.quit();
+    }
+    if (redisModule.pubClient && redisModule.pubClient.isOpen) {
+      await redisModule.pubClient.quit();
+    }
+    if (redisModule.subClient && redisModule.subClient.isOpen) {
+      await redisModule.subClient.quit();
     }
     if (redisContainer) {
       await redisContainer.stop();

@@ -108,7 +108,7 @@ class MatchingService {
       return true;
 
     } catch (error) {
-      console.error(`[MATCH_EXECUTION_ERROR] Failed to create session for ${userA} & ${userB}:`, error);
+      console.log(`[MATCH_EXECUTION_ERROR] Failed to create session for ${userA} & ${userB}:`, error);
 
       const errMsg = error instanceof Error ? error.message : 'Unable to get a question or create a session';
       
