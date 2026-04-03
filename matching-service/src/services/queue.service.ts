@@ -60,24 +60,26 @@ class QueueService {
   public async removeUserFromMatchPool(userId: string): Promise<void> {
     const ticketKey = this.getTicketKey(userId);
     
-    // Get user's ticket to find their queue
-    const ticketData = await redisClient.get(ticketKey);
-    
-    if (!ticketData) {
-      // User is not in queue (timeout or removed)
-      return; 
+    const luaScript = `
+      local ticketData = redis.call("GET", KEYS[1])
+      if not ticketData then return 0 end
+      
+      local decoded = cjson.decode(ticketData)
+      local queueKey = "queue:" .. string.lower(decoded.topic) .. ":" .. string.lower(decoded.difficulty)
+      
+      redis.call("SREM", queueKey, ARGV[1])
+      redis.call("DEL", KEYS[1])
+      return 1
+    `;
+
+    const result = await redisClient.eval(luaScript, {
+      keys: [ticketKey],
+      arguments: [userId]
+    });
+
+    if (result === 1) {
+      console.log(`[QUEUE] Removed user ${userId} from queue (Cancellation/Disconnect)`);
     }
-
-    const ticket: MatchTicket = JSON.parse(ticketData);
-    const queueKey = this.getQueueKey(ticket.topic, ticket.difficulty);
-
-    // Remove user from the Set and delete their ticket (atomic operation)
-    const multi = redisClient.multi();
-    multi.sRem(queueKey, userId);
-    multi.del(ticketKey);
-
-    await multi.exec();
-    console.log(`[QUEUE] Removed user ${userId} from ${queueKey} (Cancellation/Disconnect)`);
   }
 
   /**
@@ -90,16 +92,35 @@ class QueueService {
     // Remove both users and their tickets simultaneously.
     const ticketAQueueKey = this.getQueueKey(ticketA.topic, ticketA.difficulty);
     const ticketBQueueKey = this.getQueueKey(ticketB.topic, ticketB.difficulty);
-    const results = await redisClient.multi()
-        .sRem(ticketAQueueKey, userA)
-        .sRem(ticketBQueueKey, userB)
-        .del(this.getTicketKey(userA))
-        .del(this.getTicketKey(userB))
-        .execTyped();
+    const ticketAKey = this.getTicketKey(userA);
+    const ticketBKey = this.getTicketKey(userB);
+
+    const luaScript = `
+      local aInQueue = redis.call("SISMEMBER", KEYS[1], ARGV[1])
+      local bInQueue = redis.call("SISMEMBER", KEYS[2], ARGV[2])
+      
+      if aInQueue == 1 and bInQueue == 1 then
+        redis.call("SREM", KEYS[1], ARGV[1])
+        redis.call("SREM", KEYS[2], ARGV[2])
+        redis.call("DEL", KEYS[3])
+        redis.call("DEL", KEYS[4])
+        return 1
+      else
+        return 0
+      end
+    `;
+
+    const result = await redisClient.eval(
+      luaScript,
+      {
+        keys: [ticketAQueueKey, ticketBQueueKey, ticketAKey, ticketBKey],
+        arguments: [userA, userB]
+      }
+    );
         
-    // If sRem returns 0, it means another server already matched them in the last millisecond.
+    // If eval returns 0, it means another server already matched them in the last millisecond.
     // We abort to prevent creating duplicate rooms.
-    if (results[0] === 0 || results[1] === 0) {
+    if (result === 0) {
       console.log(`[RACE CONDITION AVERTED] Users ${userA} or ${userB} were already matched.`);
       return false; 
     }
