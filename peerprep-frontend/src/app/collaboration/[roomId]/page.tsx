@@ -9,6 +9,7 @@ import { Navbar } from "@/src/components/navbar/Navbar";
 import { API_BASE } from "@/src/constant/api";
 import { saveAttempt } from '@/src/services/attempt/attemptApi';
 import { ROUTES } from '@/src/constant/route';
+import Notification, { NotificationProps } from '@/src/components/Notification';
 
 const BACKEND_URL = API_BASE.COLLAB_SERVICE;
 
@@ -77,34 +78,49 @@ export default function RoomPage() {
   // Add ref to track current code without re-renders
   const currentCodeRef = useRef<string>('');
   const [attemptSaved, setAttemptSaved] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<Omit<NotificationProps, 'onClose'> | null>(null);
+
+  // Auto-dismiss notification after 5 seconds
+  useEffect(() => {
+    if (!activeNotification) return;
+    const timer = setTimeout(() => setActiveNotification(null), 5000);
+    return () => clearTimeout(timer);
+  }, [activeNotification]);
 
   // Save attempt
   const handleSaveAttempt = async () => {
     if (!room) return;
 
-    const endedAt = new Date().toISOString();
-    const startedAt = sessionStartedAt
-      ? new Date(sessionStartedAt).toISOString()
-      : room.createdAt;
+    const partnerId = room.user1Id === userId ? room.user2Id : room.user1Id;
 
-    const partnerId = userId === room.user1Id
-      ? room.user2Id
-      : room.user1Id;
-  
-    return saveAttempt({
-      roomId: room.id,
-      userId,
-      partnerId,
-      questionId: room.questionId,
-      code: currentCodeRef.current,
-      startedAt,
-      endedAt,
-    })
-      .then(() => {
-        setAttemptSaved(true);
-        setTimeout(() => setAttemptSaved(false), 2000); // Reset button to save after 2 seconds
-      })
-      .catch((err) => console.error('Failed to save attempt:', err));
+    try {
+      // Saving attempt
+      await saveAttempt({
+        roomId: room.id,
+        userId,
+        partnerId,
+        questionId: room.questionId,
+        code: currentCodeRef.current,
+        startedAt: sessionStartedAt ? new Date(sessionStartedAt).toISOString() : room.createdAt,
+        endedAt: new Date().toISOString(),
+      });
+
+      // Show notification
+      setAttemptSaved(true);
+      setActiveNotification({
+        type: 'success',
+        title: 'Attempt saved',
+        message: 'Your code and attempt details have been saved successfully.',
+      });
+      setTimeout(() => setAttemptSaved(false), 2000); // Reset button after 2 seconds
+    } catch (err) {
+      console.error('Failed to save attempt:', err);
+      setActiveNotification({
+        type: 'error',
+        title: 'Save failed',
+        message: 'Something went wrong. Please try again.',
+      });
+    }
   };
 
   const handleLeaveSession = async () => {
@@ -335,6 +351,14 @@ export default function RoomPage() {
   return (
     <>
       <Navbar />
+      {activeNotification && (
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Notification
+            {...activeNotification}
+            onClose={() => setActiveNotification(null)}
+          />
+        </div>
+      )}
       <main className={styles.page}>
         <div className={styles.topBar}>
           <div className={styles.topBarLeft}>
