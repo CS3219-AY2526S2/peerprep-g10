@@ -8,8 +8,10 @@ const router = Router();
 // Public
 router.get('/avatars', getAvatarOptions);
 
-// Protected
+// Protected - authtenticate token before running any API below
 router.use(authenticateToken);
+
+// User & admin
 router.get('/me', getProfile);
 router.patch('/me/icon', updateProfileIcon);
 router.patch('/update-profile', updateUserProfile);

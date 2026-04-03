@@ -9,7 +9,7 @@ interface Props {
   onClose: () => void;
   username: string;
   userEmail: string;
-  onSuccess: (userData: User) => void;
+  onSuccess: (userData: User, emailChanged: boolean) => void;
 }
 
 export default function EditProfileModal({ isOpen, onClose, userEmail, username, onSuccess }: Props) {
@@ -32,8 +32,8 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
     setSaving(true);
     setError('');
     updateProfile({ email: form.newEmail, username: form.newUsername, password: form.password })
-      .then((updatedUser) => {
-        onSuccess(updatedUser);
+      .then((result) => {
+        onSuccess(result.user, result.emailChanged);
         onClose();
       })
       .catch((err) => setError(err.message))
