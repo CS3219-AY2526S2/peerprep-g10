@@ -117,25 +117,6 @@ docker compose up --build collaboration-service
 
 For dockerized collaboration-service, `docker-compose.yml` overrides network-dependent values so container-to-container communication works correctly.
 
-#### 5.3 Create Collaboration Service room manually
-If Collaboration Service is run independently, you may need to request a collaboration service room manually. The question service needs to be run for collaboration service to create a room as the collaboration service needs to retrieve a question in the room creation process. Afterwards you can create a room by running the following commands:
-
-```powershell
-Invoke-RestMethod -Method Post -Uri "http://localhost:3001/rooms" -ContentType "application/json" -Body (@{questionId=351;user1Id="user1";user2Id="user2"} | ConvertTo-Json)
-```
-
-or 
-
-```powershell
- curl.exe -X POST "http://localhost:3001/rooms" -H "Content-Type: application/json" --data-raw '{\"questionId\":351,\"user1Id\":\"user1\",\"user2Id\":\"user2\"}'
-```
-
-These commands should provide you with the roomId as part of the response. After running the frontend you can use the roomId to access the room at http://localhost:3000/collaboration/[roomId]?user=user1
-
-and 
-
-http://localhost:3000/collaboration/[roomId]?user=user2
-
 #### 6. Frontend Set Up
 ```bash
 cd peerprep-frontend
@@ -174,3 +155,23 @@ npm run dev        # starts on port 3000
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
 | `/collaboration/[roomId]?user=[userId]` | Access the collaboration page |
+
+### Running Test
+
+#### 1. Matching Service Test Run
+
+> Note: You may need to run `npm install` for the first time if test packages are not yet installed
+
+#### Running Unit and Integration Test
+
+```bash
+cd matching-service
+npm run test
+```
+
+#### Running Integration Test Only
+
+```bash
+cd matching-service
+npm run test:integration
+```
