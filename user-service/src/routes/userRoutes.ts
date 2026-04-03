@@ -11,8 +11,10 @@ router.get('/avatars', getAvatarOptions);
 // Service-to-service
 router.post('/services/profiles', authenticateServiceToken, getProfilesForService);
 
-// Protected
+// Protected - authtenticate token before running any API below
 router.use(authenticateToken);
+
+// User & admin
 router.get('/me', getProfile);
 router.patch('/me/icon', updateProfileIcon);
 router.patch('/update-profile', updateUserProfile);

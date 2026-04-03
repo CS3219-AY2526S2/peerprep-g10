@@ -163,6 +163,8 @@ npm run dev        # starts on port 3000
 |-------|-------------|
 | `/auth/login` | Login page |
 | `/auth/register` | User registration |
+| `/auth/check-email` | Check email |
+| `/auth/verify-email` | Verify email |
 | `/user` | User dashboard (requires user role) |
 | `/user/profile` | User profile |
 | `/user/attempts/[id]` | User attempt details |

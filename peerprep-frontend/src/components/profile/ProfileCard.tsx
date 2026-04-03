@@ -8,10 +8,12 @@ import { User } from '@/src/services/user/types';
 
 interface Props {
   user: User;
-  onSuccess: (updatedUser: User) => void;
+  onProfileSuccess: (updatedUser: User, emailChanged: boolean) => void;
+  onPasswordSuccess: () => void;
+  onIconSuccess: (updatedUser: User) => void;
 }
 
-export default function ProfileCard({ user, onSuccess }: Props) {
+export default function ProfileCard({ user, onProfileSuccess, onPasswordSuccess, onIconSuccess }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
@@ -68,17 +70,18 @@ export default function ProfileCard({ user, onSuccess }: Props) {
         onClose={() => setEditOpen(false)}
         username={user.username}
         userEmail={user.email}
-        onSuccess={onSuccess}
+        onSuccess={onProfileSuccess}
       />
       <ChangePasswordModal
         isOpen={passwordOpen}
         onClose={() => setPasswordOpen(false)}
+        onSuccess={onPasswordSuccess}
       />
       <ChangeIconModal
         isOpen={iconOpen}
         onClose={() => setIconOpen(false)}
         currentIcon={user.profile_icon}
-        onSuccess={onSuccess}
+        onSuccess={onIconSuccess}
       />
     </div>
   );

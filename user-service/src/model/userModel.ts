@@ -10,7 +10,7 @@ export const UserDB = {
   },
 
   async findByEmail(email: string) {
-    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, username, email, password, access_role, profile_icon, is_verified, is_banned FROM users WHERE email = $1', [email]);
     return result.rows[0];
   },
 
@@ -24,7 +24,7 @@ export const UserDB = {
 
   async getUserById(id: string) {
     const result = await pool.query(
-      'SELECT id, username, email, password, access_role, profile_icon, is_banned FROM users WHERE id = $1',
+      'SELECT id, username, email, password, access_role, profile_icon, is_verified, is_banned FROM users WHERE id = $1',
       [id]
     );
     return result.rows[0];
@@ -40,7 +40,7 @@ export const UserDB = {
 
   async getAllUsers() {
     const result = await pool.query(
-      'SELECT id, username, email, access_role, profile_icon, is_banned FROM users'
+      'SELECT id, username, email, access_role, profile_icon, is_verified, is_banned FROM users'
     );
     return result.rows;
   },
@@ -94,6 +94,23 @@ export const UserDB = {
     const result = await pool.query(
       'UPDATE users SET is_banned = $1 WHERE id = $2 RETURNING id, username, email, access_role, profile_icon, is_banned',
       [isBanned, id]
+    );
+    return result.rows[0];
+  },
+
+  async markVerified(id: number) {
+    const result = await pool.query(
+      'UPDATE users SET is_verified = TRUE WHERE id = $1 RETURNING id, username, email, access_role, profile_icon, is_banned',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async updateEmail(id: number, newEmail: string) {
+    const result = await pool.query(
+      `UPDATE users SET email = $1 WHERE id = $2
+      RETURNING id, username, email, access_role, profile_icon, is_banned`,
+      [newEmail, id]
     );
     return result.rows[0];
   },

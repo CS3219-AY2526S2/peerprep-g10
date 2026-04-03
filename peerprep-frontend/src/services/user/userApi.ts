@@ -17,7 +17,7 @@ export async function fetchProfile(): Promise<User> {
   return res.json();
 }
 
-export async function updateProfile(data: UpdateProfileData): Promise<User> {
+export async function updateProfile(data: UpdateProfileData): Promise<{ user: User; emailChanged: boolean }> {
   const res = await fetch(`${BASE_URL}/update-profile`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
@@ -28,7 +28,7 @@ export async function updateProfile(data: UpdateProfileData): Promise<User> {
   
   if (!res.ok) throw new Error(json.message || 'Failed to update profile');
   
-  return json.user;
+  return json;
 }
 
 export async function updatePassword(currentPassword: string, newPassword: string): Promise<void> {
@@ -112,4 +112,25 @@ export async function verifyToken(): Promise<{ user: User }> {
   if (!res.ok) throw new Error('Invalid token');
   
   return res.json();
+}
+
+export async function verifyEmail(token: string): Promise<{ isEmailChange: boolean; token: string; user: User }> {
+  const res = await fetch(`${AUTH_BASE_URL}/verify-email?token=${token}`);
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.message || 'Failed to verify email');
+  
+  return data;
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  const res = await fetch(`${AUTH_BASE_URL}/resend-verification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await res.json().catch(() => null);
+  
+  if (!res.ok) throw new Error(data?.message || 'Failed to resend verification email');
 }

@@ -1,6 +1,7 @@
 export const ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  CHECK_EMAIL: '/auth/check-email',
   USER_PROFILE: '/user/profile',
   USER_ATTEMPT_DETAILS: (attemptId: string) => `/user/attempts/${attemptId}`,
   USER: '/user',
