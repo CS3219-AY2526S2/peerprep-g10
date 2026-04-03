@@ -19,6 +19,18 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const getProfilesForService = async (req: Request, res: Response) => {
+  try {
+    const ids: string[] = req.body.ids;
+    if (!ids?.length) return res.status(400).json({ message: 'No user IDs provided' });
+
+    const users = await UserService.getUsersByIds(ids);
+    res.json(users);
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching profiles" });
+  }
+};
+
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await UserService.getAllUser();

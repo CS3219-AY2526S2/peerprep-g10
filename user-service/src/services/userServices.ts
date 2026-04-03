@@ -14,6 +14,10 @@ export const UserService = {
     return user;
   },
 
+  async getUsersByIds(ids: string[]) {
+    return await UserDB.getUsersByIds(ids);
+  },
+
   async getAllUser() {
     return await UserDB.getAllUsers();
   },
