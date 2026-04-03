@@ -17,8 +17,7 @@ class MatchingService {
    */
   private async tryExactMatch(io: Server, userId: string, topic: string, difficulty: string): Promise<boolean> {
     const candidates = await queueService.getCandidatesInQueue(topic, difficulty);
-    let partnerId = null;
-    let partnerQueueTime = Infinity;
+    const validPartners = [];
 
     for (let i = 0; i < candidates.length; i++) {
       let candidateId: string | undefined = candidates[i];
@@ -41,16 +40,20 @@ class MatchingService {
           continue;
       }
 
-      // Found a candidate that joined queue earlier
-      if (candidateTicket.joinedAt < partnerQueueTime) {
-          partnerId = candidateId;
-          partnerQueueTime = candidateTicket.joinedAt;
-      }
+      validPartners.push(candidateTicket);
     }
 
-    if (partnerId) {
-      return await this.executeMatch(io, userId, partnerId, topic, difficulty);
+    // Sort partners by longest waiting time (oldest first)
+    validPartners.sort((a, b) => a.joinedAt - b.joinedAt);
+
+    // Iteratively try to match with valid partners in case another concurrent request grabbed our first choice
+    for (const partner of validPartners) {
+      const isMatched = await this.executeMatch(io, userId, partner.userId, topic, difficulty);
+      if (isMatched) {
+        return true;
+      }
     }
+    
     return false;
   }
 
@@ -62,6 +65,13 @@ class MatchingService {
     const ticketB = await queueService.getTicket(userB);
 
     if (!ticketA || !ticketB) return false;
+
+    if (
+      ticketA.topic !== topic || ticketA.difficulty !== difficulty ||
+      ticketB.topic !== topic || ticketB.difficulty !== difficulty
+    ) {
+      return false;
+    }
 
     const isRemovedSuccess = await queueService.removeBothUserFromMatchPool(ticketA, ticketB);
 
