@@ -11,6 +11,10 @@ const redisClient = createClient({
   url: REDIS_URL,
 });
 
+// Pub/Sub clients for Socket.IO Redis Adapter
+const pubClient = redisClient.duplicate();
+const subClient = redisClient.duplicate();
+
 // Event Listeners for Monitoring
 redisClient.on('error', (err) => {
   console.error('❌ [Redis Data Client] Error:', err);
@@ -38,10 +42,16 @@ export const connectRedis = async (): Promise<void> => {
     if (!redisClient.isOpen) {
       await redisClient.connect();
     }
+    if (!pubClient.isOpen) {
+      await pubClient.connect();
+    }
+    if (!subClient.isOpen) {
+      await subClient.connect();
+    }
   } catch (error) {
-    console.error('❌ [Redis Data Client] Failed to connect:', error);
+    console.error('❌ [Redis Data/Pub/Sub Client] Failed to connect:', error);
     process.exit(1); // Service should restart if cannot connect to redis
   }
 };
 
-export { redisClient };
+export { redisClient, pubClient, subClient };
