@@ -1,12 +1,21 @@
 import bcrypt from 'bcrypt';
 import { UserDB } from '../model/userModel';
+import { VerificationDB } from '../model/verificationModel';
 import { getDefaultAvatar, getRandomAvatar } from '../config/avatar';
+import { sendEmailChangeVerification } from '../config/email';
+import { Errors } from '../errors/AppError';
 
 export const UserService = {
   async getUserById(id: string) {
     const user = await UserDB.getUserById(id);
+
+    // Fallback to default avatar if no profile_icon is set
     user.profile_icon = user.profile_icon ?? getDefaultAvatar();
     return user;
+  },
+
+  async getUsersByIds(ids: string[]) {
+    return await UserDB.getUsersByIds(ids);
   },
 
   async getAllUser() {
@@ -15,23 +24,23 @@ export const UserService = {
 
   async deleteUser(id: number, requesterId: number) {
     // Prevent self-deletion
-    if (id === requesterId) throw new Error("SELF_DELETE");
+    if (id === requesterId) throw Errors.SELF_DELETE;
     return await UserDB.deleteUser(id);
   },
   
   async verifyUserPassword(userId: string, plainPassword: string) {
     const user = await UserDB.getUserById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) throw Errors.USER_DB_NOT_FOUND;
 
     const isMatch = await bcrypt.compare(plainPassword, user.password);
 
-    if (!isMatch) throw new Error("Incorrect password");
+    if (!isMatch) throw Errors.INCORRECT_PASSWORD;
     
     return user;
   },
 
   async updateProfile(userId: string, username: string, email: string, password: string) {
-    // Check password first
+    // Verify the user's current password before allowing changes
     await this.verifyUserPassword(userId, password);
 
     const lowercaseEmail = email.toLowerCase().trim();
@@ -49,16 +58,27 @@ export const UserService = {
 
       // Check if email or username is taken by another user
       if (existing && String(existing.id) !== userId) {
-        if (existing.email === lowercaseEmail) throw new Error('EMAIL_EXISTS');
-        if (existing.username === username) throw new Error('USERNAME_EXISTS');
+        if (existing.email === lowercaseEmail) throw Errors.EMAIL_EXISTS;
+        if (existing.username === username) throw Errors.USERNAME_EXISTS;
       }
     }
 
-    return await UserDB.updateProfile(userId, username, lowercaseEmail);
+    if (emailChanged) {
+      // Send verificatio link to new email
+      const token = await VerificationDB.createEmailChangeToken(Number(userId), lowercaseEmail);
+      await sendEmailChangeVerification(lowercaseEmail, token);
+
+      // Only update username immediately
+      const updatedUser = await UserDB.updateProfile(userId, username, currentUser.email);
+      return { user: updatedUser, emailChanged: true };
+    }
+
+    const updatedUser = await UserDB.updateProfile(userId, username, lowercaseEmail);
+    return { user: updatedUser, emailChanged: false };
   },
 
   async updatePassword(userId: string, currentPassword: string, newPassword: string) {
-    // Check old password first
+    // Verify current password before hashing
     await this.verifyUserPassword(userId, currentPassword);
 
     const saltRounds = 12;
@@ -76,8 +96,8 @@ export const UserService = {
     const existing = await UserDB.findByEmailOrUsername(lowercaseEmail, username);
 
     if (existing) {
-      if (existing.email === lowercaseEmail) throw new Error('EMAIL_EXISTS');
-      if (existing.username === username) throw new Error('USERNAME_EXISTS');
+      if (existing.email === lowercaseEmail) throw Errors.EMAIL_EXISTS;
+      if (existing.username === username) throw Errors.USERNAME_EXISTS;
     }
 
     const saltRounds = 12;
@@ -89,12 +109,13 @@ export const UserService = {
 
   async banUser(userId: string, isBanned: boolean, requesterId: string) {
     // Prevent self-deletion
-    if (userId === requesterId) throw new Error("SELF_DELETE");
+    if (userId === requesterId) throw Errors.SELF_DELETE;
 
     const user = await UserDB.getUserById(userId);
-    if (!user) throw new Error('User not found');
+    if (!user) throw Errors.USER_DB_NOT_FOUND;
 
-    if (user.access_role === 'admin') throw new Error('CANNOT_BAN_ADMIN');
+    // Admin are protected from being banned
+    if (user.access_role === 'admin') throw Errors.CANNOT_BAN_ADMIN;
 
     return await UserDB.updateUserBanStatus(Number(userId), isBanned);
   },

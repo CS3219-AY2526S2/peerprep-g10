@@ -6,9 +6,10 @@ import { updatePassword } from '@/src/services/user/userApi';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function ChangePasswordModal({ isOpen, onClose }: Props) {
+export default function ChangePasswordModal({ isOpen, onClose, onSuccess }: Props) {
   const [form, setForm] = useState({currentPassword: '', newPassword: '', confirmPassword: ''});
   const [show, setShow] = useState({currentPassword: false, newPassword: false, confirmPassword: false});
 
@@ -27,7 +28,10 @@ export default function ChangePasswordModal({ isOpen, onClose }: Props) {
     setSaving(true);
     setError('');
     updatePassword(form.currentPassword, form.newPassword)
-      .then(() => onClose())
+      .then(() => {
+        onSuccess?.();
+        onClose();
+      })
       .catch((err) => setError(err.message))
       .finally(() => setSaving(false));
   };

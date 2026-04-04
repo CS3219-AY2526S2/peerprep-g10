@@ -117,6 +117,8 @@ services:
       context: ./collaboration-service
       dockerfile: Dockerfile
     container_name: collaboration-service
+    env_file:
+      - ./collaboration-service/.env
     ports:
       - "3001:3001"
     environment:
@@ -124,6 +126,7 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:admin123@collaboration-db:5432/peerprep
       QUESTION_SERVICE_URL: http://question-service:3003
+      USER_SERVICE_URL: http://user-service:3004
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     depends_on:
       collaboration-db:
