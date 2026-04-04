@@ -136,6 +136,29 @@ and
 
 http://localhost:3000/collaboration/[roomId]?user=user2
 
+#### 5.4 NGINX reverse proxy set up for cross machine voice call functionality
+To enable voice call functionality the following set up steps needs to be completed:
+
+Linux and MacOS:
+
+```bash or Z-shell
+mkcert -install
+mkdir -p nginx/certs
+mkcert -cert-file nginx/certs/cert.pem -key-file nginx/certs/key.pem localhost 127.0.0.1 ::1 <your_lan_ip>
+docker compose up -d --build
+```
+
+Windows:
+
+```powershell
+mkcert -install
+mkdir nginx\certs
+mkcert -cert-file nginx\certs\cert.pem -key-file nginx\certs\key.pem localhost 127.0.0.1 ::1 <their_lan_ip>
+docker compose up -d --build
+```
+
+Do note keytool error while running mkcert -install can be safely ignored
+
 #### 6. Frontend Set Up
 ```bash
 cd peerprep-frontend
