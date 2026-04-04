@@ -5830,7 +5830,7 @@ Note:
 async function seed() {
   await initDb();
 
-  await pool.query('DELETE FROM questions');
+  await pool.query('TRUNCATE questions RESTART IDENTITY');
 
   const values: string[] = [];
   const params: unknown[] = [];
