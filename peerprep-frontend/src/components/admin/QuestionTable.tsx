@@ -32,7 +32,14 @@ export default function QuestionTable({ questions, onDelete }: QuestionTableProp
         <tbody className="divide-y divide-zinc-100">
           {questions.map((q) => (
             <tr key={q.id} className="hover:bg-zinc-50 transition-colors">
-              <td className="px-4 py-3 font-medium text-zinc-900 max-w-xs truncate">{q.title}</td>
+              <td className="px-4 py-3 font-medium max-w-xs truncate">
+                <Link
+                  href={ROUTES.ADMIN_QUESTIONS_EDIT(q.id)}
+                  className="text-zinc-900 hover:text-blue-600 transition-colors"
+                >
+                  {q.title}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-zinc-600">
                 <div className="flex flex-wrap gap-1">
                   {q.topics.map((t) => (
