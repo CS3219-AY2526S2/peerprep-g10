@@ -1,7 +1,7 @@
 "use client";
 
 import CodeEditor from "@/src/components/collaboration/CodeEditor";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
@@ -46,6 +46,11 @@ type RoomData = {
   createdAt: string;
 };
 
+type ParticipantInfo = {
+  userId: string;
+  displayName: string;
+};
+
 export default function RoomPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -61,6 +66,7 @@ export default function RoomPage() {
   const [text, setText] = useState("");
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loadingRoom, setLoadingRoom] = useState(true);
+  const [profileIcons, setProfileIcons] = useState<Record<string, string>>({});
 
   const [chatWidth, setChatWidth] = useState(360);
   const [isDraggingChat, setIsDraggingChat] = useState(false);
@@ -72,6 +78,8 @@ export default function RoomPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+  const hasLeftRef = useRef(false);
+
 
   const [socket] = useState(() => io(BACKEND_URL));
 
@@ -87,6 +95,32 @@ export default function RoomPage() {
     return () => clearTimeout(timer);
   }, [activeNotification]);
 
+  async function fetchUserById(targetUserId: string) {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API_BASE.USER_SERVICE}/api/users/${targetUserId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch user ${targetUserId}`);
+    }
+
+    return res.json();
+  }
+
+  const participantList: ParticipantInfo[] = useMemo(() => {
+    if (!room) return [];
+    return [
+      { userId: room.user1Id, displayName: room.user1Id },
+      { userId: room.user2Id, displayName: room.user2Id },
+    ];
+  }, [room]);
+
+  const onlineUserIds = useMemo(() => new Set(users.map((u) => u.userId)), [users]);
+  
   // Save attempt
   const handleSaveAttempt = async () => {
     if (!room) return;
@@ -124,8 +158,15 @@ export default function RoomPage() {
   };
 
   const handleLeaveSession = async () => {
-    await handleSaveAttempt();
-    router.push(ROUTES.USER);
+    try {
+      await handleSaveAttempt();
+    } finally {
+      if (!hasLeftRef.current) {
+        hasLeftRef.current = true;
+        socket.emit("room:leave", { roomId, userId });
+      }
+      router.push(ROUTES.USER);
+    }
   };
 
   useEffect(() => {
@@ -149,6 +190,7 @@ export default function RoomPage() {
         setLoadingRoom(false);
       }
     }
+
 
     async function loadChatHistory() {
       try {
@@ -198,7 +240,10 @@ export default function RoomPage() {
     socket.on("room:error", handleRoomError);
 
     return () => {
-      socket.emit("room:leave", { roomId, userId });
+      if (!hasLeftRef.current) {
+        hasLeftRef.current = true;
+        socket.emit("room:leave", { roomId, userId });
+      }
 
       socket.off("presence:update", handlePresenceUpdate);
       socket.off("chat:new", handleChatNew);
@@ -208,6 +253,27 @@ export default function RoomPage() {
       // socket.disconnect();
     };
   }, [roomId, socket, displayName, userId, router]);
+
+  useEffect(() => {
+    async function loadParticipantIcons() {
+      if (!room) return;
+
+      try {
+        const results = await Promise.all(
+          [room.user1Id, room.user2Id].map(async (id) => {
+            const user = await fetchUserById(id);
+            return [id, user.profile_icon] as const;
+          })
+        );
+
+        setProfileIcons(Object.fromEntries(results));
+      } catch (err) {
+        console.error('Failed to load participant icons:', err);
+      }
+    }
+
+    loadParticipantIcons();
+  }, [room]);
 
   useEffect(() => {
     if (!sessionStartedAt) return;
@@ -518,12 +584,28 @@ export default function RoomPage() {
           <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>
 
           <div className={styles.participants}>
-            {users.map((user) => (
-              <div key={user.userId} className={styles.participant}>
-                <div className={styles.avatar}>◯</div>
-                <span>{user.displayName}</span>
-              </div>
-            ))}
+            {participantList.map((participant) => {
+              const isOnline = onlineUserIds.has(participant.userId);
+
+              return (
+                <div key={participant.userId} className={styles.participant}>
+                  <div className={styles.avatar}>
+                    {profileIcons[participant.userId] ? (
+                      <img
+                        src={profileIcons[participant.userId]}
+                        alt={`${participant.displayName} avatar`}
+                        className={styles.avatarImage}
+                      />
+                    ) : (
+                      <span>◯</span>
+                    )}
+                  </div>
+
+                  <span>{participant.displayName}</span>
+                  <span>{isOnline ? "Online" : "Offline"}</span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Save attempt button */}
