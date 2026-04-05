@@ -58,4 +58,17 @@ export const AttemptController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
+
+  async getAttemptedQuestionIds(req: Request<UserParams>, res: Response) {
+    try {
+      const { userId } = req.params;
+      if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+      const questionIds = await AttemptService.getAttemptedQuestionIdsByUser(userId);
+      return res.json({ userId, questionIds });
+    } catch (err) {
+      console.error('GET /attempts/user/:userId/questions failed:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
 };

@@ -97,4 +97,11 @@ export const AttemptService = {
       partner: partners[0] ?? null,
     };
   },
+
+  /**
+   * Returns the distinct list of questionIds the user has attempted.
+   */
+  async getAttemptedQuestionIdsByUser(userId: string): Promise<string[]> {
+    return AttemptModel.getAttemptedQuestionIdsByUser(userId);
+  },
 };

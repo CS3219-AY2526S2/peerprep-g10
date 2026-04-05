@@ -94,4 +94,15 @@ export const AttemptModel = {
     );
     return result.rows[0] ?? null;
   },
+
+  async getAttemptedQuestionIdsByUser(userId: string): Promise<string[]> {
+    const result = await pool.query(
+      `SELECT DISTINCT question_id AS "questionId"
+       FROM attempts
+       WHERE user_id = $1
+       ORDER BY question_id ASC`,
+      [userId]
+    );
+    return result.rows.map((r) => r.questionId);
+  },
 };
