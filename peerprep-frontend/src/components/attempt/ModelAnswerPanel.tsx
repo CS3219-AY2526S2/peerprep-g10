@@ -1,9 +1,9 @@
 'use client';
 
-import { Question } from '@/src/services/types';
+import { QuestionSnapshot } from '@/src/services/attempt/types';
 
 interface ModelAnswerPanelProps {
-  question: Question;
+  question: QuestionSnapshot;
 }
 
 export default function ModelAnswerPanel({ question }: ModelAnswerPanelProps) {
