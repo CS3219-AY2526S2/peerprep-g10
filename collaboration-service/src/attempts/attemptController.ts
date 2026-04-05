@@ -7,15 +7,7 @@ interface IdParams { id: string; }
 export const AttemptController = {
   async saveAttempt(req: Request, res: Response) {
     try {
-      const {
-        roomId,
-        userId,
-        partnerId,
-        questionId,
-        code,
-        startedAt,
-        endedAt,
-      } = req.body;
+      const { roomId, userId, partnerId, questionId, code, startedAt, endedAt } = req.body;
 
       if (!roomId || !userId || !questionId || !startedAt || !endedAt) {
         return res.status(400).json({ error: 'roomId, userId, questionId, startedAt, endedAt are required' });

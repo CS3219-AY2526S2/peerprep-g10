@@ -1,4 +1,4 @@
-import { AttemptModel } from './attemptModel';
+import { AttemptModel, QuestionSnapshot } from './attemptModel';
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3004';
 const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:3003';
@@ -9,7 +9,7 @@ interface Partner {
   profile_icon: string;
 }
 
-async function fetchQuestion(questionId: string) {
+async function fetchQuestionSnapshot(questionId: string): Promise<QuestionSnapshot | null> {
   try {
     const res = await fetch(`${QUESTION_SERVICE_URL}/questions/${questionId}`);
     if (!res.ok) throw new Error('Failed to fetch question');
@@ -21,17 +21,16 @@ async function fetchQuestion(questionId: string) {
       topics: q.topics ?? [],
       difficulty: q.difficulty ?? '',
       description: q.description ?? '',
-      testCases: q.testCases ?? [],
+      examples: q.examples ?? '',
+      pseudocode: q.pseudocode ?? '',
     };
   } catch (err: any) {
-    console.log("fetchQuestion error:", {
-      questionId,
-      message: err.message,
-    });
+    console.warn('fetchQuestionSnapshot error:', { questionId, message: err.message });
     return null;
   }
 }
 
+// Batch fetch partner profiles by userId array
 async function fetchPartnersBatch(ids: string[]): Promise<Partner[]> {
   if (!ids.length) return [];
 
@@ -66,7 +65,9 @@ export const AttemptService = {
     startedAt: Date;
     endedAt: Date;
   }) {
-    return await AttemptModel.createAttempt(data);
+    const questionSnapshot = await fetchQuestionSnapshot(data.questionId);
+
+    return await AttemptModel.createAttempt({ ...data, questionSnapshot });
   },
 
   async getAttemptsByUser(userId: string) {
@@ -76,29 +77,24 @@ export const AttemptService = {
     const partnerIds = Array.from(new Set(rows.map(r => String(r.partnerId))));
     const partners = await fetchPartnersBatch(partnerIds);
     const partnerMap = new Map(partners.map(p => [String(p.id), p]));
-
-    const attemptsWithData = await Promise.all(
-      rows.map(async (row) => {
-        const question = await fetchQuestion(row.questionId);
-        const partner = partnerMap.get(String(row.partnerId)) ?? null;
-        return { ...row, question, partner };
-      })
-    );
-    console.log(attemptsWithData,":Attempt details");
-
-    return attemptsWithData;
+  
+    return rows.map((row) => ({
+      ...row,
+      question: row.questionSnapshot ?? null,
+      partner: partnerMap.get(String(row.partnerId)) ?? null,
+    }));
   },
 
   async getAttemptById(id: string) {
     const row = await AttemptModel.getAttemptById(id);
     if (!row) return null;
 
-    const [question, partners] = await Promise.all([
-      fetchQuestion(row.questionId),
-      fetchPartnersBatch([row.partnerId]),
-    ]);
+    const partners = row.partnerId ? await fetchPartnersBatch([row.partnerId]) : [];
 
-    const partner = partners[0];
-    return { ...row, question, partner };
+    return {
+      ...row,
+      question: row.questionSnapshot ?? null,
+      partner: partners[0] ?? null,
+    };
   },
 };
