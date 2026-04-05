@@ -1,6 +1,7 @@
 'use client';
 
 import { Question } from '@/src/services/types';
+import Image from 'next/image';
 
 interface QuestionPanelProps {
   question: Question;
@@ -36,9 +37,11 @@ export default function QuestionPanel({ question }: QuestionPanelProps) {
         <div>
           <h3 className="mb-2 text-sm font-semibold text-zinc-800">Images</h3>
           <div className="rounded-lg border border-zinc-200 overflow-hidden">
-            <img
+            <Image
               src={question.image_url}
               alt={question.title}
+              width={256}
+              height={256}
               className="w-full object-cover"
             />
           </div>

@@ -92,7 +92,7 @@ export function createApp(): Express {
       const trimmedDifficulty = difficulty.trim();
       const trimmedTopics = topics.map((t) => t.trim()).filter(Boolean);
 
-      if (!trimmedTitle || !trimmedDescription || !trimmedStarterCode.trim()) {
+      if (!trimmedTitle || !trimmedDescription) {
         return res.status(400).json({
           error: "title, description, and starterCode cannot be empty",
         });

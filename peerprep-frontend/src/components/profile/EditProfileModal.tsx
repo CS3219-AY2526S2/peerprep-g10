@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { User } from '@/src/services/user/types';
 import { updateProfile } from '@/src/services/user/userApi';
@@ -14,16 +14,9 @@ interface Props {
 
 export default function EditProfileModal({ isOpen, onClose, userEmail, username, onSuccess }: Props) {
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ newEmail: '', newUsername: '', password: '' });
+  const [form, setForm] = useState({ newEmail: userEmail, newUsername: username, password: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      setForm({ newEmail: userEmail, newUsername: username, password: '' });
-      setError('');
-    }
-  }, [isOpen, userEmail, username]);
 
   if (!isOpen) return null;
 

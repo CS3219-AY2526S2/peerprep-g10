@@ -26,9 +26,9 @@ export default function CheckEmailPage() {
         setIsError(false);
         setMessage('Verification email resent. Please check your inbox!');
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         setIsError(true);
-        setMessage(err.message || 'Something went wrong. Please try again.');
+        setMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       })
       .finally(() => setLoading(false));
   };
@@ -37,10 +37,10 @@ export default function CheckEmailPage() {
     <div className="flex min-h-screen flex-col items-center justify-center text-center p-4">
       <h1 className="text-2xl font-bold mb-4">Verify Your Email</h1>
       <p className="mb-6">
-        We've sent a verification link to your email. Please check your inbox and click the link to activate your account.
+        We&apos;ve sent a verification link to your email. Please check your inbox and click the link to activate your account.
       </p>
       <p className="mb-6 text-sm text-zinc-500">
-        Didn't receive the email? Check your spam folder or click the button below to resend.
+        Didn&apos;t receive the email? Check your spam folder or click the button below to resend.
       </p>
       <button
         onClick={handleResend}
