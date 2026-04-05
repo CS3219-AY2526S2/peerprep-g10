@@ -183,7 +183,7 @@ export default function RoomPage() {
 
         // Initialise currentCodeRef
         currentCodeRef.current = data.currentCode ?? '';
-        setSessionStartedAt(Date.now());
+        setSessionStartedAt(new Date(data.createdAt).getTime());
       } catch (err) {
         console.error("Failed to load room:", err);
       } finally {
