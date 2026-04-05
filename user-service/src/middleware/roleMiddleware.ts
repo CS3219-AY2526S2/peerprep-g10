@@ -1,14 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 
+// Returns middleware that restricts access to users with one of the specified roles
 export const authorizeRoles = (...allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as any).user; // This data was attached by authenticateToken
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = (req as any).user;
 
     if (!user || !allowedRoles.includes(user.access_role)) {
-      return res.status(403).json({ 
-        message: `Access Denied: You do not have the required permissions (${allowedRoles.join(', ')})` 
+      res.status(403).json({
+        message: `Access Denied: You do not have the required permissions (${allowedRoles.join(', ')})`,
       });
+      return;
     }
+
     next();
   };
 };
