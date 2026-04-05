@@ -1,6 +1,7 @@
 'use client';
 
 import { UserIcon } from 'lucide-react';
+import Image from 'next/image';
 import { AttemptWithDetails } from '@/src/services/attempt/types';
 
 interface AttemptPanelProps {
@@ -32,9 +33,11 @@ export default function AttemptPanel({ attempt }: AttemptPanelProps) {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
             {attempt.partner.profile_icon ? (
-              <img
+              <Image
                 src={attempt.partner.profile_icon}
                 alt={attempt.partner.username}
+                width={256}
+                height={256}
                 className="w-full h-full object-cover"
               />
             ) : (

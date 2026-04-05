@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { Pencil, User as UserIcon } from 'lucide-react';
 import EditProfileModal from '@/src/components/profile/EditProfileModal';
 import ChangePasswordModal from '@/src/components/profile/ChangePasswordModal';
@@ -34,7 +35,7 @@ export default function ProfileCard({ user, onProfileSuccess, onPasswordSuccess,
         <div className="flex flex-col items-center gap-2">
           <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center">
             {user.profile_icon
-              ? <img src={user.profile_icon} className="w-full h-full rounded-full object-cover" />
+              ? <Image src={user.profile_icon} alt="Profile avatar" width={256} height={256} className="w-full h-full rounded-full object-cover" />
               : <UserIcon className="w-8 h-8 text-gray-400 dark:text-zinc-500" />
             }
           </div>
@@ -66,6 +67,7 @@ export default function ProfileCard({ user, onProfileSuccess, onPasswordSuccess,
       </div>
 
       <EditProfileModal
+        key={editOpen ? 'open' : 'closed'}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         username={user.username}

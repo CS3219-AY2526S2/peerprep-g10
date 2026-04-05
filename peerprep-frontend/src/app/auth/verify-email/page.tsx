@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { verifyEmail } from '@/src/services/user/userApi';
@@ -21,23 +21,17 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { login } = useAuth();
+  const token = searchParams.get('token');
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
-  const hasRunRef = useRef(false);
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    token ? 'loading' : 'error'
+  );
+  const [message, setMessage] = useState(
+    token ? '' : 'Invalid verification link'
+  );
 
   useEffect(() => {
-    // Effect only run once
-    if (hasRunRef.current) return;
-    hasRunRef.current = true;
-
-    const token = searchParams.get('token');
-
-    if (!token) {
-      setStatus('error');
-      setMessage('Invalid verification link');
-      return;
-    }
+    if (!token) return;
 
     verifyEmail(token)
       .then((data) => {
@@ -52,6 +46,7 @@ function VerifyEmailContent() {
         setStatus('error');
         setMessage(err.message || 'Verification failed');
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

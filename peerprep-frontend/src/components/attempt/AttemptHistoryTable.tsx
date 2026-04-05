@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AttemptWithDetails } from '@/src/services/attempt/types';
@@ -103,7 +104,7 @@ export default function AttemptHistoryTable({
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {attempt.partner.profile_icon ? (
-                        <img src={attempt.partner.profile_icon} alt={attempt.partner.username} className="w-full h-full object-cover" />
+                        <Image src={attempt.partner.profile_icon} alt={attempt.partner.username} width={256} height={256} className="w-full h-full object-cover" />
                       ) : (
                         <UserIcon className="w-4 h-4 text-gray-400" />
                       )}
