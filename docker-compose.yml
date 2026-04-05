@@ -138,15 +138,21 @@ services:
     build:
       context: ./peerprep-frontend
       dockerfile: Dockerfile
+      args:
+       NEXT_PUBLIC_COLLAB_SERVICE_URL: ${NEXT_PUBLIC_COLLAB_SERVICE_URL}
+       NEXT_PUBLIC_MATCHING_SERVICE_URL: ${NEXT_PUBLIC_MATCHING_SERVICE_URL}
+       NEXT_PUBLIC_USER_SERVICE_URL: ${NEXT_PUBLIC_USER_SERVICE_URL}
+       NEXT_PUBLIC_QUESTION_SERVICE_URL: ${NEXT_PUBLIC_QUESTION_SERVICE_URL}
     container_name: peerprep-frontend
     ports:
     - "3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_COLLAB_BACKEND_URL: /api/collab
+      NEXT_PUBLIC_COLLAB_SERVICE_URL: /api/collab
       NEXT_PUBLIC_MATCHING_SERVICE_URL: /api/matching
       NEXT_PUBLIC_USER_SERVICE_URL: /api/user
+      NEXT_PUBLIC_QUESTION_SERVICE_URL: /api/question
     depends_on:
       collaboration-service:
         condition: service_healthy

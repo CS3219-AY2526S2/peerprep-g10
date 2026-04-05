@@ -68,7 +68,7 @@ export function useMatchingSession({
       return;
     }
 
-    const socket = io(API_BASE.MATCHING_SERVICE, {
+    const socket = io(API_BASE.MATCHING_SERIVCE, {
       auth: {
         token,
       },
