@@ -39,7 +39,7 @@ export default function CreateAdminPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-zinc-900">Create Admin Account</h2>
         <button
-          onClick={() => router.push(`${ROUTES.ADMIN_TAB('users')}`)}
+          onClick={() => router.back()}
           className="text-sm text-blue-600 hover:underline"
         >
           Back to Dashboard

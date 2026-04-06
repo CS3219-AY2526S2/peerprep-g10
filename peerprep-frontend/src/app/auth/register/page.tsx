@@ -16,7 +16,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
 
     const form = new FormData(e.currentTarget);
 
@@ -32,7 +31,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     register(username, email, password)
-      .then(() => router.push(ROUTES.LOGIN))
+      .then(() => {
+        sessionStorage.setItem('pendingEmail', email);
+        router.push(ROUTES.CHECK_EMAIL);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -94,7 +96,6 @@ export default function RegisterPage() {
 
         </div>
       </div>
-
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { X } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { User } from '@/src/services/user/types';
@@ -69,7 +70,7 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
                     : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <img src={url} className="w-full h-full rounded-full object-cover" />
+                <Image src={url} alt="Profile avatar" width={256} height={256} className="w-full h-full rounded-full object-cover" />
               </div>
             ))
           )}

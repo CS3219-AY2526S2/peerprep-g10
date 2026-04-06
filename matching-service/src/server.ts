@@ -1,6 +1,7 @@
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { connectRedis } from './config/redis';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { connectRedis, pubClient, subClient } from './config/redis';
 import app from './app';
 import { matchingService } from './services/matching.service';
 import { queueService } from './services/queue.service';
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 3002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 async function startServer() {
+  // Connect to Redis Data Client
+  await connectRedis();
+
   // Create HTTP server wrapping the Express app
   const httpServer = http.createServer(app);
 
@@ -20,10 +24,8 @@ async function startServer() {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    adapter: createAdapter(pubClient, subClient)
   });
-
-  // Connect to Redis Data Client
-  await connectRedis();
 
   // SocketIO Middleware
   io.use((socket, next) => {

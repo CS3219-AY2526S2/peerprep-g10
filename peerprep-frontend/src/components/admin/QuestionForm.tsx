@@ -130,6 +130,7 @@ export default function QuestionForm({ initialData, onSubmit, submitLabel }: Que
           value={form.difficulty}
           onChange={(e) => update('difficulty', e.target.value)}
           className={inputClass}
+          style={{ backgroundColor: 'white', color: '#18181b' }}
         >
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>

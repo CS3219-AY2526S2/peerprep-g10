@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { pool } from "./db";
+import attemptRoutes from "./attempts/attemptRoutes"; 
 
 type TestCase = {
   input: string;
@@ -28,6 +29,9 @@ export function createApp(): Express {
   app.get("/health", (_req: Request, res: Response) => {
     res.status(200).json({ status: "Collaboration Service is running perfectly." });
   });
+
+  // Mount attempt routes
+  app.use("/attempts", attemptRoutes);
 
   app.post("/rooms", async (req: Request, res: Response) => {
     try {
@@ -88,7 +92,7 @@ export function createApp(): Express {
       const trimmedDifficulty = difficulty.trim();
       const trimmedTopics = topics.map((t) => t.trim()).filter(Boolean);
 
-      if (!trimmedTitle || !trimmedDescription || !trimmedStarterCode.trim()) {
+      if (!trimmedTitle || !trimmedDescription) {
         return res.status(400).json({
           error: "title, description, and starterCode cannot be empty",
         });
@@ -96,6 +100,7 @@ export function createApp(): Express {
 
       const result = await pool.query(
         `INSERT INTO rooms (
+          question_id,
           title,
           topics,
           difficulty,
@@ -106,9 +111,10 @@ export function createApp(): Express {
           user1_id,
           user2_id
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10)
         RETURNING
           id,
+          question_id as "questionId",
           title,
           topics,
           difficulty,
@@ -118,6 +124,7 @@ export function createApp(): Express {
           test_cases as "testCases",
           created_at as "createdAt"`,
         [
+          String(questionId),
           trimmedTitle,
           trimmedTopics,
           trimmedDifficulty || null,
@@ -144,6 +151,7 @@ export function createApp(): Express {
       const result = await pool.query(
         `SELECT
           id,
+          question_id as "questionId",
           title,
           topics,
           difficulty,
@@ -151,6 +159,8 @@ export function createApp(): Express {
           starter_code as "starterCode",
           current_code as "currentCode",
           test_cases as "testCases",
+          user1_id as "user1Id",
+          user2_id as "user2Id",
           created_at as "createdAt"
         FROM rooms
         WHERE id = $1`,

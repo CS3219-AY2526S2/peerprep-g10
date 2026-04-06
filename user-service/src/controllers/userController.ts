@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { UserService } from '../services/userServices';
 import { AVATAR_OPTIONS } from '../config/avatar';
 import { registerSchema, updateProfileSchema, changePasswordSchema } from '../validator/userSchema';
 import { request } from 'node:http';
+import { handleAppError } from '../errors/handleAppError';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -15,7 +15,19 @@ export const getProfile = async (req: Request, res: Response) => {
     }
     res.json(user);
   } catch (error: any) {
-    res.status(500).json({ message: "Error fetching profile" });
+    handleAppError(error, res, 'getProfile', 'Error fetching profile');
+  }
+};
+
+export const getProfilesForService = async (req: Request, res: Response) => {
+  try {
+    const ids: string[] = req.body.ids;
+    if (!ids?.length) return res.status(400).json({ message: 'No user IDs provided' });
+
+    const users = await UserService.getUsersByIds(ids);
+    res.json(users);
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching profiles" });
   }
 };
 
@@ -24,7 +36,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const users = await UserService.getAllUser();
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch users" });
+    handleAppError(error, res, 'getAllUsers', 'Error fetching all profiles');
   }
 };
 
@@ -34,20 +46,11 @@ export const deleteUser = async (req: Request, res: Response) => {
     const requesterId = (req as any).user.userId;
   
     const deletedCount = await UserService.deleteUser(id, requesterId);
-
-    if (deletedCount === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (deletedCount === 0) return res.status(404).json({ message: 'User not found' });
 
     res.json({ message: `User deleted successfully` });
   } catch (error: any) {
-    if (error.message === 'SELF_DELETE') {
-      return res.status(400).json({ message: 'You cannot delete your own account' });
-    }
-    if (error.message.includes('LAST_ADMIN')) {
-      return res.status(400).json({ message: 'Cannot delete the last admin account' });
-    }
-    res.status(500).json({ message: 'Error deleting user' });
+    handleAppError(error, res, 'deleteUser', 'Error deleting user');
   }
 };
 
@@ -58,29 +61,24 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     // Validate email format if it's being updated
     const parseProfile = updateProfileSchema.safeParse({ username, email });
-
     if (!parseProfile.success) {
       return res.status(400).json({ message: parseProfile.error.issues[0]?.message });
     }
 
-    const updatedUser = await UserService.updateProfile(userId, username, email, password);
-    
-    if (!updatedUser) {
+    const result = await UserService.updateProfile(userId, username, email, password);
+    if (!result.user) {
         return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "Profile updated successfully", user: updatedUser });
+    res.json({
+      message: result.emailChanged
+        ? 'Profile updated. Please check your new email to verify the change.'
+        : 'Profile updated successfully',
+      emailChanged: result.emailChanged,
+      user: result.user,
+    });
   } catch (error: any) {
-    if (error.message === "Incorrect password") {
-      return res.status(401).json({ message: error.message });
-    }
-    if (error.message === 'EMAIL_EXISTS') {
-      return res.status(400).json({ message: 'This email is already in use.' });
-    }
-    if (error.message === 'USERNAME_EXISTS') {
-      return res.status(400).json({ message: 'This username is already taken.' });
-    }
-    res.status(500).json({ message: "Error updating profile" });
+    handleAppError(error, res, 'updateUserProfile', 'Error updating profile');
   }
 };
 
@@ -96,17 +94,13 @@ export const updatePassword = async (req: Request, res: Response) => {
     }
 
     const updatedPassword = await UserService.updatePassword(userId, currentPassword, newPassword);
-
     if (!updatedPassword) {
         return res.status(404).json({ message: "User not found" });
     }
 
     res.json({ message: "Password updated successfully" });
   } catch (error: any) {
-    if (error.message === "Incorrect password") {
-      return res.status(401).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Error changing password" });
+    handleAppError(error, res, 'updatePassword', 'Error changing password');
   }
 };
 
@@ -122,7 +116,7 @@ export const updateProfileIcon = async (req: Request, res: Response) => {
     const updatedUser = await UserService.updateProfileIcon(userId, profile_icon);
     res.json({ message: "Profile icon updated successfully", user: updatedUser });
   } catch (error) {
-    res.status(500).json({ message: "Error updating profile icon" });
+    handleAppError(error, res, 'updateProfileIcon', 'Error updating profile icon');
   }
 };
 
@@ -142,20 +136,7 @@ export const createAdmin = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: 'Admin created successfully', user: admin });
   } catch (error: any) {
-    if (error.message === "EMAIL_EXISTS") {
-      return res.status(400).json({ message: "This email is already registered." });
-    }
-    if (error.message === "USERNAME_EXISTS") {
-      return res.status(400).json({ message: "This username is already taken. Please choose another." });
-    }
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      const message = error.issues[0]?.message || "Inalid input data";
-      return res.status(400).json({ message });
-    }
-    
-    console.error("FAILED TO CREATE ADMIN:", error);
-    res.status(400).json({ error: error.errors || "Server Error" });
+    handleAppError(error, res, 'createAdmin', 'Error creating admin');
   }
 };
 
@@ -176,17 +157,6 @@ export const banUser = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.log(error);
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    if (error.message === 'CANNOT_BAN_ADMIN') {
-      return res.status(403).json({ message: 'Cannot ban an admin account' });
-    }
-    if (error.message === 'SELF_DELETE') {
-      return res.status(400).json({ message: 'You cannot ban yourself' });
-    }
-
-    res.status(500).json({ message: 'Error updating ban status' });
+    handleAppError(error, res, 'banUser', 'Error updating ban status');
   }
 };

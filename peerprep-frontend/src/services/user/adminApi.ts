@@ -50,7 +50,7 @@ export async function deleteUser(id: number): Promise<void> {
   if (!res.ok) throw new Error(json.message || 'Failed to delete user');
 }
 
-export async function banUser(id: number, isBanned: Boolean): Promise<User> {
+export async function banUser(id: number, isBanned: boolean): Promise<User> {
   const res = await fetch(`${BASE_URL}/${id}/ban`, {
     method: 'PATCH',
     headers: { 

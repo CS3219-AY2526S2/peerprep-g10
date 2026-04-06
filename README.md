@@ -186,11 +186,34 @@ npm run dev        # starts on port 3000
 |-------|-------------|
 | `/auth/login` | Login page |
 | `/auth/register` | User registration |
+| `/auth/check-email` | Check email |
+| `/auth/verify-email` | Verify email |
 | `/user` | User dashboard (requires user role) |
 | `/user/profile` | User profile |
+| `/user/attempts/[id]` | User attempt details |
 | `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
 | `/admin/profile` | Admin profile |
 | `/admin/create-admin` | Create a new admin |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
 | `/collaboration/[roomId]?user=[userId]` | Access the collaboration page |
+
+### Running Test
+
+#### 1. Matching Service Test Run
+
+> Note: You may need to run `npm install` for the first time if test packages are not yet installed
+
+#### Running Unit and Integration Test
+
+```bash
+cd matching-service
+npm run test
+```
+
+#### Running Integration Test Only
+
+```bash
+cd matching-service
+npm run test:integration
+```

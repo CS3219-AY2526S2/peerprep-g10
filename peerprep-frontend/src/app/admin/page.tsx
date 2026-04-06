@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import QuestionsTab from '@/src/components/admin/QuestionsTab';
 import UsersTab from '@/src/components/admin/UsersTab';
+import { ROUTES } from '@/src/constant/route';
 
 type Tab = 'questions' | 'users';
 
@@ -13,13 +13,10 @@ const tabs: { key: Tab; label: string }[] = [
 ];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('questions');
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'users') setActiveTab('users');
-  }, [searchParams]);
+  const activeTab: Tab = searchParams.get('tab') === 'users' ? 'users' : 'questions';
 
   return (
     <div>
@@ -30,7 +27,7 @@ export default function AdminPage() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => router.push(ROUTES.ADMIN_TAB(tab.key))}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'border-b-2 border-blue-600 text-blue-600'

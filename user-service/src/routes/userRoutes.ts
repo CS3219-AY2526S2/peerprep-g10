@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser } from '../controllers/userController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { getProfile, getAllUsers, deleteUser, updateUserProfile, updatePassword, updateProfileIcon, getAvatarOptions, createAdmin, banUser, getProfilesForService } from '../controllers/userController';
+import { authenticateToken, authenticateServiceToken } from '../middleware/authMiddleware';
 import { authorizeRoles } from '../middleware/roleMiddleware';
 
 const router = Router();
@@ -8,8 +8,13 @@ const router = Router();
 // Public
 router.get('/avatars', getAvatarOptions);
 
-// Protected
+// Service-to-service
+router.post('/services/profiles', authenticateServiceToken, getProfilesForService);
+
+// Protected - authtenticate token before running any API below
 router.use(authenticateToken);
+
+// User & admin
 router.get('/me', getProfile);
 router.patch('/me/icon', updateProfileIcon);
 router.patch('/update-profile', updateUserProfile);

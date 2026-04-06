@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Detect which services changed ──────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      question: ${{ steps.filter.outputs.question }}
+      user: ${{ steps.filter.outputs.user }}
+      matching: ${{ steps.filter.outputs.matching }}
+      collaboration: ${{ steps.filter.outputs.collaboration }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            question:
+              - 'question-service/**'
+            user:
+              - 'user-service/**'
+            matching:
+              - 'matching-service/**'
+            collaboration:
+              - 'collaboration-service/**'
+            frontend:
+              - 'peerprep-frontend/**'
+
+  # ── Backend services: typecheck + build ────────────────────────
+  backend:
+    needs: changes
+    if: >-
+      needs.changes.outputs.question == 'true' ||
+      needs.changes.outputs.user == 'true' ||
+      needs.changes.outputs.matching == 'true' ||
+      needs.changes.outputs.collaboration == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: question-service
+            changed: ${{ needs.changes.outputs.question }}
+          - service: user-service
+            changed: ${{ needs.changes.outputs.user }}
+          - service: matching-service
+            changed: ${{ needs.changes.outputs.matching }}
+          - service: collaboration-service
+            changed: ${{ needs.changes.outputs.collaboration }}
+    steps:
+      - uses: actions/checkout@v4
+        if: matrix.changed == 'true'
+
+      - uses: actions/setup-node@v4
+        if: matrix.changed == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        if: matrix.changed == 'true'
+        working-directory: ${{ matrix.service }}
+        run: npm ci
+
+      - name: Typecheck
+        if: matrix.changed == 'true'
+        working-directory: ${{ matrix.service }}
+        run: npx tsc --noEmit
+
+      - name: Test
+        if: matrix.changed == 'true'
+        working-directory: ${{ matrix.service }}
+        run: |
+          if [ -f jest.config.js ]; then
+            npm test -- --ci --forceExit --detectOpenHandles
+          fi
+
+      - name: Build
+        if: matrix.changed == 'true'
+        working-directory: ${{ matrix.service }}
+        run: npm run build
+
+  # ── Frontend: lint + build ─────────────────────────────────────
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: peerprep-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: peerprep-frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: peerprep-frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: peerprep-frontend
+        run: npm run build
+
+  # ── Docker: verify images build ────────────────────────────────
+  docker:
+    needs: changes
+    if: >-
+      needs.changes.outputs.question == 'true' ||
+      needs.changes.outputs.user == 'true' ||
+      needs.changes.outputs.matching == 'true' ||
+      needs.changes.outputs.collaboration == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: question-service
+            changed: ${{ needs.changes.outputs.question }}
+          - service: user-service
+            changed: ${{ needs.changes.outputs.user }}
+          - service: matching-service
+            changed: ${{ needs.changes.outputs.matching }}
+          - service: collaboration-service
+            changed: ${{ needs.changes.outputs.collaboration }}
+          - service: peerprep-frontend
+            changed: ${{ needs.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        if: matrix.changed == 'true'
+
+      - name: Build Docker image
+        if: matrix.changed == 'true'
+        run: docker build -t ${{ matrix.service }}:ci ./${{ matrix.service }}

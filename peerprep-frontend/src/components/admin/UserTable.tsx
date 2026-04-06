@@ -1,6 +1,7 @@
 'use client';
 
 import { User } from '@/src/services/user/types';
+import Image from 'next/image';
 import { Trash2, UserIcon } from 'lucide-react';
 
 interface UserTableProps {
@@ -36,7 +37,7 @@ export default function UserTable({ users, onBan, onDelete, currentUserId }: Use
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {user.profile_icon
-                      ? <img src={user.profile_icon} alt={user.username} className="w-full h-full object-cover" />
+                      ? <Image src={user.profile_icon} alt={user.username} width={256} height={256} className="w-full h-full object-cover" />
                       : <UserIcon className="w-8 h-8 text-gray-400 dark:text-zinc-500" />
                     }
                   </div>

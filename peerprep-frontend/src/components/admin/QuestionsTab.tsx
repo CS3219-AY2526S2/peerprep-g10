@@ -43,9 +43,10 @@ export default function QuestionsTab() {
   );
 
   // Reset to page 1 when search changes
-  useEffect(() => {
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setCurrentPage(1);
-  }, [search]);
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -67,7 +68,7 @@ export default function QuestionsTab() {
             type="text"
             placeholder="Search by title or topic..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>

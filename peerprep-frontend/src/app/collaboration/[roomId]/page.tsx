@@ -7,6 +7,10 @@ import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
 import VoiceChat from "@/src/components/collaboration/VoiceChat";
+import { API_BASE } from "@/src/constant/api";
+import { saveAttempt } from '@/src/services/attempt/attemptApi';
+import { ROUTES } from '@/src/constant/route';
+import Notification, { NotificationProps } from '@/src/components/Notification';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "/api/collab";
 
@@ -30,6 +34,9 @@ type TestCase = {
 
 type RoomData = {
   id: string;
+  questionId: string;
+  user1Id: string;
+  user2Id: string;
   title: string;
   topics: string[];
   difficulty: string | null;
@@ -69,6 +76,59 @@ export default function RoomPage() {
 
   const [socket] = useState(() => io("/", { path: "/api/collab/socket.io",}));
 
+  // Add ref to track current code without re-renders
+  const currentCodeRef = useRef<string>('');
+  const [attemptSaved, setAttemptSaved] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<Omit<NotificationProps, 'onClose'> | null>(null);
+
+  // Auto-dismiss notification after 5 seconds
+  useEffect(() => {
+    if (!activeNotification) return;
+    const timer = setTimeout(() => setActiveNotification(null), 5000);
+    return () => clearTimeout(timer);
+  }, [activeNotification]);
+
+  // Save attempt
+  const handleSaveAttempt = async () => {
+    if (!room) return;
+
+    const partnerId = room.user1Id === userId ? room.user2Id : room.user1Id;
+
+    try {
+      // Saving attempt
+      await saveAttempt({
+        roomId: room.id,
+        userId,
+        partnerId,
+        questionId: room.questionId,
+        code: currentCodeRef.current,
+        startedAt: sessionStartedAt ? new Date(sessionStartedAt).toISOString() : room.createdAt,
+        endedAt: new Date().toISOString(),
+      });
+
+      // Show notification
+      setAttemptSaved(true);
+      setActiveNotification({
+        type: 'success',
+        title: 'Attempt saved',
+        message: 'Your code and attempt details have been saved successfully.',
+      });
+      setTimeout(() => setAttemptSaved(false), 2000); // Reset button after 2 seconds
+    } catch (err) {
+      console.error('Failed to save attempt:', err);
+      setActiveNotification({
+        type: 'error',
+        title: 'Save failed',
+        message: 'Something went wrong. Please try again.',
+      });
+    }
+  };
+
+  const handleLeaveSession = async () => {
+    await handleSaveAttempt();
+    router.push(ROUTES.USER);
+  };
+
   useEffect(() => {
     async function loadRoom() {
       try {
@@ -80,6 +140,9 @@ export default function RoomPage() {
         }
 
         setRoom(data);
+
+        // Initialise currentCodeRef
+        currentCodeRef.current = data.currentCode ?? '';
         setSessionStartedAt(Date.now());
       } catch (err) {
         console.error("Failed to load room:", err);
@@ -143,7 +206,7 @@ export default function RoomPage() {
       socket.off("chat:error", handleChatError);
       socket.off("room:error", handleRoomError);
 
-      socket.disconnect();
+      // socket.disconnect();
     };
   }, [roomId, socket, displayName, userId, router]);
 
@@ -289,6 +352,14 @@ export default function RoomPage() {
   return (
     <>
       <Navbar />
+      {activeNotification && (
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Notification
+            {...activeNotification}
+            onClose={() => setActiveNotification(null)}
+          />
+        </div>
+      )}
       <main className={styles.page}>
         <div className={styles.topBar}>
           <div className={styles.topBarLeft}>
@@ -307,9 +378,11 @@ export default function RoomPage() {
               {isChatOpen ? "Hide Chat" : "Show Chat"}
             </button>
 
-            <button className={styles.leaveButton} onClick={() => router.push("/")}>
+            {/* Leave Session button */}
+            <button className={styles.leaveButton} onClick={handleLeaveSession}>
               Leave Session
             </button>
+            
           </div>
         </div>
 
@@ -367,6 +440,7 @@ export default function RoomPage() {
                 socket={socket}
                 userId={userId}
                 initialCode={room.currentCode}
+                onCodeChange={(code) => { currentCodeRef.current = code; }}
               />
             </div>
           </section>
@@ -453,7 +527,10 @@ export default function RoomPage() {
             ))}
           </div>
 
-          <button className={styles.saveButton}>Save</button>
+          {/* Save attempt button */}
+          <button className={styles.saveButton} onClick={handleSaveAttempt} disabled={attemptSaved}>
+            {attemptSaved ? 'Saved ✓' : 'Save'}
+          </button>
         </div>
       </main>
     </>
