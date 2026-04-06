@@ -1,7 +1,10 @@
 import { Resend } from 'resend';
 
+const SERVER_PATH = process.env.SERVER_IP;
+const FRONTEND_PATH = SERVER_PATH != null ? `https://${SERVER_PATH}` : process.env.FRONTEND_URL?.replace(/\/$/, '') ?? 'https://localhost';
+
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+  const verificationUrl = `${FRONTEND_PATH}/auth/verify-email?token=${encodeURIComponent(token)}`;
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
@@ -27,7 +30,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 };
 
 export const sendEmailChangeVerification = async (newEmail: string, token: string) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+  const verificationUrl = `${FRONTEND_PATH}/auth/verify-email?token=${encodeURIComponent(token)}`;
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
