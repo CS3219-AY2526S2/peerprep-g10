@@ -1,19 +1,27 @@
 import { Resend } from 'resend';
 
-export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+const FROM_ADDRESS = 'PeerPrep <noreply@peerprep.site>';
+
+// Builds the email verification URL from the provided token
+const buildVerificationUrl = (token: string): string => {
+  return `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+};
+
+// Sends an email verification link to a newly registered user
+export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const verificationUrl = buildVerificationUrl(token);
 
   await resend.emails.send({
-    from: 'PeerPrep <noreply@peerprep.site>',
+    from: FROM_ADDRESS,
     to: email,
     subject: 'Verify your PeerPrep account',
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Verify your email</h2>
         <p>Click the link below to verify your PeerPrep account. This link expires in 15 minutes.</p>
-        <a href="${verificationUrl}" 
-           style="display: inline-block; background: #2563eb; color: white; 
+        <a href="${verificationUrl}"
+           style="display: inline-block; background: #2563eb; color: white;
                   padding: 12px 24px; border-radius: 8px; text-decoration: none;">
           Verify Email
         </a>
@@ -23,15 +31,15 @@ export const sendVerificationEmail = async (email: string, token: string) => {
       </div>
     `,
   });
-  console.log("Sending email: " + email)
 };
 
-export const sendEmailChangeVerification = async (newEmail: string, token: string) => {
-  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+// Sends a verification link to confirm an email address change
+export const sendEmailChangeVerification = async (newEmail: string, token: string): Promise<void> => {
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const verificationUrl = buildVerificationUrl(token);
 
   await resend.emails.send({
-    from: 'PeerPrep <noreply@peerprep.site>',
+    from: FROM_ADDRESS,
     to: newEmail,
     subject: 'Verify your new email address',
     html: `

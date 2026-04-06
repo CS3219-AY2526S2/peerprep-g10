@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { AppError } from './AppError';
 
+// Central error handler
 export function handleAppError(error: unknown, res: Response, context: string, fallbackMessage: string): void {
   // Known application errors — use their built-in status and message
   if (error instanceof AppError) {
