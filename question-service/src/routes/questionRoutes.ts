@@ -10,6 +10,56 @@ router.get('/topics', async (req: Request, res: Response) => {
   res.json({ topics: result.rows.map((r) => r.topic) });
 });
 
+router.post('/random-unattempted', async (req: Request, res: Response) => {
+  const { userAId, userBId, topics, difficulties } = req.body;
+
+  if (!userAId || !userBId || !Array.isArray(topics) || !topics.length || !Array.isArray(difficulties) || !difficulties.length) {
+    res.status(400).json({ error: 'userAId, userBId, topics (non-empty array), and difficulties (non-empty array) are required.' });
+    return;
+  }
+
+  const collabServiceUrl = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:3001';
+
+  let attemptedIntIds: number[] = [];
+  try {
+    const [userARes, userBRes] = await Promise.all([
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userAId)}/questions`),
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userBId)}/questions`),
+    ]);
+
+    if (!userARes.ok || !userBRes.ok) {
+      res.status(502).json({ error: 'Failed to fetch attempted questions from collaboration service.' });
+      return;
+    }
+
+    const userAData = await userARes.json() as { questionIds: string[] };
+    const userBData = await userBRes.json() as { questionIds: string[] };
+
+    attemptedIntIds = [...new Set([...userAData.questionIds, ...userBData.questionIds])]
+      .map(Number)
+      .filter((n) => !isNaN(n));
+  } catch {
+    res.status(502).json({ error: 'Collaboration service is unavailable.' });
+    return;
+  }
+
+  const hasExclusions = attemptedIntIds.length > 0;
+  const query = `
+    SELECT * FROM questions
+    WHERE topics && $1::text[]
+      AND difficulty = ANY($2::difficulty_level[])
+      ${hasExclusions ? 'AND id != ALL($3::int[])' : ''}
+    ORDER BY RANDOM()
+    LIMIT 1
+  `;
+  const params: (string[] | number[])[] = [topics, difficulties];
+  if (hasExclusions) params.push(attemptedIntIds);
+
+  const result = await pool.query(query, params);
+
+  res.json(result.rows[0] ?? null);
+});
+
 router.get('/random', async (req: Request, res: Response) => {
   const { topic, difficulty } = req.query;
 

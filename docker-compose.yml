@@ -100,6 +100,7 @@ services:
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@question-db:5432/question_service
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      COLLABORATION_SERVICE_URL: http://collaboration-service:3001
     ports:
       - "3003:3003"
     depends_on:
