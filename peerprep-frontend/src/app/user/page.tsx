@@ -100,12 +100,14 @@ export default function UserDashboard() {
 
                 <div 
                   className={`w-full border border-gray-200 rounded-sm py-4 pl-12 pr-10 text-[15px] cursor-pointer bg-white transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary ${isLoading ? 'opacity-50' : ''}`}
-                  onClick={() => !isLoading && setIsTopicDropdownOpen(!isTopicDropdownOpen)}
+                  onClick={() => {
+                    if (!isLoading) setIsTopicDropdownOpen(!isTopicDropdownOpen);
+                  }}
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      !isLoading && setIsTopicDropdownOpen(!isTopicDropdownOpen);
+                      if (!isLoading) setIsTopicDropdownOpen(!isTopicDropdownOpen);
                     }
                   }}
                 >
