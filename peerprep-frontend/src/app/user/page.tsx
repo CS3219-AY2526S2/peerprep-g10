@@ -112,7 +112,7 @@ export default function UserDashboard() {
                   }}
                 >
                   <span className="block truncate text-black">
-                    {isLoading ? 'Loading topics...' : selectedTopics.length > 0 ? selectedTopics.join(', ') : 'Question Topics (Select multiple)'}
+                    {isLoading ? 'Loading topics...' : selectedTopics.length === topics.length && topics.length > 0 ? 'Any' : selectedTopics.length > 0 ? selectedTopics.join(', ') : 'Question Topics (Select multiple)'}
                   </span>
                 </div>
 
@@ -122,6 +122,22 @@ export default function UserDashboard() {
                 
                 {isTopicDropdownOpen && !isLoading && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 text-black rounded-sm shadow-lg max-h-60 overflow-auto">
+                    <label className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200">
+                      <input
+                        type="checkbox"
+                        className="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-400 rounded-sm cursor-pointer"
+                        checked={topics.length > 0 && selectedTopics.length === topics.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTopics([...topics]);
+                          } else {
+                            setSelectedTopics([]);
+                          }
+                          if (topicFieldError) setTopicFieldError('');
+                        }}
+                      />
+                      <span className="text-[15px] font-medium">Any</span>
+                    </label>
                     {topics.map(topic => (
                       <label key={topic} className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer">
                         <input
