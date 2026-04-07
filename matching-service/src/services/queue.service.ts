@@ -1,6 +1,6 @@
 import { redisClient } from '../config/redis'; 
 
-const MATCH_TIMEOUT_SECONDS = 120;
+const MATCH_TIMEOUT_SECONDS = 125;
 
 export interface MatchTicket {
   userId: string;
