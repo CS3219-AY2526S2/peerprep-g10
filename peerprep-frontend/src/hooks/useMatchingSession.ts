@@ -21,8 +21,8 @@ interface UseMatchingSessionOptions {
 }
 
 interface StartMatchParams {
-  topic: string;
-  difficulty: string;
+  topic: string[];
+  difficulty: string[];
   token?: string | null;
 }
 
@@ -74,7 +74,7 @@ export function useMatchingSession({
       },
       query: {
         topic,
-        difficulty: difficulty.toLowerCase(),
+        difficulty: difficulty.map(d => d.toLowerCase()),
       },
     });
 
