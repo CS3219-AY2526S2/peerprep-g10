@@ -21,6 +21,7 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [topicFieldError, setTopicFieldError] = useState('');
   const [difficultyFieldError, setDifficultyFieldError] = useState('');
+  const [filterUnattempted, setFilterUnattempted] = useState(false);
 
   const router = useRouter();
   const { logout } = useAuth();
@@ -69,6 +70,7 @@ export default function UserDashboard() {
     startMatch({
       topic: selectedTopics,
       difficulty: selectedDifficulties,
+      filterUnattempted,
       token,
     });
   };
@@ -203,10 +205,23 @@ export default function UserDashboard() {
               </p>
             ) : <div className="mb-6"></div>}
 
+            <div className="flex items-center mb-6">
+              <input
+                type="checkbox"
+                id="filterUnattempted"
+                className="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-400 rounded-sm cursor-pointer"
+                checked={filterUnattempted}
+                onChange={(e) => setFilterUnattempted(e.target.checked)}
+              />
+              <label htmlFor="filterUnattempted" className="text-[15px] cursor-pointer text-gray-700">
+                Filter for unattempted questions
+              </label>
+            </div>
+
             <button
               onClick={findMatch}
               disabled={isMatching}
-              className="cursor-pointer mt-8 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="cursor-pointer mt-2 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-sm flex items-center justify-center gap-2 text-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Match Now <ArrowRight size={20} strokeWidth={2.5} />
             </button>
