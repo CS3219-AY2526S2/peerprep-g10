@@ -189,6 +189,178 @@ describe("PUT /questions/:id", () => {
   });
 });
 
+describe("POST /questions/random-unattempted", () => {
+  const endpoint = "/questions/random-unattempted";
+
+  function mockCollabService(userAQuestionIds: string[], userBQuestionIds: string[]) {
+    jest.spyOn(global, "fetch").mockImplementation((input) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("user-a")) {
+        return Promise.resolve(Response.json({ userId: "user-a", questionIds: userAQuestionIds }));
+      }
+      if (url.includes("user-b")) {
+        return Promise.resolve(Response.json({ userId: "user-b", questionIds: userBQuestionIds }));
+      }
+      return Promise.resolve(Response.json({ userId: "unknown", questionIds: [] }));
+    });
+  }
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("returns a matching unattempted question", async () => {
+    const created = await request(app).post("/questions").send(sampleQuestion);
+    mockCollabService([], []);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(created.body.id);
+    expect(res.body.title).toBe(sampleQuestion.title);
+  });
+
+  it("excludes questions attempted by user A", async () => {
+    const q1 = await request(app).post("/questions").send(sampleQuestion);
+    const q2 = await request(app).post("/questions").send({
+      ...sampleQuestion,
+      title: "Three Sum",
+      difficulty: "easy",
+    });
+    mockCollabService([String(q1.body.id)], []);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(q2.body.id);
+  });
+
+  it("excludes questions attempted by user B", async () => {
+    const q1 = await request(app).post("/questions").send(sampleQuestion);
+    const q2 = await request(app).post("/questions").send({
+      ...sampleQuestion,
+      title: "Three Sum",
+      difficulty: "easy",
+    });
+    mockCollabService([], [String(q1.body.id)]);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(q2.body.id);
+  });
+
+  it("returns null when all matching questions are attempted", async () => {
+    const q1 = await request(app).post("/questions").send(sampleQuestion);
+    mockCollabService([String(q1.body.id)], []);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toBeNull();
+  });
+
+  it("returns null when no questions match topics/difficulties", async () => {
+    await request(app).post("/questions").send(sampleQuestion);
+    mockCollabService([], []);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Nonexistent"],
+      difficulties: ["hard"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toBeNull();
+  });
+
+  it("filters by multiple difficulties", async () => {
+    await request(app).post("/questions").send(sampleQuestion); // easy
+    const q2 = await request(app).post("/questions").send({
+      ...sampleQuestion,
+      title: "Hard Problem",
+      difficulty: "hard",
+    });
+    mockCollabService([], []);
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["hard"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(q2.body.id);
+  });
+
+  it("returns 400 when required fields are missing", async () => {
+    const res = await request(app).post(endpoint).send({ userAId: "user-a" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it("returns 400 when topics is empty array", async () => {
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: [],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 502 when collab service is unavailable", async () => {
+    jest.spyOn(global, "fetch").mockRejectedValue(new Error("Connection refused"));
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toContain("unavailable");
+  });
+
+  it("returns 502 when collab service returns error status", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 500 }));
+
+    const res = await request(app).post(endpoint).send({
+      userAId: "user-a",
+      userBId: "user-b",
+      topics: ["Arrays"],
+      difficulties: ["easy"],
+    });
+
+    expect(res.status).toBe(502);
+  });
+});
+
 describe("DELETE /questions/:id", () => {
   it("deletes a question", async () => {
     const created = await request(app).post("/questions").send(sampleQuestion);
