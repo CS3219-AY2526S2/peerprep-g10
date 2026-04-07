@@ -40,18 +40,32 @@ async function startServer() {
       // Verify the JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
 
-      // Verify all required query fields are present
-      if (!query.topic || !query.difficulty) {
+      let topics: string[] = [];
+      let difficulties: string[] = [];
+
+      if (typeof query.topic === 'string') {
+        topics = query.topic.split(',').map((t: string) => t.trim());
+      } else if (Array.isArray(query.topic)) {
+        topics = query.topic as string[];
+      }
+
+      if (typeof query.difficulty === 'string') {
+        difficulties = query.difficulty.split(',').map((d: string) => d.trim());
+      } else if (Array.isArray(query.difficulty)) {
+        difficulties = query.difficulty as string[];
+      }
+
+      if (!topics.length || !difficulties.length) {
         return next(new Error("Connection error: Missing topic or difficulty"));
       }
 
       // Assign to socket.data
       socket.data.userId = String(decoded.userId);
-      socket.data.topic = query.topic;
-      socket.data.difficulty = query.difficulty;
+      socket.data.topic = topics;
+      socket.data.difficulty = difficulties;
 
       next();
-  
+
     } catch (error) {
       // JWT verification error
       console.error("Socket authentication failed:", error);
