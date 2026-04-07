@@ -8,6 +8,7 @@ export interface MatchTicket {
   topic: string[];
   difficulty: string[];
   joinedAt: number;
+  filterUnattempted: boolean;
 }
 
 class QueueService {
@@ -39,7 +40,7 @@ class QueueService {
   /**
    * Place user into the matching queue and creates a timeout ticket.
    */
-  public async addUserToMatchPool(userId: string, socketId: string, topics: string[], difficulties: string[]): Promise<void> {
+  public async addUserToMatchPool(userId: string, socketId: string, topics: string[], difficulties: string[], filterUnattempted: boolean = false): Promise<void> {
     const queueKeys = this.getQueueKeys(topics, difficulties);
     const ticketKey = this.getTicketKey(userId);
 
@@ -49,6 +50,7 @@ class QueueService {
       topic: topics,
       difficulty: difficulties,
       joinedAt: Date.now(),
+      filterUnattempted: filterUnattempted
     };
 
     // Use multi to execute operations at same time
