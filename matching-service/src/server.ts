@@ -59,10 +59,14 @@ async function startServer() {
         return next(new Error("Connection error: Missing topic or difficulty"));
       }
 
+      // Parse filterUnattempted flag
+      const filterUnattempted = query.filterUnattempted === 'true';
+
       // Assign to socket.data
       socket.data.userId = String(decoded.userId);
       socket.data.topic = topics;
       socket.data.difficulty = difficulties;
+      socket.data.filterUnattempted = filterUnattempted;
 
       next();
 
@@ -75,10 +79,16 @@ async function startServer() {
 
   // Handle SocketIO Connections
   io.on('connection', async (socket) => {
-    console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId})`);
+    console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId}, Filter unattempted: ${socket.data.filterUnattempted})`);
 
     // Add user to queue
-    await queueService.addUserToMatchPool(socket.data.userId, socket.id, socket.data.topic, socket.data.difficulty);
+    await queueService.addUserToMatchPool(
+      socket.data.userId, 
+      socket.id, 
+      socket.data.topic, 
+      socket.data.difficulty,
+      socket.data.filterUnattempted
+    );
     await matchingService.findMatch(io, socket.data.userId, socket.data.topic, socket.data.difficulty);
 
     socket.on('disconnect', () => {

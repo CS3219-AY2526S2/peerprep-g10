@@ -49,6 +49,37 @@ class QuestionServiceClient {
       throw new Error('Failed to fetch a matching question from the Question Service.');
     }
   }
+
+  /**
+   * Retrieves a random question matching the specified topic and difficulty that BOTH users have not attempted.
+   */
+  public async getRandomUnattemptedQuestion(userAId: string, userBId: string, topics: string[], difficulties: string[]): Promise<Question | null> {
+    try {
+      const response = await axios.post<Question | null>(`${QUESTION_SERVICE_URL}/questions/random-unattempted`, {
+        userAId,
+        userBId,
+        topics,
+        difficulties
+      });
+
+      if (response.data) {
+        console.log(`✅ [QuestionClient] Fetched unattempted random question: "${response.data.title}"`);
+      } else {
+        console.log(`⚠️ [QuestionClient] No unattempted question found for users ${userAId} and ${userBId}`);
+      }
+      
+      return response.data;
+      
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`❌ [QuestionClient] HTTP Error: ${error.response?.status}`, error.response?.data);
+      } else {
+        console.error(`❌ [QuestionClient] Unexpected error:`, error);
+      }
+      
+      throw new Error('Failed to fetch an unattempted matching question from the Question Service.');
+    }
+  }
 }
 
 export const QuestionClient = new QuestionServiceClient();
