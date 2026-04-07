@@ -10,12 +10,14 @@ jest.mock("../queue.service", () => ({
     getTicket: jest.fn(),
     removeUserFromQueue: jest.fn(),
     removeBothUserFromMatchPool: jest.fn(),
+    addUserToMatchPool: jest.fn(),
   },
 }));
 
 jest.mock("../../clients/question.client", () => ({
   QuestionClient: {
     getRandomQuestion: jest.fn(),
+    getRandomUnattemptedQuestion: jest.fn(),
   },
 }));
 
@@ -74,6 +76,7 @@ describe("MatchingService Unit Tests", () => {
         topic: ["Strings"],
         difficulty: ["Hard"],
         joinedAt: Date.now(),
+        filterUnattempted: false,
       };
 
       (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
@@ -91,9 +94,9 @@ describe("MatchingService Unit Tests", () => {
     it("should match with the oldest candidate first (wait time sorting)", async () => {
       (queueService.getCandidatesInQueue as jest.Mock).mockResolvedValue(["userA", "userB", "userC"]);
 
-      const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 1000 };
-      const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 2000 }; // newer
-      const ticketC: MatchTicket = { userId: "userC", socketId: "socketC", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 500 }; // oldest
+      const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 1000, filterUnattempted: false };
+      const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 2000, filterUnattempted: false }; // newer
+      const ticketC: MatchTicket = { userId: "userC", socketId: "socketC", topic: ["Arrays"], difficulty: ["Easy"], joinedAt: 500, filterUnattempted: false }; // oldest
 
       (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
         if (id === "userA") return Promise.resolve(ticketA);
@@ -124,8 +127,8 @@ describe("MatchingService Unit Tests", () => {
   describe("executeMatch", () => {
     const topic = "Arrays";
     const difficulty = "Easy";
-    const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: [topic], difficulty: [difficulty], joinedAt: 1000 };
-    const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: [topic], difficulty: [difficulty], joinedAt: 2000 };
+    const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: [topic], difficulty: [difficulty], joinedAt: 1000, filterUnattempted: false };
+    const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: [topic], difficulty: [difficulty], joinedAt: 2000, filterUnattempted: false };
 
     beforeEach(() => {
       (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
@@ -173,6 +176,59 @@ describe("MatchingService Unit Tests", () => {
         userId: "userB",
         partnerId: "userA"
       });
+    });
+
+    it("should fetch unattempted question if filterUnattempted is true for one user", async () => {
+      (queueService.getCandidatesInQueue as jest.Mock).mockResolvedValue(["userA", "userB"]);
+      (queueService.removeBothUserFromMatchPool as jest.Mock).mockResolvedValue(true);
+
+      const modifiedTicketA = { ...ticketA, filterUnattempted: true };
+      (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
+        if (id === "userA") return Promise.resolve(modifiedTicketA);
+        if (id === "userB") return Promise.resolve(ticketB);
+        return Promise.resolve(null);
+      });
+
+      const mockQuestion = { id: 2, title: "Unattempted Question", topics: [topic], difficulty: difficulty };
+      const mockSession = { id: "room123" };
+      (QuestionClient.getRandomUnattemptedQuestion as jest.Mock).mockResolvedValue(mockQuestion);
+      (CollabClient.createSession as jest.Mock).mockResolvedValue(mockSession);
+
+      await matchingService.findMatch(ioMock as Server, "userA", [topic], [difficulty]);
+
+      expect(QuestionClient.getRandomUnattemptedQuestion).toHaveBeenCalledWith("userA", "userB", [topic], [difficulty]);
+      expect(toMock).toHaveBeenCalledWith("socketA");
+      expect(toMock).toHaveBeenCalledWith("socketB");
+      expect(payloadA).toMatchObject({
+        roomId: "room123",
+        question: mockQuestion,
+        userId: "userA",
+        partnerId: "userB"
+      });
+    });
+
+    it("should put users back into queue if no question is found when filterUnattempted is used", async () => {
+      (queueService.getCandidatesInQueue as jest.Mock).mockResolvedValue(["userA", "userB"]);
+      (queueService.removeBothUserFromMatchPool as jest.Mock).mockResolvedValue(true);
+
+      const modifiedTicketB = { ...ticketB, filterUnattempted: true };
+      (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
+        if (id === "userA") return Promise.resolve(ticketA);
+        if (id === "userB") return Promise.resolve(modifiedTicketB);
+        return Promise.resolve(null);
+      });
+
+      (QuestionClient.getRandomUnattemptedQuestion as jest.Mock).mockResolvedValue(null);
+
+      await matchingService.findMatch(ioMock as Server, "userA", [topic], [difficulty]);
+
+      expect(QuestionClient.getRandomUnattemptedQuestion).toHaveBeenCalledWith("userA", "userB", [topic], [difficulty]);
+      
+      expect(queueService.addUserToMatchPool).toHaveBeenCalledWith("userA", "socketA", [topic], [difficulty], false, ticketA.joinedAt);
+      expect(queueService.addUserToMatchPool).toHaveBeenCalledWith("userB", "socketB", [topic], [difficulty], true, modifiedTicketB.joinedAt);
+      
+      expect(CollabClient.createSession).not.toHaveBeenCalled();
+      expect(emitMockA).not.toHaveBeenCalledWith("MATCH_FOUND", expect.anything());
     });
 
     it("should emit MATCH_ERROR and abort if external APIs fail", async () => { 

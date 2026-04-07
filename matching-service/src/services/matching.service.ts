@@ -75,11 +75,7 @@ class MatchingService {
 
     // Iteratively try to match with valid partners in case another concurrent request grabbed our first choice
     for (const partner of validPartners) {
-      // Pick random topic and difficulty from intersection
-      const randomTopic = partner.sharedTopics[Math.floor(Math.random() * partner.sharedTopics.length)];
-      const randomDifficulty = partner.sharedDifficulties[Math.floor(Math.random() * partner.sharedDifficulties.length)];
-
-      const isMatched = await this.executeMatch(io, userId, partner.ticket.userId, randomTopic as string, randomDifficulty as string);
+      const isMatched = await this.executeMatch(io, userId, partner.ticket.userId, partner.sharedTopics as string[], partner.sharedDifficulties as string[]);
       if (isMatched) {
         return true;
       }
@@ -91,17 +87,17 @@ class MatchingService {
   /**
    * Atomically removes both users from Redis and create a session.
    */
-  private async executeMatch(io: Server, userA: string, userB: string, matchedTopic: string, matchedDifficulty: string): Promise<boolean> {
+  private async executeMatch(io: Server, userA: string, userB: string, sharedTopics: string[], sharedDifficulties: string[]): Promise<boolean> {
     const ticketA = await queueService.getTicket(userA);
     const ticketB = await queueService.getTicket(userB);
 
     if (!ticketA || !ticketB) return false;
 
-    // Verify both users still have this topic and difficulty in their current tickets
-    if (
-      !ticketA.topic.includes(matchedTopic) || !ticketA.difficulty.includes(matchedDifficulty) ||
-      !ticketB.topic.includes(matchedTopic) || !ticketB.difficulty.includes(matchedDifficulty)
-    ) {
+    // Verify both users still have overlapping topics and difficulties
+    const currentSharedTopics = ticketA.topic.filter(t => ticketB.topic.includes(t));
+    const currentSharedDifficulties = ticketA.difficulty.filter(d => ticketB.difficulty.includes(d));
+
+    if (currentSharedTopics.length === 0 || currentSharedDifficulties.length === 0) {
       return false;
     }
 
@@ -111,12 +107,52 @@ class MatchingService {
       return false;
     }
 
+    let question: any = null;
+    let matchedTopic = '';
+    let matchedDifficulty = '';
+
+    try {
+      if (ticketA.filterUnattempted || ticketB.filterUnattempted) {
+        question = await QuestionClient.getRandomUnattemptedQuestion(userA, userB, currentSharedTopics, currentSharedDifficulties);
+        if (question) {
+          // Unattempted question API doesn't return the exact topic matched, so we pick the first overlapped topic of the question for session creation.
+          // Fallback to random if no intersection (shouldn't happen)
+          const qTopics = question.topics;
+          const intersectionTopic = currentSharedTopics.find(t => qTopics.includes(t));
+          matchedTopic = intersectionTopic || currentSharedTopics[Math.floor(Math.random() * currentSharedTopics.length)]!;
+          matchedDifficulty = question.difficulty;
+        }
+      } else {
+        matchedTopic = currentSharedTopics[Math.floor(Math.random() * currentSharedTopics.length)]!;
+        matchedDifficulty = currentSharedDifficulties[Math.floor(Math.random() * currentSharedDifficulties.length)]!;
+        question = await QuestionClient.getRandomQuestion(matchedTopic, matchedDifficulty);
+      }
+
+      if (!question) {
+        throw new Error('NO_SUITABLE_QUESTION');
+      }
+    } catch (error: any) {
+      if (error?.message === 'NO_SUITABLE_QUESTION' || error?.message?.includes('No questions found')) {
+        console.log(`[MATCH_SKIPPED] No suitable question found for ${userA} & ${userB}. Re-inserting to queue.`);
+        
+        // Re-insert both users with their original joinedAt to preserve TTL
+        await queueService.addUserToMatchPool(ticketA.userId, ticketA.socketId, ticketA.topic, ticketA.difficulty, ticketA.filterUnattempted, ticketA.joinedAt);
+        await queueService.addUserToMatchPool(ticketB.userId, ticketB.socketId, ticketB.topic, ticketB.difficulty, ticketB.filterUnattempted, ticketB.joinedAt);
+        return false;
+      }
+
+      console.log(`[MATCH_EXECUTION_ERROR] Failed to fetch question for ${userA} & ${userB}:`, error);
+
+      const errMsg = error instanceof Error ? error.message : 'Unable to get a question or create a session';
+
+      io.to(ticketA.socketId).emit('MATCH_ERROR', { message: errMsg });
+      io.to(ticketB.socketId).emit('MATCH_ERROR', { message: errMsg });
+      return false;
+    }
+
     console.log(`🎉 MATCH SUCCESS: ${userA} & ${userB} (Topic: ${matchedTopic}, Difficulty: ${matchedDifficulty})`);
 
     try {
-      // Fetch a random question from the Question Service
-      const question = await QuestionClient.getRandomQuestion(matchedTopic, matchedDifficulty);
-
       // Create a new session from the Collaboration Service
       const session = await CollabClient.createSession(userA, userB, question.id.toString());
 

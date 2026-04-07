@@ -40,7 +40,7 @@ class QueueService {
   /**
    * Place user into the matching queue and creates a timeout ticket.
    */
-  public async addUserToMatchPool(userId: string, socketId: string, topics: string[], difficulties: string[], filterUnattempted: boolean = false): Promise<void> {
+  public async addUserToMatchPool(userId: string, socketId: string, topics: string[], difficulties: string[], filterUnattempted: boolean = false, joinedAt: number = Date.now()): Promise<void> {
     const queueKeys = this.getQueueKeys(topics, difficulties);
     const ticketKey = this.getTicketKey(userId);
 
@@ -49,9 +49,19 @@ class QueueService {
       socketId,
       topic: topics,
       difficulty: difficulties,
-      joinedAt: Date.now(),
+      joinedAt: joinedAt,
       filterUnattempted: filterUnattempted
     };
+
+    // Calculate the remaining time left on the ticket
+    const elapsedSeconds = Math.floor((Date.now() - joinedAt) / 1000);
+    const remainingTimeSeconds = Math.max(0, MATCH_TIMEOUT_SECONDS - elapsedSeconds);
+
+    // If the TTL is already expired, skip re-insertion
+    if (remainingTimeSeconds === 0) {
+      console.log(`[QUEUE] Ticket for user ${userId} expired. Did not re-insert.`);
+      return;
+    }
 
     // Use multi to execute operations at same time
     const multi = redisClient.multi();
@@ -62,10 +72,10 @@ class QueueService {
     }
 
     // Create user matching ticket in Redis
-    multi.setEx(ticketKey, MATCH_TIMEOUT_SECONDS, JSON.stringify(ticket));      
+    multi.setEx(ticketKey, remainingTimeSeconds, JSON.stringify(ticket));      
 
     await multi.exec();
-    console.log(`[QUEUE] Added user ${userId} to ${queueKeys.length} queues`);
+    console.log(`[QUEUE] Added user ${userId} to ${queueKeys.length} queues with ${remainingTimeSeconds}s TTL`);
   }
 
   /**
