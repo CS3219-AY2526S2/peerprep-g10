@@ -5,9 +5,13 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white sm:items-start">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-            P
-          </div>
+          {/* Peerprep logo */}
+          <svg width="32" height="32" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="10" fill="#0F62FE"/>
+            <polyline points="10,24 19,14 19,34" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="38,24 29,14 29,34" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="21" y1="32" x2="27" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.5"/>
+          </svg>
           <span className="text-2xl font-bold tracking-tight text-zinc-900">PeerPrep</span>
         </div>
 

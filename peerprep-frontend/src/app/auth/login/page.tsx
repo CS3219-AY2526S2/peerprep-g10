@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     loginApi(email, password)
       .then(({ token, user }) => {
-        const role = login(token, user); // save to auth context
+        const role = login(token, user);
         router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
       })
       .catch((err) => setError(err.message))
@@ -34,13 +34,36 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-white">
       {/* LEFT PANEL */}
-      <div className="hidden lg:flex w-1/2 bg-gray-50 items-center justify-center border-r border-gray-100">
-        <div className="max-w-md text-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 shadow-lg shadow-blue-200" />
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">PeerPrep</h2>
-          <p className="text-gray-600 text-lg">
+      <div className="hidden lg:flex w-1/2 items-center justify-center relative overflow-hidden bg-gray-50">
+        {/* Center content */}
+        <div className="relative z-10 max-w-md text-center px-8">
+          {/* Logo mark */}
+          <div className="flex justify-center mb-10">
+            <svg width="96" height="96" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <rect width="48" height="48" rx="10" fill="#0F62FE"/>
+              <polyline points="10,24 19,14 19,34" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="38,24 29,14 29,34" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="21" y1="32" x2="27" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.5"/>
+            </svg>
+          </div>
+          <h2 className="text-5xl font-bold text-gray-900 mb-6 tracking-tight">PeerPrep</h2>
+          <p className="text-gray-600 text-xl leading-relaxed mb-16">
             Master the technical interview with peers around the globe.
           </p>
+
+          {/* Feature pills */}
+          <div className="flex flex-col gap-4 text-left">
+            {[
+              { icon: '⟨/⟩', label: 'Live coding interviews' },
+              { icon: '⊙', label: 'Real interview questions' },
+              { icon: '↗', label: 'Track your progress' },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex items-center gap-4 px-6 py-4 rounded-xl bg-white border border-gray-200 shadow-sm">
+                <span className="text-blue-600 font-mono text-lg w-10 text-center">{icon}</span>
+                <span className="text-gray-700 text-base font-medium">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
