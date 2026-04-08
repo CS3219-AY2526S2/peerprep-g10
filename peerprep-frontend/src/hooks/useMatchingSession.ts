@@ -69,8 +69,8 @@ export function useMatchingSession({
       return;
     }
 
-    const socket = io(API_BASE.MATCHING_SERIVCE, {
-      path: "/api/matching/socket.io",
+    const socket = io("/", {
+      path: `${API_BASE.MATCHING_SERIVCE}/socket.io`,
       auth: {
         token,
       },
