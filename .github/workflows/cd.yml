@@ -196,6 +196,10 @@ jobs:
             --format='value(host)')
           echo "db_ip=$DB_IP"           >> $GITHUB_OUTPUT
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
+          
+          # Export to GITHUB_ENV so bash can evaluate them safely in the next string interpolation step
+          echo "DB_PRIVATE_IP=$DB_IP"   >> $GITHUB_ENV
+          echo "REDIS_HOST=$REDIS_HOST" >> $GITHUB_ENV
 
       - name: Resolve stable Cloud Run URLs
         if: matrix.changed == 'true'

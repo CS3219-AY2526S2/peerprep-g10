@@ -28,11 +28,12 @@ resource "google_service_account" "cicd_sa" {
 
 resource "google_project_iam_member" "cicd_roles" {
   for_each = toset([
-    "roles/run.developer",
+    "roles/run.admin",
     "roles/artifactregistry.writer",
     "roles/iam.serviceAccountUser",
     "roles/cloudsql.viewer",
-    "roles/redis.viewer"
+    "roles/redis.viewer",
+    "roles/secretmanager.secretAccessor"
   ])
 
   project = var.project_id

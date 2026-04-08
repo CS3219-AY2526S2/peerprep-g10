@@ -29,4 +29,4 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'User Service is running perfectly.' });
 });
 
-export default app; // We export this so server.ts can turn it on
+export default app;
