@@ -13,6 +13,10 @@ env:
   REGION:     ${{ secrets.GCP_REGION }}
   REGISTRY:   ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/peerprep
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   # ── Detect which services changed (same filter as CI) ─────────────────────
   changes:
