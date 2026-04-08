@@ -9,11 +9,11 @@ describe("QueueService Integration Logic", () => {
   beforeAll(async () => {
     // Start Redis container
     redisContainer = await new RedisContainer("redis:alpine").start();
-    
+
     // Override env var before modules are required
     process.env.REDIS_URL = redisContainer.getConnectionUrl();
 
-    // Now dynamically require the modules so they use the new REDIS_URL
+    // Dynamically require the modules so they use the new REDIS_URL        
     const redisModule = require('../../config/redis');
     redisClient = redisModule.redisClient;
     await redisModule.connectRedis();
@@ -45,16 +45,16 @@ describe("QueueService Integration Logic", () => {
   });
 
   describe("addUserToMatchPool & getTicket", () => {
-    it("should add a user ticket and add them to the queue set", async () => {
-      await queueService.addUserToMatchPool("user1", "socket1", "Arrays", "Easy");
+    it("should add a user ticket and add them to the queue set", async () => {  
+      await queueService.addUserToMatchPool("user1", "socket1", ["Arrays"], ["Easy"]);
 
       // Check ticket
       const ticket = await queueService.getTicket("user1");
       expect(ticket).not.toBeNull();
       expect(ticket.userId).toBe("user1");
       expect(ticket.socketId).toBe("socket1");
-      expect(ticket.topic).toBe("Arrays");
-      expect(ticket.difficulty).toBe("Easy");
+      expect(ticket.topic).toEqual(["Arrays"]);
+      expect(ticket.difficulty).toEqual(["Easy"]);
 
       // Check queue members
       const candidates = await queueService.getCandidatesInQueue("Arrays", "Easy");
@@ -63,9 +63,9 @@ describe("QueueService Integration Logic", () => {
   });
 
   describe("removeUserFromMatchPool", () => {
-    it("should remove user from queue and delete their ticket", async () => {
-      await queueService.addUserToMatchPool("user1", "socket1", "Arrays", "Easy");
-      
+    it("should remove user from queue and delete their ticket", async () => {   
+      await queueService.addUserToMatchPool("user1", "socket1", ["Arrays"], ["Easy"]);
+
       let ticket = await queueService.getTicket("user1");
       expect(ticket).not.toBeNull();
 
@@ -87,11 +87,11 @@ describe("QueueService Integration Logic", () => {
 
   describe("removeBothUserFromMatchPool", () => {
     it("should successfully remove both users if they are in the queue", async () => {
-      await queueService.addUserToMatchPool("userA", "socketA", "Arrays", "Easy");
-      await queueService.addUserToMatchPool("userB", "socketB", "Arrays", "Easy");
+      await queueService.addUserToMatchPool("userA", "socketA", ["Arrays"], ["Easy"]);
+      await queueService.addUserToMatchPool("userB", "socketB", ["Arrays", "Hash Table"], ["Easy", "Medium"]);
 
-      const ticketA: MatchTicket = await queueService.getTicket("userA");
-      const ticketB: MatchTicket = await queueService.getTicket("userB");
+      const ticketA: MatchTicket = await queueService.getTicket("userA");       
+      const ticketB: MatchTicket = await queueService.getTicket("userB");       
 
       const result = await queueService.removeBothUserFromMatchPool(ticketA, ticketB);
       expect(result).toBe(true);
@@ -102,41 +102,48 @@ describe("QueueService Integration Logic", () => {
       expect(aAfter).toBeNull();
       expect(bAfter).toBeNull();
 
-      const candidates = await queueService.getCandidatesInQueue("Arrays", "Easy");
-      expect(candidates).not.toContain("userA");
-      expect(candidates).not.toContain("userB");
+      const candidatesA = await queueService.getCandidatesInQueue("Arrays", "Easy");
+      expect(candidatesA).not.toContain("userA");
+      expect(candidatesA).not.toContain("userB");
+
+      const candidatesB = await queueService.getCandidatesInQueue("Hash Table", "Medium");
+      expect(candidatesB).not.toContain("userB");
     });
 
     it("should return false and abort if userA is no longer in the queue (simulated race condition)", async () => {
-      await queueService.addUserToMatchPool("userA", "socketA", "Arrays", "Easy");
-      await queueService.addUserToMatchPool("userB", "socketB", "Arrays", "Easy");
+      await queueService.addUserToMatchPool("userA", "socketA", ["Arrays"], ["Easy"]);
+      await queueService.addUserToMatchPool("userB", "socketB", ["Arrays"], ["Easy"]);
 
-      const ticketA: MatchTicket = await queueService.getTicket("userA");
-      const ticketB: MatchTicket = await queueService.getTicket("userB");
+      const ticketA: MatchTicket = await queueService.getTicket("userA");       
+      const ticketB: MatchTicket = await queueService.getTicket("userB");       
 
-      // Simulate thread 2 removing userA right before thread 1 matches them
+      // Simulate thread 2 removing userA right before thread 1 matches them    
       await queueService.removeUserFromMatchPool("userA");
 
       // Lua script should abort
       const result = await queueService.removeBothUserFromMatchPool(ticketA, ticketB);
       expect(result).toBe(false);
 
-      // userB should still be in the ticket system because transaction aborted
+      // userB should still be in the ticket system because transaction aborted 
       const bAfter = await queueService.getTicket("userB");
       expect(bAfter).not.toBeNull();
-      
+
       const candidates = await queueService.getCandidatesInQueue("Arrays", "Easy");
       expect(candidates).toContain("userB");
     });
   });
 
   describe("removeUserFromQueue", () => {
-    it("should remove user from the specified queue only", async () => {
-       await queueService.addUserToMatchPool("user1", "socket1", "Arrays", "Easy");
-       await queueService.removeUserFromQueue("user1", "Arrays", "Easy");
-       const candidates = await queueService.getCandidatesInQueue("Arrays", "Easy");
-       expect(candidates).not.toContain("user1");
+    it("should remove user from the specified queue only", async () => {        
+       await queueService.addUserToMatchPool("user1", "socket1", ["Arrays", "Strings"], ["Easy"]);
+       await queueService.removeUserFromQueue("user1", "Arrays", "Easy");       
        
+       const candidatesRemoved = await queueService.getCandidatesInQueue("Arrays", "Easy");
+       expect(candidatesRemoved).not.toContain("user1");
+
+       const candidatesRemaining = await queueService.getCandidatesInQueue("Strings", "Easy");
+       expect(candidatesRemaining).toContain("user1");
+
        // ticket should not be deleted by removeUserFromQueue
        const ticket = await queueService.getTicket("user1");
        expect(ticket).not.toBeNull();

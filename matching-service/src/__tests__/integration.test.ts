@@ -46,8 +46,8 @@ describe("Matching Service Integration Tests", () => {
   
         const decoded = jwt.verify(token as string, process.env.JWT_SECRET as string) as { userId: number };
         socket.data.userId = String(decoded.userId);
-        socket.data.topic = query.topic;
-        socket.data.difficulty = query.difficulty;
+        socket.data.topic = [query.topic as string];
+        socket.data.difficulty = [query.difficulty as string];
   
         next();
       } catch (error) {
@@ -56,10 +56,10 @@ describe("Matching Service Integration Tests", () => {
     });
 
     io.on("connection", async (socket) => {
-      await queueService.addUserToMatchPool(socket.data.userId, socket.id, socket.data.topic as string, socket.data.difficulty as string);
+      await queueService.addUserToMatchPool(socket.data.userId, socket.id, socket.data.topic as string[], socket.data.difficulty as string[]);
       
       // Delay slightly to ensure both clients insert into pool or can resolve accurately if joining simultaneously
-      await matchingService.findMatch(io, socket.data.userId, socket.data.topic as string, socket.data.difficulty as string);
+      await matchingService.findMatch(io, socket.data.userId, socket.data.topic as string[], socket.data.difficulty as string[]);
 
       socket.on("disconnect", () => {
         queueService.removeUserFromMatchPool(socket.data.userId);

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS attempts (
   user_id TEXT NOT NULL,
   partner_id TEXT,
   question_id TEXT NOT NULL,
+  question_snapshot JSONB,
   code TEXT,
   started_at TIMESTAMP NOT NULL,
   ended_at TIMESTAMP,

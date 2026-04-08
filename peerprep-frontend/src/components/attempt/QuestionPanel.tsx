@@ -1,10 +1,9 @@
 'use client';
 
-import { Question } from '@/src/services/types';
-import Image from 'next/image';
+import { QuestionSnapshot } from '@/src/services/attempt/types';
 
 interface QuestionPanelProps {
-  question: Question;
+  question: QuestionSnapshot;
 }
 
 export default function QuestionPanel({ question }: QuestionPanelProps) {
@@ -29,22 +28,6 @@ export default function QuestionPanel({ question }: QuestionPanelProps) {
           <pre className="rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed text-zinc-700 overflow-x-auto whitespace-pre-wrap">
             {question.examples}
           </pre>
-        </div>
-      )}
-
-      {/* Image */}
-      {question.image_url && (
-        <div>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-800">Images</h3>
-          <div className="rounded-lg border border-zinc-200 overflow-hidden">
-            <Image
-              src={question.image_url}
-              alt={question.title}
-              width={256}
-              height={256}
-              className="w-full object-cover"
-            />
-          </div>
         </div>
       )}
     </div>
