@@ -84,7 +84,7 @@ jobs:
             changed: ${{ needs.changes.outputs.collaboration }}
           - service: peerprep-frontend
             name:    frontend
-            changed: true
+            changed: ${{ needs.changes.outputs.frontend }}
 
     steps:
       - uses: actions/checkout@v4
@@ -177,7 +177,7 @@ jobs:
           - service: peerprep-frontend
             name:    frontend
             port:    3000
-            changed: true
+            changed: ${{ needs.changes.outputs.frontend }}
             env_vars: >-
               NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab,
               NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching,
