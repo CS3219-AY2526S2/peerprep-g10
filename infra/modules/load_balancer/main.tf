@@ -160,21 +160,41 @@ resource "google_compute_url_map" "url_map" {
     path_rule {
       paths   = ["/api/user", "/api/user/*"]
       service = google_compute_backend_service.services["user"].id
+      route_action {
+        url_rewrite {
+          path_prefix_rewrite = "/"
+        }
+      }
     }
 
     path_rule {
       paths   = ["/api/question", "/api/question/*"]
       service = google_compute_backend_service.services["question"].id
+      route_action {
+        url_rewrite {
+          path_prefix_rewrite = "/"
+        }
+      }
     }
 
     path_rule {
       paths   = ["/api/matching", "/api/matching/*"]
       service = google_compute_backend_service.services["matching"].id
+      route_action {
+        url_rewrite {
+          path_prefix_rewrite = "/"
+        }
+      }
     }
 
     path_rule {
       paths   = ["/api/collab", "/api/collab/*"]
       service = google_compute_backend_service.services["collaboration"].id
+      route_action {
+        url_rewrite {
+          path_prefix_rewrite = "/"
+        }
+      }
     }
   }
 }
