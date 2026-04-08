@@ -84,7 +84,7 @@ jobs:
             changed: ${{ needs.changes.outputs.collaboration }}
           - service: peerprep-frontend
             name:    frontend
-            changed: ${{ needs.changes.outputs.frontend }}
+            changed: true
 
     steps:
       - uses: actions/checkout@v4
@@ -108,9 +108,18 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:${{ github.sha }}
         run: |
+          BUILD_ARGS=""
+          if [ "${{ matrix.name }}" = "frontend" ]; then
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab \
+                        --build-arg NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching \
+                        --build-arg NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question \
+                        --build-arg NEXT_PUBLIC_USER_SERVICE_URL=/api/user"
+          fi
+          
           docker build \
             --cache-from ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
+            $BUILD_ARGS \
             -t $IMAGE \
             -t ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:latest \
             ./${{ matrix.service }}
@@ -168,7 +177,7 @@ jobs:
           - service: peerprep-frontend
             name:    frontend
             port:    3000
-            changed: ${{ needs.changes.outputs.frontend }}
+            changed: true
             env_vars: >-
               NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab,
               NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching,
