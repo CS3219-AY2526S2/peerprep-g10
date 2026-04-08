@@ -32,7 +32,8 @@ resource "google_project_iam_member" "cicd_roles" {
     "roles/artifactregistry.writer",
     "roles/iam.serviceAccountUser",
     "roles/cloudsql.viewer",
-    "roles/redis.viewer"
+    "roles/redis.viewer",
+    "roles/secretmanager.secretAccessor"
   ])
 
   project = var.project_id
