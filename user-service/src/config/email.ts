@@ -1,16 +1,13 @@
 import { Resend } from 'resend';
 
 const FROM_ADDRESS = 'PeerPrep <noreply@peerprep.site>';
-
-// Builds the email verification URL from the provided token
-const buildVerificationUrl = (token: string): string => {
-  return `${process.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
-};
+const SERVER_PATH = process.env.SERVER_IP;
+const FRONTEND_PATH = SERVER_PATH != null ? `https://${SERVER_PATH}` : process.env.FRONTEND_URL?.replace(/\/$/, '') ?? 'https://localhost';
 
 // Sends an email verification link to a newly registered user
 export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
+  const verificationUrl = `${FRONTEND_PATH}/auth/verify-email?token=${encodeURIComponent(token)}`;
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const verificationUrl = buildVerificationUrl(token);
 
   await resend.emails.send({
     from: FROM_ADDRESS,
@@ -35,8 +32,8 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
 
 // Sends a verification link to confirm an email address change
 export const sendEmailChangeVerification = async (newEmail: string, token: string): Promise<void> => {
+  const verificationUrl = `${FRONTEND_PATH}/auth/verify-email?token=${encodeURIComponent(token)}`;
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const verificationUrl = buildVerificationUrl(token);
 
   await resend.emails.send({
     from: FROM_ADDRESS,

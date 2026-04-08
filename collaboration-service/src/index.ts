@@ -16,6 +16,6 @@ const io = new SocketIOServer(server, {
 
 registerRealtime(io);
 
-server.listen(port, () => {
-  console.log(`[server]: Collaboration Service is running at http://localhost:${port}`);
+server.listen(Number(port), "0.0.0.0", () => {
+  console.log(`[server]: Collaboration Service is running on port ${port}`);
 });

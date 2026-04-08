@@ -6,12 +6,13 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
 import { Navbar } from "@/src/components/navbar/Navbar";
+import VoiceChat from "@/src/components/collaboration/VoiceChat";
 import { API_BASE } from "@/src/constant/api";
 import { saveAttempt } from '@/src/services/attempt/attemptApi';
 import { ROUTES } from '@/src/constant/route';
 import Notification, { NotificationProps } from '@/src/components/Notification';
 
-const BACKEND_URL = API_BASE.COLLAB_SERVICE;
+const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "/api/collab";
 
 type ChatMessage = {
   id?: string;
@@ -73,7 +74,7 @@ export default function RoomPage() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  const [socket] = useState(() => io(BACKEND_URL));
+  const [socket] = useState(() => io("/", { path: "/api/collab/socket.io",}));
 
   // Add ref to track current code without re-renders
   const currentCodeRef = useRef<string>('');
@@ -512,7 +513,7 @@ export default function RoomPage() {
 
         <div className={styles.footerBar}>
           <div className={styles.footerLeft}>
-            <button className={styles.iconButton}>🎤</button>
+            {socket && roomId && userId && (<VoiceChat socket={socket} roomId={roomId} userId={userId} />)}
           </div>
 
           <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>

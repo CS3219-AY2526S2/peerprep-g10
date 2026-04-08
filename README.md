@@ -117,6 +117,48 @@ docker compose up --build collaboration-service
 
 For dockerized collaboration-service, `docker-compose.yml` overrides network-dependent values so container-to-container communication works correctly.
 
+#### 5.3 Create Collaboration Service room manually
+If Collaboration Service is run independently, you may need to request a collaboration service room manually. The question service needs to be run for collaboration service to create a room as the collaboration service needs to retrieve a question in the room creation process. Afterwards you can create a room by running the following commands:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://localhost:3001/rooms" -ContentType "application/json" -Body (@{questionId=351;user1Id="user1";user2Id="user2"} | ConvertTo-Json)
+```
+
+or 
+
+```powershell
+ curl.exe -X POST "http://localhost:3001/rooms" -H "Content-Type: application/json" --data-raw '{\"questionId\":351,\"user1Id\":\"user1\",\"user2Id\":\"user2\"}'
+```
+
+These commands should provide you with the roomId as part of the response. After running the frontend you can use the roomId to access the room at http://localhost:3000/collaboration/[roomId]?user=user1
+
+and 
+
+http://localhost:3000/collaboration/[roomId]?user=user2
+
+#### 5.4 NGINX reverse proxy set up for cross machine voice call functionality
+To enable voice call functionality the following set up steps needs to be completed:
+
+Linux and MacOS:
+
+```bash or Z-shell
+mkcert -install
+mkdir -p nginx/certs
+mkcert -cert-file nginx/certs/cert.pem -key-file nginx/certs/key.pem localhost 127.0.0.1 ::1 <your_lan_ip>
+docker compose up -d --build
+```
+
+Windows:
+
+```powershell
+mkcert -install
+mkdir nginx\certs
+mkcert -cert-file nginx\certs\cert.pem -key-file nginx\certs\key.pem localhost 127.0.0.1 ::1 <their_lan_ip>
+docker compose up -d --build
+```
+
+Do note keytool error while running mkcert -install can be safely ignored
+
 #### 6. Frontend Set Up
 ```bash
 cd peerprep-frontend
@@ -128,7 +170,7 @@ npm run dev        # starts on port 3000
 
 #### Option 1: All services via Docker (recommended)
 1. Start all services: `docker compose up -d --build`
-2. Open http://localhost:3000
+2. Open https://localhost
 
 #### Option 2: Services locally
 1. Start databases: `docker compose up -d question-db user-db collaboration-db redis`
