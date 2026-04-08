@@ -129,7 +129,7 @@ jobs:
             changed: ${{ needs.changes.outputs.question }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service,
-              FRONTEND_URL=https://${{ secrets.DOMAIN }}
+              FRONTEND_URL=https://__DOMAIN__
 
           - service: user-service
             name:    user
@@ -137,7 +137,7 @@ jobs:
             changed: ${{ needs.changes.outputs.user }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service,
-              FRONTEND_URL=https://${{ secrets.DOMAIN }}
+              FRONTEND_URL=https://__DOMAIN__
 
           - service: collaboration-service
             name:    collaboration
@@ -147,7 +147,7 @@ jobs:
               DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep,
               QUESTION_SERVICE_URL=__QUESTION_URL__,
               USER_SERVICE_URL=__USER_URL__,
-              FRONTEND_URL=https://${{ secrets.DOMAIN }}
+              FRONTEND_URL=https://__DOMAIN__
 
           - service: matching-service
             name:    matching
@@ -157,7 +157,7 @@ jobs:
               REDIS_URL=redis://$REDIS_HOST:6379,
               QUESTION_SERVICE_URL=__QUESTION_URL__,
               COLLAB_SERVICE_URL=__COLLAB_URL__,
-              FRONTEND_URL=https://${{ secrets.DOMAIN }}
+              FRONTEND_URL=https://__DOMAIN__
 
           - service: peerprep-frontend
             name:    frontend
@@ -200,6 +200,7 @@ jobs:
           C_URL=$(gcloud run services describe peerprep-collaboration --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/collab")
           
           ENV_VARS="${{ matrix.env_vars }}"
+          ENV_VARS="${ENV_VARS//__DOMAIN__/${{ secrets.DOMAIN }}}"
           ENV_VARS="${ENV_VARS//__QUESTION_URL__/$Q_URL}"
           ENV_VARS="${ENV_VARS//__USER_URL__/$U_URL}"
           ENV_VARS="${ENV_VARS//__COLLAB_URL__/$C_URL}"
