@@ -8,6 +8,18 @@ dist/
 cert.pem
 key.pem
 
+# Local .terraform directories
+**/.terraform/*
+.terraform/
+.terraform.*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# terraform variable file
+terraform.tfvars
+
 # Environment variables
 .env
 .env.local
