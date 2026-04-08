@@ -39,16 +39,16 @@ export default function ForbiddenPage() {
       <h1 className="mt-6 text-6xl font-bold text-[#0F62FE]">403</h1>
       <h2 className="mt-2 text-xl font-semibold text-zinc-800">Access Denied</h2>
       <p className="mt-2 text-sm text-zinc-500 text-center max-w-xs">
-        You don't have permission to view this page. Contact an administrator if you think this is a mistake.
+        You don&apos;t have permission to view this page. Contact an administrator if you think this is a mistake.
       </p>
 
       <div className="mt-8">
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.back()}
           style={{ background: '#0F62FE' }}
           className="px-4 py-2 text-sm rounded-lg text-white hover:opacity-90 transition-opacity"
         >
-          Go home
+          Go back
         </button>
       </div>
     </div>
