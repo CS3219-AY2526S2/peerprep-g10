@@ -133,7 +133,8 @@ jobs:
             changed: ${{ needs.changes.outputs.question }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service,
-              FRONTEND_URL=https://__DOMAIN__
+              FRONTEND_URL=https://__DOMAIN__,
+              COLLABORATION_SERVICE_URL=__COLLAB_URL__
 
           - service: user-service
             name:    user
@@ -141,7 +142,8 @@ jobs:
             changed: ${{ needs.changes.outputs.user }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service,
-              FRONTEND_URL=https://__DOMAIN__
+              FRONTEND_URL=https://__DOMAIN__,
+              GCS_BUCKET_URL=https://storage.googleapis.com/peerprep/avatars
 
           - service: collaboration-service
             name:    collaboration
@@ -231,6 +233,8 @@ jobs:
           env_vars: ${{ env.RESOLVED_ENV_VARS }}
           secrets: |
             JWT_SECRET=peerprep-jwt-secret:latest
+            SERVICE_SECRET_KEY=peerprep-service-secret:latest
+            RESEND_API_KEY=peerprep-resend-key:latest
 
   # ── Post-deploy smoke test ─────────────────────────────────────────────────
   smoke-test:
