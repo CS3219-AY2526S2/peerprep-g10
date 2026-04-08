@@ -1,6 +1,6 @@
 # 👤 PeerPrep — User Service
 
-Handles user registration, authentication, profile management, and admin operations for the PeerPrep platform.
+Handles user registration, authentication, profile management, and admin operations for PeerPrep platform.
 
 ---
 

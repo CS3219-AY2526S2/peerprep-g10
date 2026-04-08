@@ -368,7 +368,7 @@ describe("DELETE /questions/:id", () => {
     const res = await request(app).delete(`/questions/${created.body.id}`);
     expect(res.status).toBe(200);
 
-    // Verify it's gone
+    // Verify that it's gone
     const check = await request(app).get(`/questions/${created.body.id}`);
     expect(check.status).toBe(404);
   });
