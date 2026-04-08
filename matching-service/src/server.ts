@@ -77,7 +77,7 @@ async function startServer() {
     }
   });
 
-  // Handle SocketIO Connections
+  // Handle SocketIO Connection
   io.on('connection', async (socket) => {
     console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId}, Filter unattempted: ${socket.data.filterUnattempted})`);
 
