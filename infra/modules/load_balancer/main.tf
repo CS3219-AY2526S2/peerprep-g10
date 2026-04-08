@@ -52,25 +52,25 @@ resource "google_compute_security_policy" "armor" {
   name = "peerprep-armor-policy"
 
   rule {
-    action   = "deny(403)"
+    action   = "allow"
     priority = 1000
     match {
       expr {
         expression = "evaluatePreconfiguredExpr('xss-stable')"
       }
     }
-    description = "Block XSS"
+    description = "Audit XSS"
   }
 
   rule {
-    action   = "deny(403)"
+    action   = "allow"
     priority = 1001
     match {
       expr {
         expression = "evaluatePreconfiguredExpr('sqli-stable')"
       }
     }
-    description = "Block SQLi"
+    description = "Audit SQLi"
   }
 
   rule {
