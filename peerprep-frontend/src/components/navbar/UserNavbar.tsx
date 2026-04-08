@@ -12,7 +12,7 @@ export const UserNavbar = () => {
     <div className="flex items-center gap-2">
       <Link
         href={ROUTES.USER_PROFILE}
-        className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white rounded-lg active:scale-95"
+        className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-900 rounded-lg active:scale-95"
       >
         {user?.profile_icon ? (
           <Image
@@ -31,7 +31,7 @@ export const UserNavbar = () => {
 
       <button
         onClick={() => logout()}
-        className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-lg active:scale-95 outline-none"
+        className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 transition-all duration-200 hover:bg-red-50 hover:text-red-600 rounded-lg active:scale-95 outline-none"
       >
         <LogOut size={18} className="transition-transform group-hover:-translate-x-1" />
         <span>Logout</span>

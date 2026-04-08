@@ -1,5 +1,3 @@
-import { Question } from '@/src/services/types';
-
 export type QuestionSnapshot = {
   id: string;
   title: string;

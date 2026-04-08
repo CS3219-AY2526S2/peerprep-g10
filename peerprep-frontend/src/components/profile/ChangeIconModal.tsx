@@ -47,18 +47,18 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-zinc-800 rounded-2xl p-6 w-[500px] shadow-lg">
+      <div className="bg-white rounded-2xl p-6 w-[500px] shadow-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Choose Avatar</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">Choose Avatar</h2>
           <X
-            className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+            className="cursor-pointer text-zinc-500 hover:text-zinc-900"
             onClick={onClose}
           />
         </div>
 
         <div className="grid grid-cols-5 gap-4 mb-6">
           {avatarOptions.length === 0 ? (
-            <p className="text-sm text-zinc-400 dark:text-zinc-500 col-span-5">Loading avatars...</p>
+            <p className="text-sm text-zinc-400 col-span-5">Loading avatars...</p>
           ) : (
             avatarOptions.map(({ key, url }) => (
               <div
@@ -67,7 +67,7 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
                 className={`cursor-pointer rounded-full border-2 p-1 transition-all ${
                   selected === url
                     ? 'border-blue-500'
-                    : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'
+                    : 'border-transparent hover:border-zinc-300'
                 }`}
               >
                 <Image src={url} alt="Profile avatar" width={256} height={256} className="w-full h-full rounded-full object-cover" />
@@ -76,12 +76,12 @@ export default function ChangeIconModal({ isOpen, onClose, currentIcon, onSucces
           )}
         </div>
 
-        {error && <p className="text-red-500 dark:text-red-400 text-sm mb-2">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg"
+            className="px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg"
           >
             Cancel
           </button>

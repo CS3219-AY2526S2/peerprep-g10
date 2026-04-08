@@ -38,7 +38,7 @@ export default function UserTable({ users, onBan, onDelete, currentUserId }: Use
                   <div className="w-8 h-8 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {user.profile_icon
                       ? <Image src={user.profile_icon} alt={user.username} width={256} height={256} className="w-full h-full object-cover" />
-                      : <UserIcon className="w-8 h-8 text-gray-400 dark:text-zinc-500" />
+                      : <UserIcon className="w-8 h-8 text-gray-400" />
                     }
                   </div>
                   <span className="truncate max-w-xs">{user.username}</span>

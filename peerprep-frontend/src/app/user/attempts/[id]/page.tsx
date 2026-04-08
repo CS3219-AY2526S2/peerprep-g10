@@ -28,10 +28,10 @@ export default function Page() {
   if (error || !attempt) return <div className="p-10 text-sm text-red-500">Failed to load attempt.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-10">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-zinc-900">
             Question Attempt Details
           </h1>
           <button

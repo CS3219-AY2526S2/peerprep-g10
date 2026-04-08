@@ -33,25 +33,25 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
       .finally(() => setSaving(false));
   };
 
-  const inputClass = `border dark:border-zinc-600 p-3 w-full rounded-xl
-    bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white
-    placeholder:text-gray-400 dark:placeholder:text-zinc-500
+  const inputClass = `border p-3 w-full rounded-xl
+    bg-white text-zinc-900
+    placeholder:text-gray-400
     focus:ring-2 focus:ring-blue-500 outline-none transition-all`;
 
-  const labelClass = "text-xs font-semibold text-gray-500 dark:text-zinc-400 ml-1 uppercase";
+  const labelClass = "text-xs font-semibold text-gray-500 ml-1 uppercase";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-zinc-800 rounded-3xl p-10 w-full max-w-[500px] relative shadow-2xl">
-        <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
+      <div className="bg-white rounded-3xl p-10 w-full max-w-[500px] relative shadow-2xl">
+        <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-black transition-colors">
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold mb-2 text-zinc-900 dark:text-white">Edit Profile</h2>
-        <p className="text-gray-500 dark:text-zinc-400 mb-6 text-sm">Update your account information below.</p>
+        <h2 className="text-2xl font-bold mb-2 text-zinc-900">Edit Profile</h2>
+        <p className="text-gray-500 mb-6 text-sm">Update your account information below.</p>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl mb-4 text-sm border border-red-100 dark:border-red-800">
+          <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm border border-red-100">
             {error}
           </div>
         )}
@@ -94,7 +94,7 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 bottom-3 text-gray-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400"
+                className="absolute right-4 bottom-3 text-gray-400 hover:text-blue-600"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -109,7 +109,7 @@ export default function EditProfileModal({ isOpen, onClose, userEmail, username,
           >
             {saving ? 'Verifying & Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={onClose} className="w-full text-gray-500 dark:text-zinc-400 text-sm font-medium hover:underline">
+          <button type="button" onClick={onClose} className="w-full text-gray-500 text-sm font-medium hover:underline">
             Cancel
           </button>
         </form>

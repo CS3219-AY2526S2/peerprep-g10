@@ -16,7 +16,7 @@ export const Input = ({ label, id, type = "text", isPassword = false, className 
     <div className="w-full">
       <label
         htmlFor={id}
-        className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2"
+        className="block text-sm font-semibold text-gray-700 mb-2"
       >
         {label}
       </label>
@@ -25,12 +25,12 @@ export const Input = ({ label, id, type = "text", isPassword = false, className 
           {...props}
           id={id}
           type={inputType}
-          className={`w-full p-4 border border-gray-200 dark:border-zinc-700 rounded-xl 
-            bg-gray-50 dark:bg-zinc-800 
-            text-gray-900 dark:text-white
-            placeholder:text-gray-400 dark:placeholder:text-zinc-500
-            focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 
-            focus:border-blue-400 dark:focus:border-blue-500 
+          className={`w-full p-4 border border-gray-200 rounded-xl 
+            bg-gray-50 
+            text-gray-900
+            placeholder:text-gray-400
+            focus:ring-2 focus:ring-blue-100 
+            focus:border-blue-400 
             outline-none transition-all
             ${className}`}
         />
@@ -38,7 +38,7 @@ export const Input = ({ label, id, type = "text", isPassword = false, className 
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600"
           >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
