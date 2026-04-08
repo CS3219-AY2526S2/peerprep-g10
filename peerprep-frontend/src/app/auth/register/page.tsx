@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Input } from '@/src/components/Inputs';
 import { Button } from '@/src/components/Button';
 import { ROUTES } from '@/src/constant/route';
 import { register } from '@/src/services/user/userApi';
+import registerSvg from '@/public/images/register.svg';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,10 +44,22 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen bg-white">
 
+      {/* LEFT PANEL */}
+      <div className="hidden lg:flex w-1/2 bg-gray-50 items-center justify-center border-r border-gray-100">
+        <div className="max-w-md w-full flex items-center justify-center p-12">
+          <Image
+            priority
+            src={registerSvg}
+            alt="Register Illustration"
+          />
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-8 py-12">
         <div className="max-w-md w-full">
 
-          <h1 className="text-4xl font-bold mb-8">Registration</h1>
+          <h1 className="text-4xl font-bold mb-8 text-zinc-900">Registration</h1>
 
           {error && (
             <p className="mb-4 text-red-500 text-sm">{error}</p>
@@ -87,7 +101,7 @@ export default function RegisterPage() {
 
           </form>
 
-          <p className="mt-6 text-center">
+          <p className="mt-6 text-center text-zinc-900">
             Already have an account?{' '}
             <Link href={ROUTES.LOGIN} className="text-blue-600 font-bold">
               Login
