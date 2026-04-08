@@ -44,11 +44,14 @@ module "databases" {
 }
 
 module "secrets" {
-  source         = "./modules/secrets"
-  project_id     = var.project_id
-  jwt_secret     = var.jwt_secret
-  service_secret = var.service_secret
-  resend_api_key = var.resend_api_key
+  source               = "./modules/secrets"
+  project_id           = var.project_id
+  jwt_secret           = var.jwt_secret
+  service_secret       = var.service_secret
+  resend_api_key       = var.resend_api_key
+  db_password_question = var.db_password_question
+  db_password_user     = var.db_password_user
+  db_password_collab   = var.db_password_collab
 }
 
 module "cloud_run" {

@@ -17,11 +17,29 @@ variable "resend_api_key" {
   sensitive = true
 }
 
+variable "db_password_question" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_password_user" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_password_collab" {
+  type      = string
+  sensitive = true
+}
+
 locals {
   secrets = {
     "peerprep-jwt-secret"     = var.jwt_secret
     "peerprep-service-secret" = var.service_secret
     "peerprep-resend-key"     = var.resend_api_key
+    "db-password-question"    = var.db_password_question
+    "db-password-user"        = var.db_password_user
+    "db-password-collab"      = var.db_password_collab
   }
 }
 
