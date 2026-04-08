@@ -188,8 +188,7 @@ jobs:
         id: infra
         run: |
           DB_IP=$(gcloud sql instances describe peerprep-postgres \
-            --format='value(ipAddresses[0].ipAddress)' \
-            --filter='ipAddresses.type=PRIVATE')
+            --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
           REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
             --region=${{ env.REGION }} \
             --format='value(host)')
