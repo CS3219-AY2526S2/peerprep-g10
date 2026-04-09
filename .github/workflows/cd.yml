@@ -1,7 +1,10 @@
 name: CD
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
     branches: [main]
 
 concurrency:
@@ -21,6 +24,7 @@ jobs:
   # ── Detect which services changed (same filter as CI) ─────────────────────
   changes:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     outputs:
       question:      ${{ steps.filter.outputs.question }}
       user:          ${{ steps.filter.outputs.user }}
