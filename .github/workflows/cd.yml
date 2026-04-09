@@ -35,6 +35,7 @@ permissions:
 jobs:
   # ── Authenticate to GCP via Workload Identity Federation ──────────────────
   auth:
+    if: inputs.question || inputs.user || inputs.matching || inputs.collaboration || inputs.frontend
     runs-on: ubuntu-latest
     outputs:
       access_token: ${{ steps.auth.outputs.access_token }}
@@ -77,23 +78,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        if: matrix.changed == 'true'
+        if: matrix.changed
 
       - uses: google-github-actions/auth@v2
-        if: matrix.changed == 'true'
+        if: matrix.changed
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account:            ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v2
-        if: matrix.changed == 'true'
+        if: matrix.changed
 
       - name: Configure Docker for Artifact Registry
-        if: matrix.changed == 'true'
+        if: matrix.changed
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       - name: Build and push image
-        if: matrix.changed == 'true'
+        if: matrix.changed
         env:
           IMAGE: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:${{ github.sha }}
         run: |
@@ -175,16 +176,16 @@ jobs:
 
     steps:
       - uses: google-github-actions/auth@v2
-        if: matrix.changed == 'true'
+        if: matrix.changed
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account:            ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@v2
-        if: matrix.changed == 'true'
+        if: matrix.changed
 
       - name: Resolve runtime infrastructure values
-        if: matrix.changed == 'true'
+        if: matrix.changed
         id: infra
         run: |
           DB_IP=$(gcloud sql instances describe peerprep-postgres \
@@ -200,7 +201,7 @@ jobs:
           echo "REDIS_HOST=$REDIS_HOST" >> $GITHUB_ENV
 
       - name: Resolve stable Cloud Run URLs
-        if: matrix.changed == 'true'
+        if: matrix.changed
         run: |
           Q_URL=$(gcloud run services describe peerprep-question --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/question")
           U_URL=$(gcloud run services describe peerprep-user --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/user")
@@ -215,7 +216,7 @@ jobs:
           echo "RESOLVED_ENV_VARS=$ENV_VARS" >> $GITHUB_ENV
 
       - name: Deploy ${{ matrix.name }} to Cloud Run
-        if: matrix.changed == 'true'
+        if: matrix.changed
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service:    peerprep-${{ matrix.name }}
@@ -241,6 +242,7 @@ jobs:
   # ── Post-deploy smoke test ─────────────────────────────────────────────────
   smoke-test:
     needs: deploy
+    if: inputs.question || inputs.user || inputs.matching || inputs.collaboration || inputs.frontend
     runs-on: ubuntu-latest
     steps:
       - name: Health checks

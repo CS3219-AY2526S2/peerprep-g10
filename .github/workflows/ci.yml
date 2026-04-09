@@ -155,9 +155,10 @@ jobs:
     needs: [changes, backend, frontend, docker]
     if: |
       always() &&
-      needs.backend.result != 'failure' && needs.backend.result != 'cancelled' &&
-      needs.frontend.result != 'failure' && needs.frontend.result != 'cancelled' &&
-      needs.docker.result != 'failure' && needs.docker.result != 'cancelled' &&
+      needs.changes.result == 'success' &&
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped') &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
+      (needs.docker.result == 'success' || needs.docker.result == 'skipped') &&
       github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/cd.yml
     with:
