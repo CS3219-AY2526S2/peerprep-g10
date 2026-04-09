@@ -82,11 +82,6 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input id="email" name="email" label="Email" type="email" placeholder="name@example.com" required />
             <Input id="password" name="password" label="Password" type="password" isPassword placeholder="••••••••" required />
-            <div className="text-right">
-              <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
             <Button type="submit" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
