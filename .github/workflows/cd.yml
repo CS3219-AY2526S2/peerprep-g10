@@ -1,8 +1,23 @@
 name: CD
 
 on:
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      question:
+        required: true
+        type: boolean
+      user:
+        required: true
+        type: boolean
+      matching:
+        required: true
+        type: boolean
+      collaboration:
+        required: true
+        type: boolean
+      frontend:
+        required: true
+        type: boolean
 
 concurrency:
   group: cd-${{ github.ref }}
@@ -18,32 +33,6 @@ permissions:
   id-token: write
 
 jobs:
-  # ── Detect which services changed (same filter as CI) ─────────────────────
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      question:      ${{ steps.filter.outputs.question }}
-      user:          ${{ steps.filter.outputs.user }}
-      matching:      ${{ steps.filter.outputs.matching }}
-      collaboration: ${{ steps.filter.outputs.collaboration }}
-      frontend:      ${{ steps.filter.outputs.frontend }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            question:
-              - 'question-service/**'
-            user:
-              - 'user-service/**'
-            matching:
-              - 'matching-service/**'
-            collaboration:
-              - 'collaboration-service/**'
-            frontend:
-              - 'peerprep-frontend/**'
-
   # ── Authenticate to GCP via Workload Identity Federation ──────────────────
   auth:
     runs-on: ubuntu-latest
@@ -58,13 +47,13 @@ jobs:
 
   # ── Build & Push Images ────────────────────────────────────────────────────
   build-push:
-    needs: [changes, auth]
+    needs: [auth]
     if: >-
-      needs.changes.outputs.question      == 'true' ||
-      needs.changes.outputs.user          == 'true' ||
-      needs.changes.outputs.matching      == 'true' ||
-      needs.changes.outputs.collaboration == 'true' ||
-      needs.changes.outputs.frontend      == 'true'
+      inputs.question      == true ||
+      inputs.user          == true ||
+      inputs.matching      == true ||
+      inputs.collaboration == true ||
+      inputs.frontend      == true
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -72,19 +61,19 @@ jobs:
         include:
           - service: question-service
             name:    question
-            changed: ${{ needs.changes.outputs.question }}
+            changed: ${{ inputs.question }}
           - service: user-service
             name:    user
-            changed: ${{ needs.changes.outputs.user }}
+            changed: ${{ inputs.user }}
           - service: matching-service
             name:    matching
-            changed: ${{ needs.changes.outputs.matching }}
+            changed: ${{ inputs.matching }}
           - service: collaboration-service
             name:    collaboration
-            changed: ${{ needs.changes.outputs.collaboration }}
+            changed: ${{ inputs.collaboration }}
           - service: peerprep-frontend
             name:    frontend
-            changed: ${{ needs.changes.outputs.frontend }}
+            changed: ${{ inputs.frontend }}
 
     steps:
       - uses: actions/checkout@v4
@@ -128,7 +117,7 @@ jobs:
 
   # ── Deploy to Cloud Run ────────────────────────────────────────────────────
   deploy:
-    needs: [changes, build-push]
+    needs: [build-push]
     runs-on: ubuntu-latest
     environment: production   # requires manual approval gate if configured in GitHub
     strategy:
@@ -139,7 +128,7 @@ jobs:
           - service: question-service
             name:    question
             port:    3003
-            changed: ${{ needs.changes.outputs.question }}
+            changed: ${{ inputs.question }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service,
               FRONTEND_URL=https://__DOMAIN__,
@@ -148,7 +137,7 @@ jobs:
           - service: user-service
             name:    user
             port:    3004
-            changed: ${{ needs.changes.outputs.user }}
+            changed: ${{ inputs.user }}
             env_vars: >-
               DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service,
               FRONTEND_URL=https://__DOMAIN__,
@@ -157,7 +146,7 @@ jobs:
           - service: collaboration-service
             name:    collaboration
             port:    3001
-            changed: ${{ needs.changes.outputs.collaboration }}
+            changed: ${{ inputs.collaboration }}
             env_vars: >-
               DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep,
               QUESTION_SERVICE_URL=__QUESTION_URL__,
@@ -167,7 +156,7 @@ jobs:
           - service: matching-service
             name:    matching
             port:    3002
-            changed: ${{ needs.changes.outputs.matching }}
+            changed: ${{ inputs.matching }}
             env_vars: >-
               REDIS_URL=redis://$REDIS_HOST:6379,
               QUESTION_SERVICE_URL=__QUESTION_URL__,
@@ -177,7 +166,7 @@ jobs:
           - service: peerprep-frontend
             name:    frontend
             port:    3000
-            changed: ${{ needs.changes.outputs.frontend }}
+            changed: ${{ inputs.frontend }}
             env_vars: >-
               NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab,
               NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching,

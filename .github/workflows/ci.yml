@@ -149,3 +149,21 @@ jobs:
       - name: Build Docker image
         if: matrix.changed == 'true'
         run: docker build -t ${{ matrix.service }}:ci ./${{ matrix.service }}
+
+  # ── Trigger CD on Push to Main ─────────────────────────────────
+  call-cd:
+    needs: [changes, backend, frontend, docker]
+    if: |
+      always() &&
+      needs.backend.result != 'failure' && needs.backend.result != 'cancelled' &&
+      needs.frontend.result != 'failure' && needs.frontend.result != 'cancelled' &&
+      needs.docker.result != 'failure' && needs.docker.result != 'cancelled' &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/cd.yml
+    with:
+      question: ${{ needs.changes.outputs.question == 'true' }}
+      user: ${{ needs.changes.outputs.user == 'true' }}
+      matching: ${{ needs.changes.outputs.matching == 'true' }}
+      collaboration: ${{ needs.changes.outputs.collaboration == 'true' }}
+      frontend: ${{ needs.changes.outputs.frontend == 'true' }}
+    secrets: inherit
