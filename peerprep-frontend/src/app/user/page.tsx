@@ -10,6 +10,10 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useMatchingSession } from '@/src/hooks/useMatchingSession';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/src/constant/route';
+import { AttemptWithDetails } from '@/src/services/attempt/types';
+import { fetchAttemptsByUser } from '@/src/services/attempt/attemptApi';
+import { fetchProfile } from '@/src/services/user/userApi';
+import AttemptHistoryTable from '@/src/components/attempt/AttemptHistoryTable';
 
 
 export default function UserDashboard() {
@@ -22,6 +26,7 @@ export default function UserDashboard() {
   const [topicFieldError, setTopicFieldError] = useState('');
   const [difficultyFieldError, setDifficultyFieldError] = useState('');
   const [filterUnattempted, setFilterUnattempted] = useState(false);
+  const [attempts, setAttempts] = useState<AttemptWithDetails[]>([]);
 
   const router = useRouter();
   const { logout } = useAuth();
@@ -39,6 +44,13 @@ export default function UserDashboard() {
     fetchTopics().then(setTopics)
     .catch(console.error)
     .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchProfile()
+      .then((user) => fetchAttemptsByUser(String(user.id)))
+      .then((data) => setAttempts(data as AttemptWithDetails[]))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -235,6 +247,14 @@ export default function UserDashboard() {
               alt="Finding Partner Illustration"
             />
           </div>
+        </div>
+
+        {/* Attempt History */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900">
+            Attempt History
+          </h2>
+          <AttemptHistoryTable attempts={attempts} />
         </div>
       </main>
     </div>
