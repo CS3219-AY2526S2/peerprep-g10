@@ -129,7 +129,21 @@ Output: true
 Constraints:
 \`1 <= s.length <= 104\`
 \`s\` consists of parentheses only \`'()[]{}'\`.`,
-    pseudocode: '',
+    pseudocode: `def isValid(s):
+    stack = []
+    mapping = {')': '(', '}': '{', ']': '['}
+    for char in s:
+        if char in mapping:
+            if not stack or stack[-1] != mapping[char]:
+                return False
+            stack.pop()
+        else:
+            stack.append(char)
+    return len(stack) == 0
+
+# Approach: Stack matching
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Reverse Linked List`,
@@ -425,7 +439,29 @@ Constraints:
 Methods \`pop\`, \`top\` and \`getMin\` operations will always be called on non-empty stacks.
 
 At most \`3 * 104\` calls will be made to \`push\`, \`pop\`, \`top\`, and \`getMin\`.`,
-    pseudocode: '',
+    pseudocode: `class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+
+    def push(self, val):
+        self.stack.append(val)
+        if not self.min_stack or val <= self.min_stack[-1]:
+            self.min_stack.append(val)
+
+    def pop(self):
+        if self.stack.pop() == self.min_stack[-1]:
+            self.min_stack.pop()
+
+    def top(self):
+        return self.stack[-1]
+
+    def getMin(self):
+        return self.min_stack[-1]
+
+# Approach: Two stacks (main + min tracker)
+# Time Complexity: O(1) for all operations
+# Space Complexity: O(n)`,
   },
   {
     title: `Diameter of Binary Tree`,
@@ -1233,7 +1269,21 @@ Constraints:
 \`s\` and \`t\` consist of lowercase English letters.
 
 Follow up: What if the inputs contain Unicode characters? How would you adapt your solution to such a case?`,
-    pseudocode: '',
+    pseudocode: `def isAnagram(s, t):
+    if len(s) != len(t):
+        return False
+    count = {}
+    for c in s:
+        count[c] = count.get(c, 0) + 1
+    for c in t:
+        count[c] = count.get(c, 0) - 1
+        if count[c] < 0:
+            return False
+    return True
+
+# Approach: Character frequency count
+# Time Complexity: O(n)
+# Space Complexity: O(1) (at most 26 characters)`,
   },
   {
     title: `Valid Palindrome II`,
@@ -1311,7 +1361,21 @@ Constraints:
 \`s\` and \`t\` only contain lowercase letters and \`'#'\` characters.
 
 Follow up: Can you solve it in \`O(n)\` time and \`O(1)\` space?`,
-    pseudocode: '',
+    pseudocode: `def backspaceCompare(s, t):
+    def build(string):
+        stack = []
+        for c in string:
+            if c == '#':
+                if stack:
+                    stack.pop()
+            else:
+                stack.append(c)
+        return stack
+    return build(s) == build(t)
+
+# Approach: Stack simulation
+# Time Complexity: O(m + n)
+# Space Complexity: O(m + n)`,
   },
   {
     title: `Is Subsequence`,
@@ -1373,7 +1437,18 @@ All integers in \`nums1\` and \`nums2\` are unique.
 All the integers of \`nums1\` also appear in \`nums2\`.
 
 Follow up: Could you find an \`O(nums1.length + nums2.length)\` solution?`,
-    pseudocode: '',
+    pseudocode: `def nextGreaterElement(nums1, nums2):
+    stack = []
+    next_greater = {}
+    for num in nums2:
+        while stack and stack[-1] < num:
+            next_greater[stack.pop()] = num
+        stack.append(num)
+    return [next_greater.get(num, -1) for num in nums1]
+
+# Approach: Monotonic decreasing stack
+# Time Complexity: O(m + n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Pascal's Triangle`,
@@ -1721,7 +1796,19 @@ Constraints:
 \`1 <= intervals.length <= 104\`
 \`intervals[i].length == 2\`
 \`0 <= starti <= endi <= 104\``,
-    pseudocode: '',
+    pseudocode: `def merge(intervals):
+    intervals.sort(key=lambda x: x[0])
+    merged = [intervals[0]]
+    for start, end in intervals[1:]:
+        if start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    return merged
+
+# Approach: Sort by start, then merge overlapping
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Longest Increasing Subsequence`,
@@ -2200,7 +2287,22 @@ Constraints:
 Follow up:
 Could you solve this problem without using the library's sort function?
 Could you come up with a one-pass algorithm using only \`O(1)\` constant space?`,
-    pseudocode: '',
+    pseudocode: `def sortColors(nums):
+    lo, mid, hi = 0, 0, len(nums) - 1
+    while mid <= hi:
+        if nums[mid] == 0:
+            nums[lo], nums[mid] = nums[mid], nums[lo]
+            lo += 1
+            mid += 1
+        elif nums[mid] == 1:
+            mid += 1
+        else:
+            nums[mid], nums[hi] = nums[hi], nums[mid]
+            hi -= 1
+
+# Approach: Dutch National Flag (three-way partition)
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Remove Nth Node From End of List`,
@@ -2395,7 +2497,27 @@ Constraints:
 \`s\` is guaranteed to be a valid input.
 
 All the integers in \`s\` are in the range \`[1, 300]\`.`,
-    pseudocode: '',
+    pseudocode: `def decodeString(s):
+    stack = []
+    curr_str = ''
+    curr_num = 0
+    for c in s:
+        if c.isdigit():
+            curr_num = curr_num * 10 + int(c)
+        elif c == '[':
+            stack.append((curr_str, curr_num))
+            curr_str = ''
+            curr_num = 0
+        elif c == ']':
+            prev_str, num = stack.pop()
+            curr_str = prev_str + curr_str * num
+        else:
+            curr_str += c
+    return curr_str
+
+# Approach: Stack-based parsing
+# Time Complexity: O(n * max_k)
+# Space Complexity: O(n)`,
   },
   {
     title: `Top K Frequent Elements`,
@@ -2491,7 +2613,18 @@ Constraints:
 \`tasks[i]\` is upper-case English letter.
 
 The integer \`n\` is in the range \`[0, 100]\`.`,
-    pseudocode: '',
+    pseudocode: `def leastInterval(tasks, n):
+    freq = {}
+    for t in tasks:
+        freq[t] = freq.get(t, 0) + 1
+    max_freq = max(freq.values())
+    max_count = sum(1 for v in freq.values() if v == max_freq)
+    result = (max_freq - 1) * (n + 1) + max_count
+    return max(result, len(tasks))
+
+# Approach: Greedy (math based on max frequency)
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Search a 2D Matrix II`,
@@ -2576,7 +2709,22 @@ The number of nodes in the tree is in the range \`[0, 100]\`.
 \`-100 <= Node.val <= 100\`
 Follow up:
 Recursive solution is trivial, could you do it iteratively?`,
-    pseudocode: '',
+    pseudocode: `def inorderTraversal(root):
+    result = []
+    stack = []
+    curr = root
+    while curr or stack:
+        while curr:
+            stack.append(curr)
+            curr = curr.left
+        curr = stack.pop()
+        result.append(curr.val)
+        curr = curr.right
+    return result
+
+# Approach: Iterative with explicit stack
+# Time Complexity: O(n)
+# Space Complexity: O(h) where h = tree height`,
   },
   {
     title: `Unique Binary Search Trees`,
@@ -2894,7 +3042,35 @@ Constraints:
 The number of nodes in the list is in the range \`[0, 5 * 104]\`.
 
 \`-105 <= Node.val <= 105\``,
-    pseudocode: '',
+    pseudocode: `def sortList(head):
+    if not head or not head.next:
+        return head
+    # Find middle
+    slow, fast = head, head.next
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    mid = slow.next
+    slow.next = None
+    left = sortList(head)
+    right = sortList(mid)
+    # Merge two sorted lists
+    dummy = ListNode(0)
+    curr = dummy
+    while left and right:
+        if left.val <= right.val:
+            curr.next = left
+            left = left.next
+        else:
+            curr.next = right
+            right = right.next
+        curr = curr.next
+    curr.next = left or right
+    return dummy.next
+
+# Approach: Merge Sort on linked list
+# Time Complexity: O(n log n)
+# Space Complexity: O(log n) recursion stack`,
   },
   {
     title: `Daily Temperatures`,
@@ -2909,7 +3085,20 @@ Each temperature will be an integer in the range \`[30, 100]\`.`,
     topics: ['Hash Tables', 'Stacks and Queues'],
     difficulty: 'medium',
     examples: ``,
-    pseudocode: '',
+    pseudocode: `def dailyTemperatures(temperatures):
+    n = len(temperatures)
+    result = [0] * n
+    stack = []  # indices of temps waiting for a warmer day
+    for i in range(n):
+        while stack and temperatures[i] > temperatures[stack[-1]]:
+            j = stack.pop()
+            result[j] = i - j
+        stack.append(i)
+    return result
+
+# Approach: Monotonic decreasing stack
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Linked List Cycle II`,
@@ -3107,7 +3296,28 @@ Constraints:
 The number of nodes in the tree is in the range \`[0, 100]\`.
 
 \`-100 <= Node.val <= 100\``,
-    pseudocode: '',
+    pseudocode: `from collections import deque
+
+def rightSideView(root):
+    if not root:
+        return []
+    result = []
+    queue = deque([root])
+    while queue:
+        level_size = len(queue)
+        for i in range(level_size):
+            node = queue.popleft()
+            if i == level_size - 1:
+                result.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+    return result
+
+# Approach: BFS level order, take last node per level
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Kth Smallest Element in a BST`,
@@ -3216,7 +3426,27 @@ At most \`105\` calls will be made to \`hasNext\`, and \`next\`.
 
 Follow up:
 Could you implement \`next()\` and \`hasNext()\` to run in average \`O(1)\` time and use \`O(h)\` memory, where \`h\` is the height of the tree?`,
-    pseudocode: '',
+    pseudocode: `class BSTIterator:
+    def __init__(self, root):
+        self.stack = []
+        self._push_left(root)
+
+    def _push_left(self, node):
+        while node:
+            self.stack.append(node)
+            node = node.left
+
+    def next(self):
+        node = self.stack.pop()
+        self._push_left(node.right)
+        return node.val
+
+    def hasNext(self):
+        return len(self.stack) > 0
+
+# Approach: Controlled inorder traversal with stack
+# Time Complexity: O(1) amortized per call
+# Space Complexity: O(h)`,
   },
   {
     title: `Course Schedule II`,
@@ -3540,7 +3770,32 @@ Constraints:
 The number of nodes in the tree is in the range \`[0, 2000]\`.
 
 \`-100 <= Node.val <= 100\``,
-    pseudocode: '',
+    pseudocode: `from collections import deque
+
+def zigzagLevelOrder(root):
+    if not root:
+        return []
+    result = []
+    queue = deque([root])
+    left_to_right = True
+    while queue:
+        level = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+        if not left_to_right:
+            level.reverse()
+        result.append(level)
+        left_to_right = not left_to_right
+    return result
+
+# Approach: BFS with alternating direction
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Set Matrix Zeroes`,
@@ -3681,7 +3936,22 @@ Example 3:
 Input: num = 10, k = 2
 Output: 0
 Explanation: Remove all the digits from the number and it is left with nothing which is 0.`,
-    pseudocode: '',
+    pseudocode: `def removeKdigits(num, k):
+    stack = []
+    for digit in num:
+        while k and stack and stack[-1] > digit:
+            stack.pop()
+            k -= 1
+        stack.append(digit)
+    # Remove remaining from the end
+    stack = stack[:len(stack) - k]
+    # Remove leading zeros
+    result = ''.join(stack).lstrip('0')
+    return result or '0'
+
+# Approach: Monotonic increasing stack (greedy)
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `4Sum`,
@@ -3965,7 +4235,23 @@ Output: 10
 Constraints:
 \`1 <= nums.length <= 100\`
 \`0 <= nums[i] <= 109\``,
-    pseudocode: '',
+    pseudocode: `from functools import cmp_to_key
+
+def largestNumber(nums):
+    def compare(a, b):
+        if a + b > b + a:
+            return -1
+        elif a + b < b + a:
+            return 1
+        return 0
+    strs = [str(n) for n in nums]
+    strs.sort(key=cmp_to_key(compare))
+    result = ''.join(strs)
+    return '0' if result[0] == '0' else result
+
+# Approach: Custom sort comparator (compare a+b vs b+a)
+# Time Complexity: O(n log n * k) where k = avg digit length
+# Space Complexity: O(n)`,
   },
   {
     title: `Number of Provinces`,
@@ -4088,7 +4374,26 @@ Explanation: The answer [[-2,4],[3,3]] would also be accepted.
 Constraints:
 \`1 <= k <= points.length <= 104\`
 \`-104 < xi, yi < 104\``,
-    pseudocode: '',
+    pseudocode: `import heapq
+
+def kClosest(points, k):
+    return heapq.nsmallest(k, points, key=lambda p: p[0]**2 + p[1]**2)
+
+# Alternative using max-heap for O(n log k):
+# import heapq
+# def kClosest(points, k):
+#     heap = []
+#     for x, y in points:
+#         dist = -(x*x + y*y)
+#         if len(heap) < k:
+#             heapq.heappush(heap, (dist, x, y))
+#         else:
+#             heapq.heappushpop(heap, (dist, x, y))
+#     return [[x, y] for _, x, y in heap]
+
+# Approach: Min-heap / nsmallest
+# Time Complexity: O(n log k)
+# Space Complexity: O(k)`,
   },
   {
     title: `Top K Frequent Words`,
@@ -4298,7 +4603,28 @@ Constraints:
 \`n == height.length\`
 \`0 <= n <= 3 * 104\`
 \`0 <= height[i] <= 105\``,
-    pseudocode: '',
+    pseudocode: `def trap(height):
+    left, right = 0, len(height) - 1
+    left_max = right_max = 0
+    water = 0
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                water += left_max - height[left]
+            left += 1
+        else:
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                water += right_max - height[right]
+            right -= 1
+    return water
+
+# Approach: Two Pointers
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Median of Two Sorted Arrays`,
@@ -4465,7 +4791,22 @@ Output: 4
 Constraints:
 \`1 <= heights.length <= 105\`
 \`0 <= heights[i] <= 104\``,
-    pseudocode: '',
+    pseudocode: `def largestRectangleArea(heights):
+    stack = []
+    max_area = 0
+    heights.append(0)  # sentinel to flush remaining
+    for i, h in enumerate(heights):
+        while stack and heights[stack[-1]] > h:
+            height = heights[stack.pop()]
+            width = i if not stack else i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+    heights.pop()  # remove sentinel
+    return max_area
+
+# Approach: Monotonic increasing stack
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `First Missing Positive`,
@@ -4530,7 +4871,26 @@ Constraints:
 \`1 <= nums.length <= 105\`
 \`-104 <= nums[i] <= 104\`
 \`1 <= k <= nums.length\``,
-    pseudocode: '',
+    pseudocode: `from collections import deque
+
+def maxSlidingWindow(nums, k):
+    dq = deque()  # stores indices, front = max
+    result = []
+    for i in range(len(nums)):
+        # Remove elements outside the window
+        while dq and dq[0] < i - k + 1:
+            dq.popleft()
+        # Remove smaller elements from back
+        while dq and nums[dq[-1]] < nums[i]:
+            dq.pop()
+        dq.append(i)
+        if i >= k - 1:
+            result.append(nums[dq[0]])
+    return result
+
+# Approach: Monotonic decreasing deque
+# Time Complexity: O(n)
+# Space Complexity: O(k)`,
   },
   {
     title: `Binary Tree Maximum Path Sum`,
@@ -4736,7 +5096,28 @@ Constraints:
 \`cols == matrix[i].length\`
 \`0 <= row, cols <= 200\`
 \`matrix[i][j]\` is \`'0'\` or \`'1'\`.`,
-    pseudocode: '',
+    pseudocode: `def maximalRectangle(matrix):
+    if not matrix:
+        return 0
+    cols = len(matrix[0])
+    heights = [0] * (cols + 1)
+    max_area = 0
+    for row in matrix:
+        for j in range(cols):
+            heights[j] = heights[j] + 1 if row[j] == '1' else 0
+        # Largest rectangle in histogram using stack
+        stack = []
+        for i in range(cols + 1):
+            while stack and heights[stack[-1]] > heights[i]:
+                h = heights[stack.pop()]
+                w = i if not stack else i - stack[-1] - 1
+                max_area = max(max_area, h * w)
+            stack.append(i)
+    return max_area
+
+# Approach: Row-by-row histogram + monotonic stack
+# Time Complexity: O(m * n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Reverse Nodes in k-Group`,
@@ -4868,7 +5249,41 @@ Output: [0,0]
 Constraints:
 \`1 <= nums.length <= 105\`
 \`-104 <= nums[i] <= 104\``,
-    pseudocode: '',
+    pseudocode: `def countSmaller(nums):
+    result = [0] * len(nums)
+    indices = list(range(len(nums)))
+
+    def merge_sort(lo, hi):
+        if hi - lo <= 1:
+            return
+        mid = (lo + hi) // 2
+        merge_sort(lo, mid)
+        merge_sort(mid, hi)
+        temp = []
+        i, j = lo, mid
+        while i < mid and j < hi:
+            if nums[indices[i]] <= nums[indices[j]]:
+                temp.append(indices[j])
+                j += 1
+            else:
+                result[indices[i]] += j - mid
+                temp.append(indices[i])
+                i += 1
+        while i < mid:
+            result[indices[i]] += j - mid
+            temp.append(indices[i])
+            i += 1
+        while j < hi:
+            temp.append(indices[j])
+            j += 1
+        indices[lo:hi] = temp
+
+    merge_sort(0, len(nums))
+    return result
+
+# Approach: Merge Sort with index tracking
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Remove Invalid Parentheses`,
@@ -5222,7 +5637,38 @@ Constraints:
 \`s\` consists of digits, \`'+'\`, \`'-'\`, \`'('\`, \`')'\`, and \`' '\`.
 
 \`s\` represents a valid expression.`,
-    pseudocode: '',
+    pseudocode: `def calculate(s):
+    stack = []
+    result = 0
+    num = 0
+    sign = 1
+    for c in s:
+        if c.isdigit():
+            num = num * 10 + int(c)
+        elif c == '+':
+            result += sign * num
+            num = 0
+            sign = 1
+        elif c == '-':
+            result += sign * num
+            num = 0
+            sign = -1
+        elif c == '(':
+            stack.append(result)
+            stack.append(sign)
+            result = 0
+            sign = 1
+        elif c == ')':
+            result += sign * num
+            num = 0
+            result *= stack.pop()  # sign before parenthesis
+            result += stack.pop()  # result before parenthesis
+    result += sign * num
+    return result
+
+# Approach: Stack with sign tracking
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Russian Doll Envelopes`,
@@ -5354,7 +5800,29 @@ Constraints:
 At most \`2 * 104\` calls will be made to \`push\` and \`pop\`.
 
 It is guaranteed that there will be at least one element in the stack before calling \`pop\`.`,
-    pseudocode: '',
+    pseudocode: `class FreqStack:
+    def __init__(self):
+        self.freq = {}
+        self.group = {}
+        self.max_freq = 0
+
+    def push(self, val):
+        f = self.freq.get(val, 0) + 1
+        self.freq[val] = f
+        if f > self.max_freq:
+            self.max_freq = f
+        self.group.setdefault(f, []).append(val)
+
+    def pop(self):
+        val = self.group[self.max_freq].pop()
+        self.freq[val] -= 1
+        if not self.group[self.max_freq]:
+            self.max_freq -= 1
+        return val
+
+# Approach: Stack per frequency + hash map
+# Time Complexity: O(1) for push and pop
+# Space Complexity: O(n)`,
   },
   {
     title: `Palindrome Partitioning II`,
@@ -5429,7 +5897,26 @@ Note:
 \`1 <= A.length <= 50000\`
 \`-10 ^ 5 <= A[i] <= 10 ^ 5\`
 \`1 <= K <= 10 ^ 9\``,
-    pseudocode: '',
+    pseudocode: `from collections import deque
+
+def shortestSubarray(nums, k):
+    n = len(nums)
+    prefix = [0] * (n + 1)
+    for i in range(n):
+        prefix[i + 1] = prefix[i] + nums[i]
+    dq = deque()
+    result = n + 1
+    for i in range(n + 1):
+        while dq and prefix[i] - prefix[dq[0]] >= k:
+            result = min(result, i - dq.popleft())
+        while dq and prefix[i] <= prefix[dq[-1]]:
+            dq.pop()
+        dq.append(i)
+    return result if result <= n else -1
+
+# Approach: Monotonic deque with prefix sums
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Subarrays with K Different Integers`,
@@ -5798,7 +6285,41 @@ Note:
 The length of the given array will not exceed \`50,000\`.
 
 All the numbers in the input array are in the range of 32-bit integer.`,
-    pseudocode: '',
+    pseudocode: `def reversePairs(nums):
+    count = [0]
+
+    def merge_sort(arr):
+        if len(arr) <= 1:
+            return arr
+        mid = len(arr) // 2
+        left = merge_sort(arr[:mid])
+        right = merge_sort(arr[mid:])
+        # Count important reverse pairs
+        j = 0
+        for i in range(len(left)):
+            while j < len(right) and left[i] > 2 * right[j]:
+                j += 1
+            count[0] += j
+        # Standard merge
+        merged = []
+        i = j = 0
+        while i < len(left) and j < len(right):
+            if left[i] <= right[j]:
+                merged.append(left[i])
+                i += 1
+            else:
+                merged.append(right[j])
+                j += 1
+        merged.extend(left[i:])
+        merged.extend(right[j:])
+        return merged
+
+    merge_sort(nums)
+    return count[0]
+
+# Approach: Merge Sort with pair counting
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Find K-th Smallest Pair Distance`,
