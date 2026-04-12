@@ -74,11 +74,17 @@ export default function RoomPage() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  const [socket] = useState(() => io("/", { path: "/api/collab/socket.io",}));
+  // Pass the JWT in the socket handshake so the server's io.use() middleware can verify
+  // the user and check the ban blacklist before the connection is accepted
+  const [socket] = useState(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    return io("/", { path: `${API_BASE.COLLAB_SERVICE}/socket.io`, auth: { token } });
+  });
 
   // Add ref to track current code without re-renders
   const currentCodeRef = useRef<string>('');
   const [attemptSaved, setAttemptSaved] = useState(false);
+  const handleSaveAttemptRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const [activeNotification, setActiveNotification] = useState<Omit<NotificationProps, 'onClose'> | null>(null);
 
   // Auto-dismiss notification after 5 seconds
@@ -123,6 +129,9 @@ export default function RoomPage() {
       });
     }
   };
+
+  // Keep ref pointing at the latest handleSaveAttempt
+  handleSaveAttemptRef.current = handleSaveAttempt;
 
   const handleLeaveSession = async () => {
     await handleSaveAttempt();
@@ -193,10 +202,37 @@ export default function RoomPage() {
       router.push("/");
     };
 
+    // Force-logout event — server disconnects the socket when the user is banned mid-session
+    const handleForceLogout = async () => {
+      socket.disconnect();
+      // Save attempt while the token is still in localStorage
+      await handleSaveAttemptRef.current();
+      localStorage.removeItem('token');
+      
+      let remaining = 5;
+      const showBanNotification = () => setActiveNotification({
+        type: 'error',
+        title: 'Account Banned',
+        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
+        rightAction: 'none',
+      });
+      showBanNotification();
+      const interval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          router.replace(`${ROUTES.LOGIN}?reason=banned`);
+        } else {
+          showBanNotification();
+        }
+      }, 1000);
+    };
+
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("chat:new", handleChatNew);
     socket.on("chat:error", handleChatError);
     socket.on("room:error", handleRoomError);
+    socket.on("force-logout", handleForceLogout);
 
     return () => {
       socket.emit("room:leave", { roomId, userId });
@@ -205,6 +241,7 @@ export default function RoomPage() {
       socket.off("chat:new", handleChatNew);
       socket.off("chat:error", handleChatError);
       socket.off("room:error", handleRoomError);
+      socket.off("force-logout", handleForceLogout);
 
       // socket.disconnect();
     };

@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import { AttemptService } from './attemptService';
 
-interface UserParams { userId: string; }
-interface IdParams { id: string; }
-
 export const AttemptController = {
   async saveAttempt(req: Request, res: Response) {
     try {
@@ -30,9 +27,9 @@ export const AttemptController = {
     }
   },
 
-  async getAttemptsByUser(req: Request<UserParams>, res: Response) {
+  async getAttemptsByUser(req: Request, res: Response) {
     try {
-      const { userId } = req.params;
+      const userId = String(req.params['userId']);
       if (!userId) return res.status(400).json({ error: 'userId is required' });
 
       const attempts = await AttemptService.getAttemptsByUser(userId);
@@ -43,9 +40,9 @@ export const AttemptController = {
     }
   },
 
-  async getAttemptById(req: Request<IdParams>, res: Response) {
+  async getAttemptById(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const id = String(req.params['id']);
       const attempt = await AttemptService.getAttemptById(id);
 
       if (!attempt) {
@@ -59,9 +56,9 @@ export const AttemptController = {
     }
   },
 
-  async getAttemptedQuestionIds(req: Request<UserParams>, res: Response) {
+  async getAttemptedQuestionIds(req: Request, res: Response) {
     try {
-      const { userId } = req.params;
+      const userId = String(req.params['userId']);
       if (!userId) return res.status(400).json({ error: 'userId is required' });
 
       const questionIds = await AttemptService.getAttemptedQuestionIdsByUser(userId);
