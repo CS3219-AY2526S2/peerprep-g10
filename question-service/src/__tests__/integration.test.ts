@@ -2,17 +2,39 @@ import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
+import jwt from "jsonwebtoken";
 import request from "supertest";
 import type { Express } from "express";
 import type { Pool } from "pg";
+
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret";
+process.env.SERVICE_SECRET_KEY = process.env.SERVICE_SECRET_KEY || "test-service-secret";
+
+jest.mock("../config/authRedis", () => ({
+  banCheckClient: {
+    sIsMember: jest.fn().mockResolvedValue(false),
+  },
+}));
 
 let pgContainer: StartedPostgreSqlContainer;
 let app: Express;
 let pool: Pool;
 
+const createAdminAuthHeader = () => {
+  const token = jwt.sign(
+    { userId: 1, access_role: "admin" },
+    process.env.JWT_SECRET as string
+  );
+
+  return { Authorization: `Bearer ${token}` };
+};
+
 beforeAll(async () => {
   pgContainer = await new PostgreSqlContainer("postgres:17").start();
   process.env.DATABASE_URL = pgContainer.getConnectionUri();
+
+  process.env.JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret";
+  process.env.SERVICE_SECRET_KEY = process.env.SERVICE_SECRET_KEY || "test-service-secret";
 
   // Require modules after setting DATABASE_URL (pool reads it at import time)
   const { initDb } = require("../init-db");
@@ -50,7 +72,10 @@ describe("GET /health", () => {
 
 describe("POST /questions", () => {
   it("creates a question", async () => {
-    const res = await request(app).post("/questions").send(sampleQuestion);
+    const res = await request(app)
+      .post("/questions")
+      .set(createAdminAuthHeader())
+      .send(sampleQuestion);
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeDefined();
@@ -62,6 +87,7 @@ describe("POST /questions", () => {
   it("returns 400 when required fields are missing", async () => {
     const res = await request(app)
       .post("/questions")
+      .set(createAdminAuthHeader())
       .send({ title: "Incomplete" });
 
     expect(res.status).toBe(400);
@@ -71,8 +97,8 @@ describe("POST /questions", () => {
 
 describe("GET /questions", () => {
   it("returns all questions", async () => {
-    await request(app).post("/questions").send(sampleQuestion);
-    await request(app).post("/questions").send({
+    await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
+    await request(app).post("/questions").set(createAdminAuthHeader()).send({
       ...sampleQuestion,
       title: "Three Sum",
     });
@@ -91,7 +117,7 @@ describe("GET /questions", () => {
 
 describe("GET /questions/:id", () => {
   it("returns the question when found", async () => {
-    const created = await request(app).post("/questions").send(sampleQuestion);
+    const created = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
 
     const res = await request(app).get(`/questions/${created.body.id}`);
     expect(res.status).toBe(200);
@@ -106,7 +132,7 @@ describe("GET /questions/:id", () => {
 
 describe("GET /questions/random", () => {
   it("returns a matching question", async () => {
-    await request(app).post("/questions").send(sampleQuestion);
+    await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
 
     const res = await request(app)
       .get("/questions/random")
@@ -132,8 +158,8 @@ describe("GET /questions/random", () => {
 
 describe("GET /questions/topics", () => {
   it("returns distinct topics", async () => {
-    await request(app).post("/questions").send(sampleQuestion);
-    await request(app).post("/questions").send({
+    await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
+    await request(app).post("/questions").set(createAdminAuthHeader()).send({
       ...sampleQuestion,
       title: "Binary Search",
       topics: ["Arrays", "Binary Search"],
@@ -153,7 +179,10 @@ describe("GET /questions/topics", () => {
 
 describe("PUT /questions/:id", () => {
   it("updates a question", async () => {
-    const created = await request(app).post("/questions").send(sampleQuestion);
+    const created = await request(app)
+      .post("/questions")
+      .set(createAdminAuthHeader())
+      .send(sampleQuestion);
 
     const updated = {
       ...sampleQuestion,
@@ -163,6 +192,7 @@ describe("PUT /questions/:id", () => {
 
     const res = await request(app)
       .put(`/questions/${created.body.id}`)
+      .set(createAdminAuthHeader())
       .send(updated);
 
     expect(res.status).toBe(200);
@@ -171,10 +201,11 @@ describe("PUT /questions/:id", () => {
   });
 
   it("returns 400 when required fields are missing", async () => {
-    const created = await request(app).post("/questions").send(sampleQuestion);
+    const created = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
 
     const res = await request(app)
       .put(`/questions/${created.body.id}`)
+      .set(createAdminAuthHeader())
       .send({ title: "Incomplete" });
 
     expect(res.status).toBe(400);
@@ -183,6 +214,7 @@ describe("PUT /questions/:id", () => {
   it("returns 404 when question does not exist", async () => {
     const res = await request(app)
       .put("/questions/99999")
+      .set(createAdminAuthHeader())
       .send(sampleQuestion);
 
     expect(res.status).toBe(404);
@@ -210,7 +242,7 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("returns a matching unattempted question", async () => {
-    const created = await request(app).post("/questions").send(sampleQuestion);
+    const created = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
     mockCollabService([], []);
 
     const res = await request(app).post(endpoint).send({
@@ -226,8 +258,8 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("excludes questions attempted by user A", async () => {
-    const q1 = await request(app).post("/questions").send(sampleQuestion);
-    const q2 = await request(app).post("/questions").send({
+    const q1 = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
+    const q2 = await request(app).post("/questions").set(createAdminAuthHeader()).send({
       ...sampleQuestion,
       title: "Three Sum",
       difficulty: "easy",
@@ -246,8 +278,8 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("excludes questions attempted by user B", async () => {
-    const q1 = await request(app).post("/questions").send(sampleQuestion);
-    const q2 = await request(app).post("/questions").send({
+    const q1 = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
+    const q2 = await request(app).post("/questions").set(createAdminAuthHeader()).send({
       ...sampleQuestion,
       title: "Three Sum",
       difficulty: "easy",
@@ -266,7 +298,7 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("returns null when all matching questions are attempted", async () => {
-    const q1 = await request(app).post("/questions").send(sampleQuestion);
+    const q1 = await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
     mockCollabService([String(q1.body.id)], []);
 
     const res = await request(app).post(endpoint).send({
@@ -281,7 +313,7 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("returns null when no questions match topics/difficulties", async () => {
-    await request(app).post("/questions").send(sampleQuestion);
+    await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion);
     mockCollabService([], []);
 
     const res = await request(app).post(endpoint).send({
@@ -296,8 +328,8 @@ describe("POST /questions/random-unattempted", () => {
   });
 
   it("filters by multiple difficulties", async () => {
-    await request(app).post("/questions").send(sampleQuestion); // easy
-    const q2 = await request(app).post("/questions").send({
+    await request(app).post("/questions").set(createAdminAuthHeader()).send(sampleQuestion); // easy
+    const q2 = await request(app).post("/questions").set(createAdminAuthHeader()).send({
       ...sampleQuestion,
       title: "Hard Problem",
       difficulty: "hard",
@@ -363,9 +395,14 @@ describe("POST /questions/random-unattempted", () => {
 
 describe("DELETE /questions/:id", () => {
   it("deletes a question", async () => {
-    const created = await request(app).post("/questions").send(sampleQuestion);
+    const created = await request(app)
+      .post("/questions")
+      .set(createAdminAuthHeader())
+      .send(sampleQuestion);
 
-    const res = await request(app).delete(`/questions/${created.body.id}`);
+    const res = await request(app)
+      .delete(`/questions/${created.body.id}`)
+      .set(createAdminAuthHeader());
     expect(res.status).toBe(200);
 
     // Verify that it's gone
@@ -374,7 +411,9 @@ describe("DELETE /questions/:id", () => {
   });
 
   it("returns 404 when question does not exist", async () => {
-    const res = await request(app).delete("/questions/99999");
+    const res = await request(app)
+      .delete("/questions/99999")
+      .set(createAdminAuthHeader());
     expect(res.status).toBe(404);
   });
 });

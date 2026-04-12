@@ -21,12 +21,22 @@ router.post('/random-unattempted', async (req: Request, res: Response) => {
   }
 
   const collabServiceUrl = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:3001';
+  const serviceToken = process.env.SERVICE_SECRET_KEY;
+
+  if (!serviceToken) {
+    res.status(500).json({ error: 'Service secret is not configured' });
+    return;
+  }
+
+  const serviceHeaders = {
+    Authorization: `Bearer ${serviceToken}`,
+  };
 
   let attemptedIntIds: number[] = [];
   try {
     const [userARes, userBRes] = await Promise.all([
-      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userAId)}/questions`),
-      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userBId)}/questions`),
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userAId)}/questions`, { headers: serviceHeaders }),
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userBId)}/questions`, { headers: serviceHeaders }),
     ]);
 
     if (!userARes.ok || !userBRes.ok) {
