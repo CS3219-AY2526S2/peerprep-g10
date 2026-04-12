@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pool from '../db';
+import { authenticateToken, requireAuth } from '../middleware/authMiddleware';
+import { authorizeRoles } from '../middleware/roleMiddleware';
 
 const router = Router();
 
@@ -81,14 +83,14 @@ router.get('/random', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// GET /questions — list all questions
-router.get('/', async (req: Request, res: Response) => {
+// GET /questions — list all questions (user and admin — ban check applied)
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
   const result = await pool.query('SELECT * FROM questions ORDER BY id');
   res.json(result.rows);
 });
 
-// GET /questions/:id — get a single question
-router.get('/:id', async (req: Request, res: Response) => {
+// GET /questions/:id — get a single question (user and admin — ban check applied)
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query('SELECT * FROM questions WHERE id = $1', [id]);
 
@@ -100,8 +102,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// POST /questions — create a new question
-router.post('/', async (req: Request, res: Response) => {
+// POST /questions — create a new question (admin only — requires JWT + role check + ban check)
+router.post('/', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
   const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
 
   if (!title || !description || !topics || !difficulty) {
@@ -118,8 +120,8 @@ router.post('/', async (req: Request, res: Response) => {
   res.status(201).json(result.rows[0]);
 });
 
-// PUT /questions/:id — update a question
-router.put('/:id', async (req: Request, res: Response) => {
+// PUT /questions/:id — update a question (admin only — requires JWT + role check + ban check)
+router.put('/:id', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
 
@@ -142,8 +144,8 @@ router.put('/:id', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// DELETE /questions/:id — delete a question
-router.delete('/:id', async (req: Request, res: Response) => {
+// DELETE /questions/:id — delete a question (admin only — requires JWT + role check + ban check)
+router.delete('/:id', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query('DELETE FROM questions WHERE id = $1 RETURNING *', [id]);
 
