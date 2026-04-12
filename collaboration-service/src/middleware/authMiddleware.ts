@@ -10,6 +10,18 @@ export const isUserBanned = async (userId: string): Promise<boolean> => {
   return Boolean(result);
 };
 
+export const authenticateServiceToken = (req: Request, res: Response, next: NextFunction): void => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+
+  if (!token || token !== process.env.SERVICE_SECRET_KEY) {
+    res.status(401).json({ message: 'Service authorization failed' });
+    return;
+  }
+
+  next();
+};
+
 // Verifies a JWT string and returns the decoded payload, or throws on failure
 export const verifyToken = (token: string): { userId: number; access_role: string } => {
   return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number; access_role: string };

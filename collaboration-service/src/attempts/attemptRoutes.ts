@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { AttemptController } from './attemptController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { authenticateToken, authenticateServiceToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Service-to-service — called by question-service to exclude already-attempted questions
-router.get('/user/:userId/questions', AttemptController.getAttemptedQuestionIds);
+router.get('/user/:userId/questions', authenticateServiceToken, AttemptController.getAttemptedQuestionIds);
 
 router.post('/', AttemptController.saveAttempt);
 
