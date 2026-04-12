@@ -18,20 +18,27 @@ From the project root:
 docker compose up -d --build
 ```
 
-> ⚠️ Note: Please update your .env file in question-service, user-service and matching-service before building and starting up the containers with this command.
+> ⚠️ Note: Please update your .env file in question-service, user-service, matching-service and collaboration-service before building and starting up the containers with this command.
+>
+> The following environment variables must be set consistently across **all four services** (same values):
+> - `JWT_SECRET` — shared secret for JWT verification
+> - `AUTH_REDIS_URL` — overridden automatically by docker-compose to `redis://auth-redis:6379`; set to `redis://localhost:6380` for local development
 
 This starts databases container, question-service container, user-service container and matching-service container:
 - **question-db** on port `5433`
-- **user-db** on port `5434` — automatically runs `init.sql` (creates the users table) and `seed.sql` (seeds a default admin account)
-- **redis** on port `6379`
+- **user-db** on port `5434` — automatically runs `init.sql` (creates the users table)
+- **matching-redis** on port `6379` — queue management for the matching service
+- **auth-redis** on port `6380` — ban blacklist and Pub/Sub events for real-time user banning
 - **question-service** on port `3003`
 - **user-service** on port `3004`
 - **matching-service** on port `3002`
 - **collaboration-service** on port `3001`
 
-**Default admin account** (seeded automatically):
-- Email: `admin@peerprep.com` 
-- Password: `Admin123!`
+**Default admin account** — run after the database is up:
+```bash
+cd user-service && npm run seed
+```
+Credentials are set via `ADMIN_SEED_PASSWORD` / `ADMIN_SEED_EMAIL` / `ADMIN_SEED_USERNAME` in `user-service/.env`.
 
 > To reset the databases from scratch, run `docker compose down -v && docker compose up -d`.
 
@@ -173,7 +180,7 @@ npm run dev        # starts on port 3000
 2. Open https://localhost
 
 #### Option 2: Services locally
-1. Start databases: `docker compose up -d question-db user-db collaboration-db redis`
+1. Start databases: `docker compose up -d question-db user-db collaboration-db redis auth-redis`
 2. Start question-service: `cd question-service && npm run dev`
 3. Start user-service: `cd user-service && npm run dev`
 4. Start matching-service: `cd matching-service && npm run dev`
