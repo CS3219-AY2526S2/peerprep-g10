@@ -65,6 +65,34 @@ export function useMatchingSession({
     setActiveNotification(null);
   }, [clearTimers]);
 
+  // Handles the ban notification and countdown before redirecting to login
+  const handleBanNotification = useCallback(() => {
+    localStorage.removeItem('token');
+
+    let remaining = 5;
+
+    const showBanNotification = () =>
+      setActiveNotification({
+        type: 'error',
+        title: 'Account Banned',
+        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
+        rightAction: 'none',
+      });
+
+    showBanNotification();
+
+    const interval = setInterval(() => {
+      remaining--;
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        window.location.href = `${ROUTES.LOGIN}?reason=banned`;
+      } else {
+        showBanNotification();
+      }
+    }, 1000);
+  }, []);
+
   const startMatch = useCallback(({ topic, difficulty, filterUnattempted, token }: StartMatchParams) => {
     if (isMatching) {
       return;
@@ -150,24 +178,7 @@ export function useMatchingSession({
     // Force-logout event — server disconnects the socket when the user is banned mid-session
     socket.on('force-logout', () => {
       cancelMatch();
-      localStorage.removeItem('token');
-      let remaining = 5;
-      const showBanNotification = () => setActiveNotification({
-        type: 'error',
-        title: 'Account Banned',
-        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
-        rightAction: 'none',
-      });
-      showBanNotification();
-      const interval = setInterval(() => {
-        remaining--;
-        if (remaining <= 0) {
-          clearInterval(interval);
-          window.location.href = `${ROUTES.LOGIN}?reason=banned`;
-        } else {
-          showBanNotification();
-        }
-      }, 1000);
+      handleBanNotification();
     });
 
     socket.on('connect_error', (err: Error) => {
@@ -179,24 +190,7 @@ export function useMatchingSession({
 
       // Banned users are blocked at connection time — show notification before redirecting
       if (err.message === 'USER_BANNED') {
-        localStorage.removeItem('token');
-        let remaining = 5;
-        const showBanNotification = () => setActiveNotification({
-          type: 'error',
-          title: 'Account Banned',
-          message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
-          rightAction: 'none',
-        });
-        showBanNotification();
-        const interval = setInterval(() => {
-          remaining--;
-          if (remaining <= 0) {
-            clearInterval(interval);
-            window.location.href = `${ROUTES.LOGIN}?reason=banned`;
-          } else {
-            showBanNotification();
-          }
-        }, 1000);
+        handleBanNotification();
         return;
       }
 
