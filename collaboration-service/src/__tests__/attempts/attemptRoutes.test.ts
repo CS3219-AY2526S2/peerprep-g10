@@ -26,7 +26,7 @@ const mockAttempt = {
   userId: '1',
   partnerId: '2',
   questionId: '1',
-  questionSnapshot: { id: '1', title: 'Two Sum', description: '', topics: [], difficulty: 'easy', examples: '', pseudocode: '' },
+  questionSnapshot: { id: '1', title: 'Two Sum', description: '', topics: [], difficulty: 'easy', examples: '', pseudocode: '', solution: '' },
   partner: { id: '2', username: 'John Doe', profile_icon: '' },
   code: 'print("hello")',
   startedAt: '2024-01-01T10:00:00Z',

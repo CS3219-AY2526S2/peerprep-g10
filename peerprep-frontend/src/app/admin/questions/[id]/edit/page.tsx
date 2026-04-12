@@ -44,6 +44,7 @@ export default function EditQuestionPage() {
     topics: question.topics,
     examples: question.examples ?? '',
     pseudocode: question.pseudocode ?? '',
+    solution: question.solution ?? '',
     image_url: question.image_url ?? '',
   };
 

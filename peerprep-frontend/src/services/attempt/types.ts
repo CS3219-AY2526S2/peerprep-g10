@@ -6,6 +6,7 @@ export type QuestionSnapshot = {
   difficulty: string;
   examples: string;
   pseudocode: string;
+  solution: string;
 };
 
 export type Attempt = {

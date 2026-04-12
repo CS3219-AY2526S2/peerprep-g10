@@ -16,10 +16,13 @@ export async function initDb(): Promise<void> {
       difficulty difficulty_level NOT NULL,
       examples TEXT,
       pseudocode TEXT,
+      solution TEXT,
       image_url TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE questions ADD COLUMN IF NOT EXISTS solution TEXT;
 
     CREATE INDEX IF NOT EXISTS idx_questions_topics ON questions USING GIN (topics);
     CREATE INDEX IF NOT EXISTS idx_questions_difficulty ON questions USING btree (difficulty);

@@ -102,7 +102,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // POST /questions — create a new question
 router.post('/', async (req: Request, res: Response) => {
-  const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
+  const { title, description, topics, difficulty, examples, pseudocode, solution, image_url } = req.body;
 
   if (!title || !description || !topics || !difficulty) {
     res.status(400).json({ error: 'title, description, topics, and difficulty are required.' });
@@ -110,9 +110,9 @@ router.post('/', async (req: Request, res: Response) => {
   }
 
   const result = await pool.query(
-    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode, image_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, image_url ?? null]
+    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode, solution, image_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, solution ?? null, image_url ?? null]
   );
 
   res.status(201).json(result.rows[0]);
@@ -121,7 +121,7 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /questions/:id — update a question
 router.put('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
+  const { title, description, topics, difficulty, examples, pseudocode, solution, image_url } = req.body;
 
   if (!title || !description || !topics || !difficulty) {
     res.status(400).json({ error: 'title, description, topics, and difficulty are required.' });
@@ -130,8 +130,8 @@ router.put('/:id', async (req: Request, res: Response) => {
 
   const result = await pool.query(
     `UPDATE questions SET title = $1, description = $2, topics = $3, difficulty = $4,
-     examples = $5, pseudocode = $6, image_url = $7, updated_at = NOW() WHERE id = $8 RETURNING *`,
-    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, image_url ?? null, id]
+     examples = $5, pseudocode = $6, solution = $7, image_url = $8, updated_at = NOW() WHERE id = $9 RETURNING *`,
+    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, solution ?? null, image_url ?? null, id]
   );
 
   if (result.rows.length === 0) {
