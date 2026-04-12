@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { BanService } from '../services/banService';
 
 // Verifies the JWT from the Authorization header and attaches the decoded user to the request
-export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
+// Also checks the Redis banned_users set — returns 403 with code USER_BANNED if the user is banned
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1];
 
@@ -13,6 +15,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    // Check if the user is in the Redis ban blacklist before allowing the request
+    const banned = await BanService.isBanned(String((decoded as any).userId));
+    if (banned) {
+      res.status(403).json({ message: 'Your account has been banned', code: 'USER_BANNED' });
+      return;
+    }
     (req as any).user = decoded;
     next();
   } catch {
