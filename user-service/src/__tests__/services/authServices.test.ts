@@ -9,6 +9,10 @@ jest.mock('../../model/userModel');
 jest.mock('../../model/verificationModel');
 jest.mock('../../config/avatar');
 jest.mock('../../config/email');
+jest.mock('../../services/banService', () => ({
+  BanService: {
+  },
+}));
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 

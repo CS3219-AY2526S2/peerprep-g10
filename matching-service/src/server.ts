@@ -3,7 +3,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { connectRedis, pubClient, subClient } from './config/redis';
 import { connectAuthRedis } from './config/authRedis';
-import { isUserBanned } from './middleware/authMiddleware';
+import { isUserBanned, isUserDeleted } from './middleware/authMiddleware';
 import { startBanSubscriber } from './banSubscriber';
 import app from './app';
 import { matchingService } from './services/matching.service';
@@ -47,6 +47,11 @@ async function startServer() {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
 
       // Check the ban blacklist before allowing the socket connection
+      const deleted = await isUserDeleted(String(decoded.userId));
+      if (deleted) {
+        return next(new Error("USER_DELETED"));
+      }
+
       const banned = await isUserBanned(String(decoded.userId));
       if (banned) {
         return next(new Error("USER_BANNED"));

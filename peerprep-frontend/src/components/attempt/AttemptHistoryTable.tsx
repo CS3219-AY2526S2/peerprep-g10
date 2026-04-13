@@ -12,6 +12,22 @@ interface AttemptHistoryTableProps {
   pageSize?: number;
 }
 
+const FALLBACK_PARTNER_NAME = 'Account deleted';
+
+function getSafeAvatarSrc(icon: string | null | undefined): string | null {
+  if (!icon || !icon.trim()) return null;
+
+  try {
+    if (icon.startsWith('/')) return icon;
+
+    const parsed = new URL(icon);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return icon;
+  } catch {
+    return null;
+  }
+}
+
 const DIFFICULTY_STYLES: Record<string, string> = {
   easy: 'bg-green-100 text-green-700',
   medium: 'bg-yellow-100 text-yellow-700',
@@ -24,6 +40,7 @@ export default function AttemptHistoryTable({
 }: AttemptHistoryTableProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [failedAvatarIds, setFailedAvatarIds] = useState<Set<string>>(new Set());
 
   if (attempts.length === 0) {
     return (
@@ -103,13 +120,35 @@ export default function AttemptHistoryTable({
                 <td className="px-4 py-3 text-zinc-600">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center flex-shrink-0">
-                      {attempt.partner.profile_icon ? (
-                        <Image src={attempt.partner.profile_icon} alt={attempt.partner.username} width={256} height={256} className="w-full h-full object-cover" />
-                      ) : (
-                        <UserIcon className="w-4 h-4 text-gray-400" />
-                      )}
+                      {(() => {
+                        const partnerName = attempt.partner?.username?.trim() || FALLBACK_PARTNER_NAME;
+                        const avatarSrc = failedAvatarIds.has(attempt.id)
+                          ? null
+                          : getSafeAvatarSrc(attempt.partner?.profile_icon);
+
+                        if (!avatarSrc) {
+                          return <UserIcon className="w-4 h-4 text-gray-400 opacity-60" />;
+                        }
+
+                        return (
+                          <Image
+                            src={avatarSrc}
+                            alt={partnerName}
+                            width={256}
+                            height={256}
+                            className="w-full h-full object-cover"
+                            onError={() => {
+                              setFailedAvatarIds((prev) => {
+                                const next = new Set(prev);
+                                next.add(attempt.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        );
+                      })()}
                     </div>
-                    <span>{attempt.partner.username}</span>
+                    <span>{attempt.partner?.username?.trim() || FALLBACK_PARTNER_NAME}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">

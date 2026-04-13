@@ -2,10 +2,11 @@ import { createClient } from 'redis';
 import { Server as SocketIOServer } from 'socket.io';
 
 const BAN_CHANNEL = 'user:banned';
+const DELETE_CHANNEL = 'user:deleted';
 const AUTH_REDIS_URL = process.env.AUTH_REDIS_URL || 'redis://localhost:6380';
 
 // Creates a dedicated Redis subscriber connection and listens for ban events.
-// When a user is banned, all their open Socket.IO connections are force-disconnected.
+// When a user is banned or deleted, all their open Socket.IO connections are force-disconnected.
 export async function startBanSubscriber(io: SocketIOServer): Promise<void> {
   const subscriber = createClient({ url: AUTH_REDIS_URL });
 
@@ -23,25 +24,36 @@ export async function startBanSubscriber(io: SocketIOServer): Promise<void> {
 
   await subscriber.connect();
 
+  const disconnectUser = async (userId: string, reason: 'USER_BANNED' | 'USER_DELETED') => {
+    const sockets = await io.fetchSockets();
+    for (const socket of sockets) {
+      if (socket.data.userId === String(userId)) {
+        socket.emit('force-logout', { reason });
+        socket.disconnect(true);
+      }
+    }
+
+    console.log(`[BanSubscriber] Disconnected all sockets for ${reason === 'USER_DELETED' ? 'deleted' : 'banned'} user: ${userId}`);
+  };
+
   await subscriber.subscribe(BAN_CHANNEL, async (message) => {
     try {
       const { action, userId } = JSON.parse(message);
 
-      // Only act on ban events — unban events don't require disconnection
       if (action !== 'ban') return;
 
-      // Find all sockets belonging to the banned user and disconnect them
-      const sockets = await io.fetchSockets();
-      for (const socket of sockets) {
-        if (socket.data.userId === String(userId)) {
-          socket.emit('force-logout', { reason: 'USER_BANNED' });
-          socket.disconnect(true);
-        }
-      }
-
-      console.log(`[BanSubscriber] Disconnected all sockets for banned user: ${userId}`);
+      await disconnectUser(userId, 'USER_BANNED');
     } catch (err) {
       console.error('[BanSubscriber] Failed to process ban event:', err);
+    }
+  });
+
+  await subscriber.subscribe(DELETE_CHANNEL, async (message) => {
+    try {
+      const { userId } = JSON.parse(message);
+      await disconnectUser(userId, 'USER_DELETED');
+    } catch (err) {
+      console.error('[BanSubscriber] Failed to process delete event:', err);
     }
   });
 }

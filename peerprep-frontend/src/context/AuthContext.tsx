@@ -22,9 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<Role | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  // Controls the ban notification banner and countdown before redirecting to login
-  const [showBanNotification, setShowBanNotification] = useState(false);
-  const [banCountdown, setBanCountdown] = useState(5);
+  // Controls account-status notification (banned/deleted) and countdown before redirecting to login.
+  const [accountStatusReason, setAccountStatusReason] = useState<'banned' | 'deleted' | null>(null);
+  const [accountStatusCountdown, setAccountStatusCountdown] = useState(5);
 
   const [isLoading, setIsLoading] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return user.access_role;
   };
 
-  // Global fetch interceptor — catches 403 USER_BANNED responses from any service
+  // Global fetch interceptor — catches 403 account-status responses from any service
   // and immediately clears the session, redirecting the user to the login page
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -68,19 +68,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const cloned = response.clone();
         try {
           const data = await cloned.json();
-          if (data?.code === 'USER_BANNED') {
+          if (data?.code === 'USER_BANNED' || data?.code === 'USER_DELETED') {
             localStorage.removeItem('token');
+            const reason = data.code === 'USER_DELETED' ? 'deleted' : 'banned';
+
+            // Avoid spawning duplicate countdown intervals if multiple requests fail together.
+            if (accountStatusReason) return response;
 
             let count = 5;
-            setBanCountdown(count);
-            setShowBanNotification(true);
+            setAccountStatusCountdown(count);
+            setAccountStatusReason(reason);
 
             const interval = setInterval(() => {
               count--;
-              setBanCountdown(count);
+              setAccountStatusCountdown(count);
               if (count <= 0) {
                 clearInterval(interval);
-                window.location.href = `${ROUTES.LOGIN}?reason=banned`;
+                window.location.href = `${ROUTES.LOGIN}?reason=${reason}`;
               }
             }, 1000);
           }
@@ -95,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       window.fetch = originalFetch;
     };
-  }, []);
+  }, [accountStatusReason]);
 
   // Runs once on app load to validate existing token with backend
   useEffect(() => {
@@ -115,12 +119,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ isLoggedIn, isLoading, role, user, setUser, login, logout }}>
-      {showBanNotification && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[480px] px-4">
+      {accountStatusReason && (
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
           <Notification
             type="error"
-            title="Account Banned"
-            message={`Your account has been banned. Redirecting to login in ${banCountdown} second${banCountdown !== 1 ? 's' : ''}...`}
+            title={accountStatusReason === 'deleted' ? 'Deleted' : 'Banned'}
+            message={accountStatusReason === 'deleted'
+              ? `Your account has been deleted. Redirecting to login in ${accountStatusCountdown} second${accountStatusCountdown !== 1 ? 's' : ''}...`
+              : `Your account has been banned. Redirecting to login in ${accountStatusCountdown} second${accountStatusCountdown !== 1 ? 's' : ''}...`}
             rightAction="none"
           />
         </div>

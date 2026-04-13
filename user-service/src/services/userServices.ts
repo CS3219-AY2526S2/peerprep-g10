@@ -11,6 +11,7 @@ const SALT_ROUNDS = 12;
 export const UserService = {
   async getUserById(id: string) {
     const user = await UserDB.getUserById(id);
+    if (!user) return null;
     // Fall back to default avatar if none is set
     user.profile_icon = user.profile_icon ?? getDefaultAvatar();
     return user;
@@ -26,7 +27,15 @@ export const UserService = {
 
   async deleteUser(id: number, requesterId: number) {
     if (id === requesterId) throw Errors.SELF_DELETE;
-    return UserDB.deleteUser(id);
+
+    const user = await UserDB.getUserById(String(id));
+    const deletedCount = await UserDB.deleteUser(id);
+
+    if (deletedCount && user) {
+      await BanService.markDeleted(String(user.id));
+    }
+
+    return deletedCount;
   },
 
   // Verifies the user's current password
