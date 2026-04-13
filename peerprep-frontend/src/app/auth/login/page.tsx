@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import Link from 'next/link';
@@ -14,6 +14,17 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason === 'deleted') {
+      setError('Your account has been deleted.');
+      return;
+    }
+    if (reason === 'banned') {
+      setError('Your account has been banned.');
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
@@ -27,7 +38,21 @@ export default function LoginPage() {
         const role = login(token, user);
         router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (typeof err?.message === 'string') {
+          if (err.message.toLowerCase().includes('deleted')) {
+            setError('Your account has been deleted.');
+            return;
+          }
+
+          if (err.message.toLowerCase().includes('banned')) {
+            setError('Your account has been banned.');
+            return;
+          }
+        }
+
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   };
 

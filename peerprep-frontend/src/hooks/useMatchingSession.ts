@@ -65,30 +65,32 @@ export function useMatchingSession({
     setActiveNotification(null);
   }, [clearTimers]);
 
-  // Handles the ban notification and countdown before redirecting to login
-  const handleBanNotification = useCallback(() => {
+  // Handles the account-status notification and countdown before redirecting to login
+  const handleAccountStatusNotification = useCallback((reason: 'banned' | 'deleted') => {
     localStorage.removeItem('token');
 
     let remaining = 5;
 
-    const showBanNotification = () =>
+    const showNotification = () =>
       setActiveNotification({
         type: 'error',
-        title: 'Account Banned',
-        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
+        title: reason === 'deleted' ? 'Deleted' : 'Banned',
+        message: reason === 'deleted'
+          ? `Your account has been deleted. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`
+          : `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
         rightAction: 'none',
       });
 
-    showBanNotification();
+    showNotification();
 
     const interval = setInterval(() => {
       remaining--;
 
       if (remaining <= 0) {
         clearInterval(interval);
-        window.location.href = `${ROUTES.LOGIN}?reason=banned`;
+        window.location.href = `${ROUTES.LOGIN}?reason=${reason}`;
       } else {
-        showBanNotification();
+        showNotification();
       }
     }, 1000);
   }, []);
@@ -176,9 +178,9 @@ export function useMatchingSession({
     });
 
     // Force-logout event — server disconnects the socket when the user is banned mid-session
-    socket.on('force-logout', () => {
+    socket.on('force-logout', (payload?: { reason?: 'USER_BANNED' | 'USER_DELETED' }) => {
       cancelMatch();
-      handleBanNotification();
+      handleAccountStatusNotification(payload?.reason === 'USER_DELETED' ? 'deleted' : 'banned');
     });
 
     socket.on('connect_error', (err: Error) => {
@@ -190,7 +192,12 @@ export function useMatchingSession({
 
       // Banned users are blocked at connection time — show notification before redirecting
       if (err.message === 'USER_BANNED') {
-        handleBanNotification();
+        handleAccountStatusNotification('banned');
+        return;
+      }
+
+      if (err.message === 'USER_DELETED') {
+        handleAccountStatusNotification('deleted');
         return;
       }
 
@@ -206,7 +213,7 @@ export function useMatchingSession({
         rightAction: 'close',
       });
     });
-  }, [cancelMatch, clearTimers, isMatching, onAuthError, onMatchFound, timeoutInSeconds]);
+  }, [cancelMatch, clearTimers, handleAccountStatusNotification, isMatching, onAuthError, onMatchFound, timeoutInSeconds]);
 
   useEffect(() => {
     return () => {

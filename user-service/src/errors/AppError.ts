@@ -15,6 +15,7 @@ export const Errors = {
   USERNAME_EXISTS: new AppError('USERNAME_EXISTS', 400, 'This username is already taken.'),
   USER_NOT_FOUND: new AppError('USER_NOT_FOUND', 401, 'This email is not registered. Please sign up first.'),
   USER_BANNED: new AppError('USER_BANNED', 403, 'Your account has been banned.'),
+  USER_DELETED: new AppError('USER_DELETED', 403, 'Your account has been deleted.'),
   EMAIL_NOT_VERIFIED: new AppError('EMAIL_NOT_VERIFIED', 403, 'Please verify your email before logging in.'),
   INVALID_PASSWORD: new AppError('INVALID_PASSWORD', 401, 'Incorrect password. Please try again.'),
   ALREADY_VERIFIED: new AppError('ALREADY_VERIFIED', 400, 'This email is already verified.'),

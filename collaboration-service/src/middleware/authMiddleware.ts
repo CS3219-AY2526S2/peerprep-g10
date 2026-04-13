@@ -3,10 +3,16 @@ import jwt from 'jsonwebtoken';
 import { banCheckClient } from '../config/authRedis';
 
 const BANNED_USERS_KEY = 'banned_users';
+const DELETED_USERS_KEY = 'deleted_users';
 
 // Checks if a userId is in the Redis banned_users set
 export const isUserBanned = async (userId: string): Promise<boolean> => {
   const result = await banCheckClient.sIsMember(BANNED_USERS_KEY, String(userId));
+  return Boolean(result);
+};
+
+export const isUserDeleted = async (userId: string): Promise<boolean> => {
+  const result = await banCheckClient.sIsMember(DELETED_USERS_KEY, String(userId));
   return Boolean(result);
 };
 
@@ -40,6 +46,10 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
   try {
     const decoded = verifyToken(token);
+    if (await isUserDeleted(String(decoded.userId))) {
+      res.status(403).json({ message: 'Your account has been deleted', code: 'USER_DELETED' });
+      return;
+    }
     const banned = await isUserBanned(String(decoded.userId));
     if (banned) {
       res.status(403).json({ message: 'Your account has been banned', code: 'USER_BANNED' });
