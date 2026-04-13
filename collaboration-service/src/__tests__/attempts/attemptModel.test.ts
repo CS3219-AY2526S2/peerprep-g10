@@ -16,6 +16,7 @@ const mockSnapshot: QuestionSnapshot = {
   difficulty: 'easy',
   examples: 'Example 1:\nInput: nums = [2,7,11,15]',
   pseudocode: 'function twoSum(nums, target) {...}',
+  solution: 'def twoSum(nums, target): ...',
 };
 
 const mockRow = {

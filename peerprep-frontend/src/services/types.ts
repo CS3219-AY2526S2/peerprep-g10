@@ -6,6 +6,7 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard';
   examples: string;
   pseudocode: string;
+  solution: string;
   image_url: string;
   created_at: string;
   updated_at: string;

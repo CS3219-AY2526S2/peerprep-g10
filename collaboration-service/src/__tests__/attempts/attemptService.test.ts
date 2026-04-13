@@ -25,6 +25,7 @@ const mockSnapshot = {
   difficulty: 'easy',
   examples: 'Example 1:\nInput: nums = [2,7,11,15]',
   pseudocode: 'function twoSum(nums, target) {...}',
+  solution: 'def twoSum(nums, target): ...',
 };
 
 const mockAttemptRow = {
@@ -47,7 +48,7 @@ describe('AttemptService', () => {
     it('fetches question snapshot and saves attempt', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ id: 1, title: 'Two Sum', topics: ['Arrays'], difficulty: 'easy', description: 'desc', examples: 'ex', pseudocode: 'ps' }),
+        json: async () => ({ id: 1, title: 'Two Sum', topics: ['Arrays'], difficulty: 'easy', description: 'desc', examples: 'ex', pseudocode: 'ps', solution: 'sol' }),
       });
       mockModel.createAttempt.mockResolvedValueOnce(mockAttemptRow);
 
