@@ -319,7 +319,9 @@ jobs:
           ENV_VARS="${ENV_VARS//__USER_URL__/$U_URL}"
           ENV_VARS="${ENV_VARS//__COLLAB_URL__/$C_URL}"
           
-          echo "RESOLVED_ENV_VARS=$ENV_VARS" >> $GITHUB_ENV
+          echo "RESOLVED_ENV_VARS<<EOF" >> $GITHUB_ENV
+          echo "$ENV_VARS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Deploy ${{ matrix.name }} to Cloud Run
         if: matrix.changed == 'true'
@@ -341,8 +343,7 @@ jobs:
             --allow-unauthenticated
           env_vars: |-
             ${{ env.RESOLVED_ENV_VARS }}
-          secrets: |-
-            ${{ matrix.secrets }}
+          secrets: ${{ matrix.secrets || '' }}
 
   # ── Post-deploy smoke test ─────────────────────────────────────────────────
   smoke-test:
