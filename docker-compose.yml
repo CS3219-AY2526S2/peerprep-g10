@@ -74,7 +74,7 @@ services:
       REDIS_URL: redis://matching-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
       COLLAB_SERVICE_URL: http://collaboration-service:3001
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     ports:
       - "3002:3002"
     depends_on:
@@ -99,7 +99,8 @@ services:
       - ./question-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@question-db:5432/question_service
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
+      COLLABORATION_SERVICE_URL: http://collaboration-service:3001
     ports:
       - "3003:3003"
     depends_on:
@@ -117,6 +118,8 @@ services:
       context: ./collaboration-service
       dockerfile: Dockerfile
     container_name: collaboration-service
+    env_file:
+      - ./collaboration-service/.env
     ports:
       - "3001:3001"
     environment:
@@ -124,7 +127,8 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:admin123@collaboration-db:5432/peerprep
       QUESTION_SERVICE_URL: http://question-service:3003
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      USER_SERVICE_URL: http://user-service:3004
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     depends_on:
       collaboration-db:
         condition: service_healthy
@@ -134,19 +138,27 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
+  peerprep-frontend:
     build:
       context: ./peerprep-frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_COLLAB_SERVICE_URL: ${NEXT_PUBLIC_COLLAB_SERVICE_URL:-/api/collab}
+        NEXT_PUBLIC_MATCHING_SERVICE_URL: ${NEXT_PUBLIC_MATCHING_SERVICE_URL:-/api/matching}
+        NEXT_PUBLIC_QUESTION_SERVICE_URL: ${NEXT_PUBLIC_QUESTION_SERVICE_URL:-/api/question}
+        NEXT_PUBLIC_USER_SERVICE_URL: ${NEXT_PUBLIC_USER_SERVICE_URL:-/api/user}
     container_name: peerprep-frontend
+    env_file:
+      - ./peerprep-frontend/.env
     ports:
     - "3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_COLLAB_BACKEND_URL: /api/collab
-      NEXT_PUBLIC_MATCHING_SERVICE_URL: /api/matching
-      NEXT_PUBLIC_USER_SERVICE_URL: /api/user
+      NEXT_PUBLIC_COLLAB_SERVICE_URL: ${NEXT_PUBLIC_COLLAB_SERVICE_URL:-/api/collab}
+      NEXT_PUBLIC_MATCHING_SERVICE_URL: ${NEXT_PUBLIC_MATCHING_SERVICE_URL:-/api/matching}
+      NEXT_PUBLIC_QUESTION_SERVICE_URL: ${NEXT_PUBLIC_QUESTION_SERVICE_URL:-/api/question}
+      NEXT_PUBLIC_USER_SERVICE_URL: ${NEXT_PUBLIC_USER_SERVICE_URL:-/api/user}
     depends_on:
       collaboration-service:
         condition: service_healthy
@@ -154,6 +166,8 @@ services:
         condition: service_started
       user-service:
         condition: service_started
+      question-service:
+        condition: service_healthy
   
   user-service:
     build:
@@ -163,7 +177,7 @@ services:
       - ./user-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@user-db:5432/user_service
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     ports:
       - "3004:3004"
     depends_on:
@@ -186,7 +200,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
-      frontend:
+      peerprep-frontend:
         condition: service_started
       collaboration-service:
         condition: service_healthy

@@ -2,6 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id TEXT,
   title TEXT NOT NULL,
   topics TEXT[],
   difficulty TEXT,
@@ -20,4 +21,18 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   user_id TEXT NOT NULL,
   message TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL,
+  user_id TEXT NOT NULL,
+  partner_id TEXT,
+  question_id TEXT NOT NULL,
+  question_snapshot JSONB,
+  code TEXT,
+  started_at TIMESTAMP NOT NULL,
+  ended_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(room_id, user_id)
 );

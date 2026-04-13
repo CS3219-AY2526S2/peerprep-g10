@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { Pencil, User as UserIcon } from 'lucide-react';
 import EditProfileModal from '@/src/components/profile/EditProfileModal';
 import ChangePasswordModal from '@/src/components/profile/ChangePasswordModal';
@@ -8,10 +9,12 @@ import { User } from '@/src/services/user/types';
 
 interface Props {
   user: User;
-  onSuccess: (updatedUser: User) => void;
+  onProfileSuccess: (updatedUser: User, emailChanged: boolean) => void;
+  onPasswordSuccess: () => void;
+  onIconSuccess: (updatedUser: User) => void;
 }
 
-export default function ProfileCard({ user, onSuccess }: Props) {
+export default function ProfileCard({ user, onProfileSuccess, onPasswordSuccess, onIconSuccess }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
@@ -32,7 +35,7 @@ export default function ProfileCard({ user, onSuccess }: Props) {
         <div className="flex flex-col items-center gap-2">
           <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center">
             {user.profile_icon
-              ? <img src={user.profile_icon} className="w-full h-full rounded-full object-cover" />
+              ? <Image src={user.profile_icon} alt="Profile avatar" width={256} height={256} className="w-full h-full rounded-full object-cover" />
               : <UserIcon className="w-8 h-8 text-gray-400 dark:text-zinc-500" />
             }
           </div>
@@ -64,21 +67,23 @@ export default function ProfileCard({ user, onSuccess }: Props) {
       </div>
 
       <EditProfileModal
+        key={editOpen ? 'open' : 'closed'}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         username={user.username}
         userEmail={user.email}
-        onSuccess={onSuccess}
+        onSuccess={onProfileSuccess}
       />
       <ChangePasswordModal
         isOpen={passwordOpen}
         onClose={() => setPasswordOpen(false)}
+        onSuccess={onPasswordSuccess}
       />
       <ChangeIconModal
         isOpen={iconOpen}
         onClose={() => setIconOpen(false)}
         currentIcon={user.profile_icon}
-        onSuccess={onSuccess}
+        onSuccess={onIconSuccess}
       />
     </div>
   );

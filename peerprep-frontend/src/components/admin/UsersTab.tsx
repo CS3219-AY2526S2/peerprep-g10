@@ -34,9 +34,10 @@ export default function UsersTab() {
     loadUsers();
   }, []);
 
-  useEffect(() => {
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setCurrentPage(1);
-  }, [search]);
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return users;
@@ -85,7 +86,7 @@ export default function UsersTab() {
             type="text"
             placeholder="Search by username, email or role..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>

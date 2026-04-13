@@ -136,6 +136,29 @@ and
 
 http://localhost:3000/collaboration/[roomId]?user=user2
 
+#### 5.4 NGINX reverse proxy set up for cross machine voice call functionality
+To enable voice call functionality the following set up steps needs to be completed:
+
+Linux and MacOS:
+
+```bash or Z-shell
+mkcert -install
+mkdir -p nginx/certs
+mkcert -cert-file nginx/certs/cert.pem -key-file nginx/certs/key.pem localhost 127.0.0.1 ::1 <your_lan_ip>
+docker compose up -d --build
+```
+
+Windows:
+
+```powershell
+mkcert -install
+mkdir nginx\certs
+mkcert -cert-file nginx\certs\cert.pem -key-file nginx\certs\key.pem localhost 127.0.0.1 ::1 <their_lan_ip>
+docker compose up -d --build
+```
+
+Do note keytool error while running mkcert -install can be safely ignored
+
 #### 6. Frontend Set Up
 ```bash
 cd peerprep-frontend
@@ -147,7 +170,7 @@ npm run dev        # starts on port 3000
 
 #### Option 1: All services via Docker (recommended)
 1. Start all services: `docker compose up -d --build`
-2. Open http://localhost:3000
+2. Open https://localhost
 
 #### Option 2: Services locally
 1. Start databases: `docker compose up -d question-db user-db collaboration-db redis`
@@ -163,11 +186,34 @@ npm run dev        # starts on port 3000
 |-------|-------------|
 | `/auth/login` | Login page |
 | `/auth/register` | User registration |
+| `/auth/check-email` | Check email |
+| `/auth/verify-email` | Verify email |
 | `/user` | User dashboard (requires user role) |
 | `/user/profile` | User profile |
+| `/user/attempts/[id]` | User attempt details |
 | `/admin` | Admin dashboard — question management with search, pagination, create/edit/delete (requires admin role) |
 | `/admin/profile` | Admin profile |
 | `/admin/create-admin` | Create a new admin |
 | `/admin/questions/create` | Create a new question |
 | `/admin/questions/[id]/edit` | Edit an existing question |
 | `/collaboration/[roomId]?user=[userId]` | Access the collaboration page |
+
+### Running Test
+
+#### 1. Matching Service Test Run
+
+> Note: You may need to run `npm install` for the first time if test packages are not yet installed
+
+#### Running Unit and Integration Test
+
+```bash
+cd matching-service
+npm run test
+```
+
+#### Running Integration Test Only
+
+```bash
+cd matching-service
+npm run test:integration
+```

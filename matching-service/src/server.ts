@@ -1,6 +1,7 @@
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { connectRedis } from './config/redis';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { connectRedis, pubClient, subClient } from './config/redis';
 import app from './app';
 import { matchingService } from './services/matching.service';
 import { queueService } from './services/queue.service';
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 3002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 async function startServer() {
+  // Connect to Redis Data Client
+  await connectRedis();
+
   // Create HTTP server wrapping the Express app
   const httpServer = http.createServer(app);
 
@@ -20,10 +24,8 @@ async function startServer() {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    adapter: createAdapter(pubClient, subClient)
   });
-
-  // Connect to Redis Data Client
-  await connectRedis();
 
   // SocketIO Middleware
   io.use((socket, next) => {
@@ -38,18 +40,36 @@ async function startServer() {
       // Verify the JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
 
-      // Verify all required query fields are present
-      if (!query.topic || !query.difficulty) {
+      let topics: string[] = [];
+      let difficulties: string[] = [];
+
+      if (typeof query.topic === 'string') {
+        topics = query.topic.split(',').map((t: string) => t.trim());
+      } else if (Array.isArray(query.topic)) {
+        topics = query.topic as string[];
+      }
+
+      if (typeof query.difficulty === 'string') {
+        difficulties = query.difficulty.split(',').map((d: string) => d.trim());
+      } else if (Array.isArray(query.difficulty)) {
+        difficulties = query.difficulty as string[];
+      }
+
+      if (!topics.length || !difficulties.length) {
         return next(new Error("Connection error: Missing topic or difficulty"));
       }
 
+      // Parse filterUnattempted flag
+      const filterUnattempted = query.filterUnattempted === 'true';
+
       // Assign to socket.data
       socket.data.userId = String(decoded.userId);
-      socket.data.topic = query.topic;
-      socket.data.difficulty = query.difficulty;
+      socket.data.topic = topics;
+      socket.data.difficulty = difficulties;
+      socket.data.filterUnattempted = filterUnattempted;
 
       next();
-  
+
     } catch (error) {
       // JWT verification error
       console.error("Socket authentication failed:", error);
@@ -59,10 +79,16 @@ async function startServer() {
 
   // Handle SocketIO Connections
   io.on('connection', async (socket) => {
-    console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId})`);
+    console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId}, Filter unattempted: ${socket.data.filterUnattempted})`);
 
     // Add user to queue
-    await queueService.addUserToMatchPool(socket.data.userId, socket.id, socket.data.topic, socket.data.difficulty);
+    await queueService.addUserToMatchPool(
+      socket.data.userId, 
+      socket.id, 
+      socket.data.topic, 
+      socket.data.difficulty,
+      socket.data.filterUnattempted
+    );
     await matchingService.findMatch(io, socket.data.userId, socket.data.topic, socket.data.difficulty);
 
     socket.on('disconnect', () => {

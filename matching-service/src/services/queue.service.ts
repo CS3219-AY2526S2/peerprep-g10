@@ -1,22 +1,33 @@
 import { redisClient } from '../config/redis'; 
 
-const MATCH_TIMEOUT_SECONDS = 120;
+const MATCH_TIMEOUT_SECONDS = 125;
 
 export interface MatchTicket {
   userId: string;
   socketId: string;
-  topic: string;
-  difficulty: string;
+  topic: string[];
+  difficulty: string[];
   joinedAt: number;
+  filterUnattempted: boolean;
 }
 
 class QueueService {
   /**
-   * Generates the deterministic key for a specific topic/difficulty bucket.
+   * Generates the deterministic key for a specific topic/difficulty bucket.    
    */
   public getQueueKey(topic: string, difficulty: string): string {
     // Normalize strings to omit case-sensitivity bugs
     return `queue:${topic.toLowerCase()}:${difficulty.toLowerCase()}`;
+  }
+
+  public getQueueKeys(topics: string[], difficulties: string[]): string[] {
+    const keys: string[] = [];
+    for (const t of topics) {
+      for (const d of difficulties) {
+        keys.push(this.getQueueKey(t, d));
+      }
+    }
+    return keys;
   }
 
   /**
@@ -29,29 +40,42 @@ class QueueService {
   /**
    * Place user into the matching queue and creates a timeout ticket.
    */
-  public async addUserToMatchPool(userId: string, socketId: string, topic: string, difficulty: string): Promise<void> {
-    const queueKey = this.getQueueKey(topic, difficulty);
+  public async addUserToMatchPool(userId: string, socketId: string, topics: string[], difficulties: string[], filterUnattempted: boolean = false, joinedAt: number = Date.now()): Promise<void> {
+    const queueKeys = this.getQueueKeys(topics, difficulties);
     const ticketKey = this.getTicketKey(userId);
 
     const ticket: MatchTicket = {
       userId,
       socketId,
-      topic,
-      difficulty,
-      joinedAt: Date.now(),
+      topic: topics,
+      difficulty: difficulties,
+      joinedAt: joinedAt,
+      filterUnattempted: filterUnattempted
     };
+
+    // Calculate the remaining time left on the ticket
+    const elapsedSeconds = Math.floor((Date.now() - joinedAt) / 1000);
+    const remainingTimeSeconds = Math.max(0, MATCH_TIMEOUT_SECONDS - elapsedSeconds);
+
+    // If the TTL is already expired, skip re-insertion
+    if (remainingTimeSeconds === 0) {
+      console.log(`[QUEUE] Ticket for user ${userId} expired. Did not re-insert.`);
+      return;
+    }
 
     // Use multi to execute operations at same time
     const multi = redisClient.multi();
 
     // Add user ID to the specific topic & difficulty set
-    multi.sAdd(queueKey, userId);
-    
+    for (const key of queueKeys) {
+      multi.sAdd(key, userId);
+    }
+
     // Create user matching ticket in Redis
-    multi.setEx(ticketKey, MATCH_TIMEOUT_SECONDS, JSON.stringify(ticket));
+    multi.setEx(ticketKey, remainingTimeSeconds, JSON.stringify(ticket));      
 
     await multi.exec();
-    console.log(`[QUEUE] Added user ${userId} to ${queueKey}`);
+    console.log(`[QUEUE] Added user ${userId} to ${queueKeys.length} queues with ${remainingTimeSeconds}s TTL`);
   }
 
   /**
@@ -59,25 +83,32 @@ class QueueService {
    */
   public async removeUserFromMatchPool(userId: string): Promise<void> {
     const ticketKey = this.getTicketKey(userId);
-    
-    // Get user's ticket to find their queue
-    const ticketData = await redisClient.get(ticketKey);
-    
-    if (!ticketData) {
-      // User is not in queue (timeout or removed)
-      return; 
+
+    // Lua script reads the ticket JSON and removes user from all arrays
+    const luaScript = `
+      local ticketData = redis.call("GET", KEYS[1])
+      if not ticketData then return 0 end
+      
+      local decoded = cjson.decode(ticketData)
+      for _, topic in ipairs(decoded.topic) do
+        for _, difficulty in ipairs(decoded.difficulty) do
+            local queueKey = "queue:" .. string.lower(topic) .. ":" .. string.lower(difficulty)
+            redis.call("SREM", queueKey, ARGV[1])
+        end
+      end
+
+      redis.call("DEL", KEYS[1])
+      return 1
+    `;
+
+    const result = await redisClient.eval(luaScript, {
+      keys: [ticketKey],
+      arguments: [userId]
+    });
+
+    if (result === 1) {
+      console.log(`[QUEUE] Removed user ${userId} from all queues (Cancellation/Disconnect)`);
     }
-
-    const ticket: MatchTicket = JSON.parse(ticketData);
-    const queueKey = this.getQueueKey(ticket.topic, ticket.difficulty);
-
-    // Remove user from the Set and delete their ticket (atomic operation)
-    const multi = redisClient.multi();
-    multi.sRem(queueKey, userId);
-    multi.del(ticketKey);
-
-    await multi.exec();
-    console.log(`[QUEUE] Removed user ${userId} from ${queueKey} (Cancellation/Disconnect)`);
   }
 
   /**
@@ -86,35 +117,57 @@ class QueueService {
   public async removeBothUserFromMatchPool(ticketA: MatchTicket, ticketB: MatchTicket): Promise<boolean> {
     const userA = ticketA.userId;
     const userB = ticketB.userId;
-    
-    // Remove both users and their tickets simultaneously.
-    const ticketAQueueKey = this.getQueueKey(ticketA.topic, ticketA.difficulty);
-    const ticketBQueueKey = this.getQueueKey(ticketB.topic, ticketB.difficulty);
-    const results = await redisClient.multi()
-        .sRem(ticketAQueueKey, userA)
-        .sRem(ticketBQueueKey, userB)
-        .del(this.getTicketKey(userA))
-        .del(this.getTicketKey(userB))
-        .execTyped();
-        
-    // If sRem returns 0, it means another server already matched them in the last millisecond.
-    // We abort to prevent creating duplicate rooms.
-    if (results[0] === 0 || results[1] === 0) {
+
+    const ticketAKey = this.getTicketKey(userA);
+    const ticketBKey = this.getTicketKey(userB);
+
+    const luaScript = `
+      local ticketDataA = redis.call("GET", KEYS[1])
+      local ticketDataB = redis.call("GET", KEYS[2])
+      if not ticketDataA or not ticketDataB then return 0 end
+
+      local aDecoded = cjson.decode(ticketDataA)
+      local bDecoded = cjson.decode(ticketDataB)
+
+      for _, t in ipairs(aDecoded.topic) do
+        for _, d in ipairs(aDecoded.difficulty) do
+          redis.call("SREM", "queue:" .. string.lower(t) .. ":" .. string.lower(d), ARGV[1])
+        end
+      end
+
+      for _, t in ipairs(bDecoded.topic) do
+        for _, d in ipairs(bDecoded.difficulty) do
+          redis.call("SREM", "queue:" .. string.lower(t) .. ":" .. string.lower(d), ARGV[2])
+        end
+      end
+
+      redis.call("DEL", KEYS[1])
+      redis.call("DEL", KEYS[2])
+      return 1
+    `;
+
+    const result = await redisClient.eval(
+      luaScript,
+      {
+        keys: [ticketAKey, ticketBKey],       
+        arguments: [userA, userB]
+      }
+    );
+
+    if (result === 0) {
       console.log(`[RACE CONDITION AVERTED] Users ${userA} or ${userB} were already matched.`);
-      return false; 
+      return false;
     }
 
-    console.log(`[QUEUE] Removed user ${userA} from ${ticketAQueueKey} (Match Found)`);
-    console.log(`[QUEUE] Removed user ${userB} from ${ticketBQueueKey} (Match Found)`);
-
+    console.log(`[QUEUE] Removed matched users ${userA} & ${userB} from all queues`);
     return true;
   }
 
   /**
-   * Retrieves user's current match ticket to check if they are still active.
+   * Retrieves user's current match ticket to check if they are still active.   
    */
   public async getTicket(userId: string): Promise<MatchTicket | null> {
-    const ticketData = await redisClient.get(this.getTicketKey(userId));
+    const ticketData = await redisClient.get(this.getTicketKey(userId));        
     if (!ticketData) return null;
     return JSON.parse(ticketData);
   }
@@ -132,7 +185,8 @@ class QueueService {
    * Removes user from a specific queue.
    */
   public async removeUserFromQueue(userId: string, topic: string, difficulty: string): Promise<void> {
-    await redisClient.sRem(queueService.getQueueKey(topic, difficulty), userId);
+    const queueKey = this.getQueueKey(topic, difficulty);
+    await redisClient.sRem(queueKey, userId);
   }
 }
 

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/src/context/AuthContext';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import { ROUTES } from '@/src/constant/route';
@@ -14,8 +15,11 @@ export const UserNavbar = () => {
         className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white rounded-lg active:scale-95"
       >
         {user?.profile_icon ? (
-          <img
+          <Image
             src={user.profile_icon}
+            alt="Profile avatar" 
+            width={256} 
+            height={256}
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             className="w-6 h-6 rounded-full object-cover"
           />

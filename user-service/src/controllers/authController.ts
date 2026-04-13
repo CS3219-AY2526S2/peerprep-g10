@@ -1,69 +1,75 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { AuthService } from '../services/authServices';
 import { UserService } from '../services/userServices';
 import { registerSchema } from '../validator/userSchema';
+import { handleAppError } from '../errors/handleAppError';
 
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = registerSchema.parse(req.body);
-    
     await AuthService.register(username, email, password);
-    res.status(201).json({ message: "User registered successfully!" });
 
-  } catch (error: any) {
-    if (error.message === "EMAIL_EXISTS") {
-      return res.status(400).json({ message: "This email is already registered." });
-    }
-    if (error.message === "USERNAME_EXISTS") {
-      return res.status(400).json({ message: "This username is already taken. Please choose another." });
-    }
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      const message = error.issues[0]?.message || "Invalid input data";
-      return res.status(400).json({ message });
-    }
-    
-    console.error("REGISTRATION ERROR:", error);
-    res.status(400).json({ error: error.errors || "Server Error" });
+    res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
+  } catch (error) {
+    handleAppError(error, res, 'registerUser', 'Error registering user');
   }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const authData = await AuthService.login(email, password);
-    
-    res.status(200).json({ 
-      message: "Login successful", 
-      ...authData 
-    });
-  } catch (error: any) {
-    if (error.message === "USER_BANNED") {
-      return res.status(403).json({ message: "Your account has been banned." });
-    }
-    if (error.message === "USER_NOT_FOUND") {
-      return res.status(401).json({ message: "This email is not registered. Please sign up first." });
-    }
-    if (error.message === "INVALID_PASSWORD") {
-      return res.status(401).json({ message: "Incorrect password. Please try again." });
-    }
-    console.error("DEBUG LOGIN ERROR:", error.message);
-    res.status(500).json({ message: "Server Error during login" });
+
+    res.status(200).json({ message: 'Login successful', ...authData });
+  } catch (error) {
+    handleAppError(error, res, 'loginUser', 'Error logging in');
   }
 };
 
-export const verifyToken = async (req: Request, res: Response) => {
+// Validates the JWT and returns the currently authenticated user
+export const verifyToken = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user.userId;
     const user = await UserService.getUserById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     res.json({ user });
   } catch (error) {
-    res.status(500).json({ message: "Error verifying token" });
+    handleAppError(error, res, 'verifyToken', 'Error verifying token');
+  }
+};
+
+// Handles both registration verification and email change verification
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.query as { token: string };
+    if (!token) {
+      res.status(400).json({ message: 'Token is required' });
+      return;
+    }
+
+    const result = await AuthService.verifyEmail(token);
+
+    res.json({
+      message: result.isEmailChange ? 'Email updated successfully' : 'Email verified successfully',
+      ...result,
+    });
+  } catch (error) {
+    handleAppError(error, res, 'verifyEmail', 'Error verifying email');
+  }
+};
+
+export const resendVerification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    await AuthService.resendVerification(email);
+    
+    res.json({ message: 'Verification email sent' });
+  } catch (error) {
+    handleAppError(error, res, 'resendVerification', 'Error sending verification email');
   }
 };

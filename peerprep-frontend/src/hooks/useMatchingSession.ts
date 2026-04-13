@@ -21,8 +21,9 @@ interface UseMatchingSessionOptions {
 }
 
 interface StartMatchParams {
-  topic: string;
-  difficulty: string;
+  topic: string[];
+  difficulty: string[];
+  filterUnattempted?: boolean;
   token?: string | null;
 }
 
@@ -63,18 +64,20 @@ export function useMatchingSession({
     setActiveNotification(null);
   }, [clearTimers]);
 
-  const startMatch = useCallback(({ topic, difficulty, token }: StartMatchParams) => {
+  const startMatch = useCallback(({ topic, difficulty, filterUnattempted, token }: StartMatchParams) => {
     if (isMatching) {
       return;
     }
 
-    const socket = io(API_BASE.MATCHING_SERVICE, {
+    const socket = io("/", {
+      path: `${API_BASE.MATCHING_SERIVCE}/socket.io`,
       auth: {
         token,
       },
       query: {
         topic,
-        difficulty: difficulty.toLowerCase(),
+        difficulty: difficulty.map(d => d.toLowerCase()),
+        filterUnattempted: filterUnattempted ? 'true' : 'false',
       },
     });
 

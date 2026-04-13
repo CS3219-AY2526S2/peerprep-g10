@@ -24,7 +24,7 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
       return;
     }
     
-  }, [isLoggedIn, isLoading, router]);
+  }, [isLoggedIn, isLoading, router, role]);
 
   if (isLoading || role === null) {
     return (

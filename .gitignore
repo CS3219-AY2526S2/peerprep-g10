@@ -1,6 +1,13 @@
 # Dependency directories
 node_modules/
 
+# Build directories
+dist/
+
+# generated Key and Certificates
+cert.pem
+key.pem
+
 # Environment variables
 .env
 .env.local
