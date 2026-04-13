@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import Link from 'next/link';
@@ -11,19 +11,15 @@ import { login as loginApi} from '@/src/services/user/userApi';
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(() => {
+    if (typeof window === 'undefined') return '';
 
-  useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('reason');
-    if (reason === 'deleted') {
-      setError('Your account has been deleted.');
-      return;
-    }
-    if (reason === 'banned') {
-      setError('Your account has been banned.');
-    }
-  }, []);
+    if (reason === 'deleted') return 'Your account has been deleted.';
+    if (reason === 'banned') return 'Your account has been banned.';
+    return '';
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
