@@ -48,3 +48,9 @@ variable "resend_api_key" {
   type      = string
   sensitive = true
 }
+
+variable "admin_seed_password" {
+  description = "Seed password for the admin account"
+  type        = string
+  sensitive   = true
+}

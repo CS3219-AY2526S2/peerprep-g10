@@ -96,6 +96,16 @@ resource "google_redis_instance" "cache" {
   display_name       = "PeerPrep Matching Cache"
 }
 
+resource "google_redis_instance" "auth_cache" {
+  name               = "peerprep-auth-redis"
+  tier               = "BASIC"
+  memory_size_gb     = 1
+  region             = var.region
+  authorized_network = var.vpc_id
+  redis_version      = "REDIS_7_0"
+  display_name       = "PeerPrep Auth Cache"
+}
+
 output "cloud_sql_connection_name" {
   value = google_sql_database_instance.main.connection_name
 }
@@ -110,4 +120,12 @@ output "redis_host" {
 
 output "redis_port" {
   value = google_redis_instance.cache.port
+}
+
+output "auth_redis_host" {
+  value = google_redis_instance.auth_cache.host
+}
+
+output "auth_redis_port" {
+  value = google_redis_instance.auth_cache.port
 }
