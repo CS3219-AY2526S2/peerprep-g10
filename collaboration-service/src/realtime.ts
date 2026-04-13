@@ -4,6 +4,43 @@ import * as Y from "yjs";
 import * as awarenessProtocol from "y-protocols/awareness.js";
 import { isUserBanned } from "./middleware/authMiddleware";
 
+type UserProfile = {
+  id: string;
+  username?: string;
+  profile_icon?: string;
+};
+
+async function fetchUserProfilesBatch(ids: string[]): Promise<UserProfile[]> {
+  if (!ids.length) return [];
+
+  const userServiceUrl = process.env.USER_SERVICE_URL;
+  const serviceSecret = process.env.SERVICE_SECRET_KEY;
+
+  if (!userServiceUrl) {
+    throw new Error("USER_SERVICE_URL is not set");
+  }
+  if (!serviceSecret) {
+    throw new Error("SERVICE_SECRET_KEY is not set");
+  }
+
+  const res = await fetch(`${userServiceUrl}/api/users/services/profiles`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceSecret}`,
+    },
+    body: JSON.stringify({ ids }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to fetch user profiles: ${res.status} ${text}`);
+  }
+
+  const data = await res.json();
+  return Array.isArray(data) ? data : Array.isArray(data?.users) ? data.users : [];
+}
+
 type RoomYState = {
   doc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
@@ -78,6 +115,7 @@ async function getOrCreateRoomYState(roomId: string): Promise<RoomYState> {
 type PresenceUser = {
   userId: string;
   displayName: string;
+  profileIcon: string | undefined;
   socketId: string;
 };
 
@@ -121,6 +159,7 @@ function emitPresence(io: SocketIOServer, roomId: string) {
   const users = Array.from(usersMap.values()).map((u) => ({
     userId: u.userId,
     displayName: u.displayName ?? u.userId,
+    profileIcon: u.profileIcon,
   }));
 
   io.to(roomId).emit("presence:update", {roomId, users});
@@ -158,10 +197,10 @@ export function registerRealtime(io: SocketIOServer) {
   io.on("connection", (socket: Socket) => {
     socket.on(
       "room:join",
-      async (payload: {roomId: string; userId: string; displayName: string}) => {
+      async (payload: {roomId: string; userId: string}) => {
         await withBanCheck(socket, async () => {
           try {
-            const { roomId, userId, displayName } = payload;
+            const {roomId, userId} = payload;
 
             if (!roomId || !userId) {
               socket.emit("room:error", {message: "Invalid room join payload"});
@@ -202,9 +241,16 @@ export function registerRealtime(io: SocketIOServer) {
 
             socket.join(roomId);
 
+            const profiles = await fetchUserProfilesBatch([userId]);
+            const profile = profiles[0];
+
+            const resolvedDisplayName = profile?.username || userId;
+            const resolvedProfileIcon = profile?.profile_icon;
+
             usersMap.set(userId, {
               userId,
-              displayName,
+              displayName : resolvedDisplayName,
+              profileIcon: resolvedProfileIcon,
               socketId: socket.id,
             });
 
@@ -484,7 +530,11 @@ export function registerRealtime(io: SocketIOServer) {
 
       const usersMap = roomUsers.get(roomId);
       if (usersMap) {
-        usersMap.delete(userId);
+        const existing = usersMap.get(userId);
+
+        if (existing?.socketId === socket.id) {
+          usersMap.delete(userId);
+        }
       }
 
       socket.data.authorized = false;

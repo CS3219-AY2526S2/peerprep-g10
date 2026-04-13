@@ -59,7 +59,7 @@ async function startServer() {
   await pubClient.connect();
   await subClient.connect();
 
-  io.adapter(createAdapter(pubClient, subClient));
+  // io.adapter(createAdapter(pubClient, subClient));
 
   // Connect to auth-redis for ban checks and subscribe to ban events
   await connectAuthRedis();
