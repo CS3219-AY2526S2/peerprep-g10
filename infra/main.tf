@@ -52,6 +52,7 @@ module "secrets" {
   db_password_question = var.db_password_question
   db_password_user     = var.db_password_user
   db_password_collab   = var.db_password_collab
+  admin_seed_password  = var.admin_seed_password
 }
 
 module "cloud_run" {

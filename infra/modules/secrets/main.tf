@@ -32,6 +32,11 @@ variable "db_password_collab" {
   sensitive = true
 }
 
+variable "admin_seed_password" {
+  type      = string
+  sensitive = true
+}
+
 locals {
   secrets = {
     "peerprep-jwt-secret"     = var.jwt_secret
@@ -40,6 +45,7 @@ locals {
     "db-password-question"    = var.db_password_question
     "db-password-user"        = var.db_password_user
     "db-password-collab"      = var.db_password_collab
+    "admin-seed-password"     = var.admin_seed_password
   }
 }
 
