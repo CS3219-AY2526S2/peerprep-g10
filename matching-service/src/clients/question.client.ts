@@ -10,6 +10,7 @@ export interface Question {
   difficulty: string;
   examples?: string;
   pseudocode?: string;
+  solution?: string;
   image_url?: string | null;
   created_at: string;
   updated_at: string;

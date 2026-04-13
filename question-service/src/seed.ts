@@ -11,6 +11,7 @@ interface Question {
   difficulty: 'easy' | 'medium' | 'hard';
   examples: string;
   pseudocode: string;
+  solution: string;
 }
 
 const questions: Question[] = [
@@ -42,6 +43,7 @@ Constraints:
 \`-109 <= target <= 109\`
 Only one valid answer exists.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximum Subarray`,
@@ -67,6 +69,7 @@ Constraints:
 \`-105 <= nums[i] <= 105\`
 Follow up: If you have figured out the \`O(n)\` solution, try coding another solution using the divide and conquer approach, which is more subtle.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Best Time to Buy and Sell Stock`,
@@ -95,6 +98,7 @@ Constraints:
 \`1 <= prices.length <= 105\`
 \`0 <= prices[i] <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Valid Parentheses`,
@@ -130,6 +134,21 @@ Constraints:
 \`1 <= s.length <= 104\`
 \`s\` consists of parentheses only \`'()[]{}'\`.`,
     pseudocode: '',
+    solution: `def isValid(s):
+    stack = []
+    mapping = {')': '(', '}': '{', ']': '['}
+    for char in s:
+        if char in mapping:
+            if not stack or stack[-1] != mapping[char]:
+                return False
+            stack.pop()
+        else:
+            stack.append(char)
+    return len(stack) == 0
+
+# Approach: Stack matching
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Reverse Linked List`,
@@ -154,6 +173,7 @@ The number of nodes in the list is the range \`[0, 5000]\`.
 \`-5000 <= Node.val <= 5000\`
 Follow up: A linked list can be reversed either iteratively or recursively. Could you implement both?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Merge Two Sorted Lists`,
@@ -178,6 +198,7 @@ The number of nodes in both lists is in the range \`[0, 50]\`.
 \`-100 <= Node.val <= 100\`
 Both \`l1\` and \`l2\` are sorted in non-decreasing order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Climbing Stairs`,
@@ -206,6 +227,7 @@ Explanation: There are three ways to climb to the top.
 Constraints:
 \`1 <= n <= 45\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Single Number`,
@@ -231,6 +253,7 @@ Constraints:
 \`-3 * 104 <= nums[i] <= 3 * 104\`
 Each element in the array appears twice except for one element which appears only once.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Symmetric Tree`,
@@ -251,6 +274,7 @@ The number of nodes in the tree is in the range \`[1, 1000]\`.
 \`-100 <= Node.val <= 100\`
 Follow up: Could you solve it both recursively and iteratively?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Intersection of Two Linked Lists`,
@@ -301,6 +325,7 @@ The number of nodes of \`listB\` is in the \`n\`.
 
 Follow up: Could you write a solution that runs in \`O(n)\` time and use only \`O(1)\` memory?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Move Zeroes`,
@@ -322,6 +347,7 @@ Constraints:
 \`-231 <= nums[i] <= 231 - 1\`
 Follow up: Could you minimize the total number of operations done?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Palindrome Linked List`,
@@ -342,6 +368,7 @@ The number of nodes in the list is in the range \`[1, 105]\`.
 \`0 <= Node.val <= 9\`
 Follow up: Could you do it in \`O(n)\` time and \`O(1)\` space?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Invert Binary Tree`,
@@ -365,6 +392,7 @@ The number of nodes in the tree is in the range \`[0, 100]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Majority Element`,
@@ -387,6 +415,7 @@ Constraints:
 \`-231 <= nums[i] <= 231 - 1\`
 Follow-up: Could you solve the problem in linear time and in \`O(1)\` space?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Min Stack`,
@@ -426,6 +455,29 @@ Methods \`pop\`, \`top\` and \`getMin\` operations will always be called on non-
 
 At most \`3 * 104\` calls will be made to \`push\`, \`pop\`, \`top\`, and \`getMin\`.`,
     pseudocode: '',
+    solution: `class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+
+    def push(self, val):
+        self.stack.append(val)
+        if not self.min_stack or val <= self.min_stack[-1]:
+            self.min_stack.append(val)
+
+    def pop(self):
+        if self.stack.pop() == self.min_stack[-1]:
+            self.min_stack.pop()
+
+    def top(self):
+        return self.stack[-1]
+
+    def getMin(self):
+        return self.min_stack[-1]
+
+# Approach: Two stacks (main + min tracker)
+# Time Complexity: O(1) for all operations
+# Space Complexity: O(n)`,
   },
   {
     title: `Diameter of Binary Tree`,
@@ -451,6 +503,7 @@ The number of nodes in the tree is in the range \`[1, 104]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Linked List Cycle`,
@@ -487,6 +540,7 @@ The number of the nodes in the list is in the range \`[0, 104]\`.
 
 Follow up: Can you solve it using \`O(1)\` (i.e. constant) memory?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Merge Two Binary Trees`,
@@ -512,6 +566,7 @@ The number of nodes in both trees is in the range \`[0, 2000]\`.
 
 \`-104 <= Node.val <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find All Numbers Disappeared in an Array`,
@@ -532,6 +587,7 @@ Constraints:
 \`1 <= nums[i] <= n\`
 Follow up: Could you do it without extra space and in \`O(n)\` runtime? You may assume the returned list does not count as extra space.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Common Prefix`,
@@ -555,6 +611,7 @@ Constraints:
 \`0 <= strs[i].length <= 200\`
 \`strs[i]\` consists of only lower-case English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Best Time to Buy and Sell Stock II`,
@@ -591,6 +648,7 @@ Constraints:
 \`1 <= prices.length <= 3 * 104\`
 \`0 <= prices[i] <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximum Depth of Binary Tree`,
@@ -620,6 +678,7 @@ The number of nodes in the tree is in the range \`[0, 104]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Remove Duplicates from Sorted Array`,
@@ -660,6 +719,7 @@ Constraints:
 \`-104 <= nums[i] <= 104\`
 \`nums\` is sorted in ascending order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Convert Sorted Array to Binary Search Tree`,
@@ -684,6 +744,7 @@ Constraints:
 \`-104 <= nums[i] <= 104\`
 \`nums\` is sorted in a strictly increasing order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Merge Sorted Array`,
@@ -707,6 +768,7 @@ Constraints:
 \`1 <= m + n <= 200\`
 \`-109 <= nums1[i], nums2[i] <= 109\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Search Insert Position`,
@@ -740,6 +802,7 @@ Constraints:
 
 \`-104 <= target <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Balanced Binary Tree`,
@@ -766,6 +829,7 @@ The number of nodes in the tree is in the range \`[0, 5000]\`.
 
 \`-104 <= Node.val <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Subtree of Another Tree`,
@@ -801,6 +865,7 @@ Given tree t:
  1   2
 Return false.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Same Tree`,
@@ -826,6 +891,7 @@ The number of nodes in both trees is in the range \`[0, 100]\`.
 
 \`-104 <= Node.val <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Happy Number`,
@@ -857,6 +923,7 @@ Output: false
 Constraints:
 \`1 <= n <= 231 - 1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Min Cost Climbing Stairs`,
@@ -883,6 +950,7 @@ Constraints:
 \`2 <= cost.length <= 1000\`
 \`0 <= cost[i] <= 999\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Path Sum`,
@@ -909,6 +977,7 @@ The number of nodes in the tree is in the range \`[0, 5000]\`.
 \`-1000 <= Node.val <= 1000\`
 \`-1000 <= targetSum <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Lowest Common Ancestor of a Binary Search Tree`,
@@ -942,6 +1011,7 @@ All \`Node.val\` are unique.
 \`p != q\`
 \`p\` and \`q\` will exist in the BST.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Missing Number`,
@@ -980,6 +1050,7 @@ Constraints:
 \`0 <= nums[i] <= n\`
 All the numbers of \`nums\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Count Primes`,
@@ -1003,6 +1074,7 @@ Output: 0
 Constraints:
 \`0 <= n <= 5 * 106\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `First Unique Character in a String`,
@@ -1025,6 +1097,7 @@ Constraints:
 \`1 <= s.length <= 105\`
 \`s\` consists of only lowercase English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Add Binary`,
@@ -1045,6 +1118,7 @@ Constraints:
 
 Each string does not contain leading zeros except for the zero itself.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Island Perimeter`,
@@ -1075,6 +1149,7 @@ Constraints:
 \`1 <= row, col <= 100\`
 \`grid[i][j]\` is \`0\` or \`1\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Jewels and Stones`,
@@ -1097,6 +1172,7 @@ Constraints:
 
 All the characters of \`jewels\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Remove Linked List Elements`,
@@ -1121,6 +1197,7 @@ The number of nodes in the list is in the range \`[0, 104]\`.
 \`1 <= Node.val <= 50\`
 \`0 <= k <= 50\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Two Sum II - Input array is sorted`,
@@ -1153,6 +1230,7 @@ Constraints:
 \`-1000 <= target <= 1000\`
 Only one valid answer exists.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Delete Node in a Linked List`,
@@ -1193,6 +1271,7 @@ The value of each node in the list is unique.
 
 The \`node\` to be deleted is in the list and is not a tail node`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Tree Paths`,
@@ -1214,6 +1293,7 @@ The number of nodes in the tree is in the range \`[1, 100]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Valid Anagram`,
@@ -1234,6 +1314,21 @@ Constraints:
 
 Follow up: What if the inputs contain Unicode characters? How would you adapt your solution to such a case?`,
     pseudocode: '',
+    solution: `def isAnagram(s, t):
+    if len(s) != len(t):
+        return False
+    count = {}
+    for c in s:
+        count[c] = count.get(c, 0) + 1
+    for c in t:
+        count[c] = count.get(c, 0) - 1
+        if count[c] < 0:
+            return False
+    return True
+
+# Approach: Character frequency count
+# Time Complexity: O(n)
+# Space Complexity: O(1) (at most 26 characters)`,
   },
   {
     title: `Valid Palindrome II`,
@@ -1254,6 +1349,7 @@ The string will only contain lowercase characters a-z.
 
 The maximum length of the string is 50000.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Remove Duplicates from Sorted List`,
@@ -1274,6 +1370,7 @@ The number of nodes in the list is in the range \`[0, 300]\`.
 \`-100 <= Node.val <= 100\`
 The list is guaranteed to be sorted in ascending order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Backspace String Compare`,
@@ -1312,6 +1409,21 @@ Constraints:
 
 Follow up: Can you solve it in \`O(n)\` time and \`O(1)\` space?`,
     pseudocode: '',
+    solution: `def backspaceCompare(s, t):
+    def build(string):
+        stack = []
+        for c in string:
+            if c == '#':
+                if stack:
+                    stack.pop()
+            else:
+                stack.append(c)
+        return stack
+    return build(s) == build(t)
+
+# Approach: Stack simulation
+# Time Complexity: O(m + n)
+# Space Complexity: O(m + n)`,
   },
   {
     title: `Is Subsequence`,
@@ -1335,6 +1447,7 @@ Constraints:
 
 Follow up: If there are lots of incoming \`s\`, say \`s1, s2, ..., sk\` where \`k >= 109\`, and you want to check one by one to see if \`t\` has its subsequence. In this scenario, how would you change your code?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Next Greater Element I`,
@@ -1374,6 +1487,18 @@ All the integers of \`nums1\` also appear in \`nums2\`.
 
 Follow up: Could you find an \`O(nums1.length + nums2.length)\` solution?`,
     pseudocode: '',
+    solution: `def nextGreaterElement(nums1, nums2):
+    stack = []
+    next_greater = {}
+    for num in nums2:
+        while stack and stack[-1] < num:
+            next_greater[stack.pop()] = num
+        stack.append(num)
+    return [next_greater.get(num, -1) for num in nums1]
+
+# Approach: Monotonic decreasing stack
+# Time Complexity: O(m + n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Pascal's Triangle`,
@@ -1393,6 +1518,7 @@ Output: [[1]]
 Constraints:
 \`1 <= numRows <= 30\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Substring Without Repeating Characters`,
@@ -1427,6 +1553,7 @@ Constraints:
 \`0 <= s.length <= 5 * 104\`
 \`s\` consists of English letters, digits, symbols and spaces.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Add Two Numbers`,
@@ -1455,6 +1582,7 @@ The number of nodes in each linked list is in the range \`[1, 100]\`.
 \`0 <= Node.val <= 9\`
 It is guaranteed that the list represents a number that does not have leading zeros.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Palindromic Substring`,
@@ -1483,6 +1611,7 @@ Constraints:
 \`1 <= s.length <= 1000\`
 \`s\` consist of only digits and English letters (lower-case and/or upper-case),`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `3Sum`,
@@ -1507,6 +1636,7 @@ Constraints:
 \`0 <= nums.length <= 3000\`
 \`-105 <= nums[i] <= 105\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Container With Most Water`,
@@ -1538,6 +1668,7 @@ Constraints:
 \`2 <= n <= 105\`
 \`0 <= height[i] <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Number of Islands`,
@@ -1570,6 +1701,7 @@ Constraints:
 \`1 <= m, n <= 300\`
 \`grid[i][j]\` is \`'0'\` or \`'1'\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Generate Parentheses`,
@@ -1587,6 +1719,7 @@ Output: [()]
 Constraints:
 \`1 <= n <= 8\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Search in Rotated Sorted Array`,
@@ -1619,6 +1752,7 @@ All values of \`nums\` are unique.
 \`-104 <= target <= 104\`
 Follow up: Can you achieve this in \`O(log n)\` time complexity?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find the Duplicate Number`,
@@ -1655,6 +1789,7 @@ Can you solve the problem without modifying the array \`nums\`?
 Can you solve the problem using only constant, \`O(1)\` extra space?
 Can you solve the problem with runtime complexity less than \`O(n2)\`?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Product of Array Except Self`,
@@ -1680,6 +1815,7 @@ Follow up:
 Could you solve it in \`O(n)\` time complexity and without using division?
 Could you solve it with \`O(1)\` constant space complexity? (The output array does not count as extra space for space complexity analysis.)`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Subarray Sum Equals K`,
@@ -1699,6 +1835,7 @@ Constraints:
 \`-1000 <= nums[i] <= 1000\`
 \`-107 <= k <= 107\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Merge Intervals`,
@@ -1722,6 +1859,19 @@ Constraints:
 \`intervals[i].length == 2\`
 \`0 <= starti <= endi <= 104\``,
     pseudocode: '',
+    solution: `def merge(intervals):
+    intervals.sort(key=lambda x: x[0])
+    merged = [intervals[0]]
+    for start, end in intervals[1:]:
+        if start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    return merged
+
+# Approach: Sort by start, then merge overlapping
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Longest Increasing Subsequence`,
@@ -1751,6 +1901,7 @@ Follow up:
 Could you come up with the \`O(n2)\` solution?
 Could you improve it to \`O(n log(n))\` time complexity?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `House Robber`,
@@ -1779,6 +1930,7 @@ Constraints:
 \`1 <= nums.length <= 100\`
 \`0 <= nums[i] <= 400\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Coin Change`,
@@ -1815,6 +1967,7 @@ Constraints:
 \`1 <= coins[i] <= 231 - 1\`
 \`0 <= amount <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximum Product Subarray`,
@@ -1842,6 +1995,7 @@ Constraints:
 \`-10 <= nums[i] <= 10\`
 The product of any prefix or suffix of \`nums\` is guaranteed to fit in a 32-bit integer.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Word Break`,
@@ -1876,6 +2030,7 @@ Constraints:
 
 All the strings of \`wordDict\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Jump Game`,
@@ -1902,6 +2057,7 @@ Constraints:
 \`1 <= nums.length <= 3 * 104\`
 \`0 <= nums[i] <= 105\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Combination Sum`,
@@ -1946,6 +2102,7 @@ All elements of \`candidates\` are distinct.
 
 \`1 <= target <= 500\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Letter Combinations of a Phone Number`,
@@ -1970,6 +2127,7 @@ Constraints:
 \`0 <= digits.length <= 4\`
 \`digits[i]\` is a digit in the range \`['2', '9']\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Course Schedule`,
@@ -2001,6 +2159,7 @@ Constraints:
 \`0 <= ai, bi < numCourses\`
 All the pairs prerequisites[i] are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Subsets`,
@@ -2022,6 +2181,7 @@ Constraints:
 \`-10 <= nums[i] <= 10\`
 All the numbers of \`nums\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Lowest Common Ancestor of a Binary Tree`,
@@ -2055,6 +2215,7 @@ All \`Node.val\` are unique.
 \`p != q\`
 \`p\` and \`q\` will exist in the tree.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Word Search`,
@@ -2084,6 +2245,7 @@ Constraints:
 
 Follow up: Could you use search pruning to make your solution faster with a larger \`board\`?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Next Permutation`,
@@ -2114,6 +2276,7 @@ Constraints:
 \`1 <= nums.length <= 100\`
 \`0 <= nums[i] <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find First and Last Position of Element in Sorted Array`,
@@ -2143,6 +2306,7 @@ Constraints:
 
 \`-109 <= target <= 109\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Group Anagrams`,
@@ -2168,6 +2332,7 @@ Constraints:
 \`0 <= strs[i].length <= 100\`
 \`strs[i]\` consists of lower-case English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Sort Colors`,
@@ -2201,6 +2366,22 @@ Follow up:
 Could you solve this problem without using the library's sort function?
 Could you come up with a one-pass algorithm using only \`O(1)\` constant space?`,
     pseudocode: '',
+    solution: `def sortColors(nums):
+    lo, mid, hi = 0, 0, len(nums) - 1
+    while mid <= hi:
+        if nums[mid] == 0:
+            nums[lo], nums[mid] = nums[mid], nums[lo]
+            lo += 1
+            mid += 1
+        elif nums[mid] == 1:
+            mid += 1
+        else:
+            nums[mid], nums[hi] = nums[hi], nums[mid]
+            hi -= 1
+
+# Approach: Dutch National Flag (three-way partition)
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Remove Nth Node From End of List`,
@@ -2228,6 +2409,7 @@ The number of nodes in the list is \`sz\`.
 \`0 <= Node.val <= 100\`
 \`1 <= n <= sz\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Construct Binary Tree from Preorder and Inorder Traversal`,
@@ -2254,6 +2436,7 @@ Each value of \`inorder\` also appears in \`preorder\`.
 
 \`inorder\` is guaranteed to be the inorder traversal of the tree.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Copy List with Random Pointer`,
@@ -2295,6 +2478,7 @@ Constraints:
 \`-10000 <= Node.val <= 10000\`
 \`Node.random\` is \`null\` or is pointing to some node in the linked list.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Path Sum III`,
@@ -2325,6 +2509,7 @@ Return 3. The paths that sum to 8 are:
     difficulty: 'medium',
     examples: ``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Unique Paths`,
@@ -2360,6 +2545,7 @@ Constraints:
 \`1 <= m, n <= 100\`
 It's guaranteed that the answer will be less than or equal to \`2 * 109\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Decode String`,
@@ -2396,6 +2582,27 @@ Constraints:
 
 All the integers in \`s\` are in the range \`[1, 300]\`.`,
     pseudocode: '',
+    solution: `def decodeString(s):
+    stack = []
+    curr_str = ''
+    curr_num = 0
+    for c in s:
+        if c.isdigit():
+            curr_num = curr_num * 10 + int(c)
+        elif c == '[':
+            stack.append((curr_str, curr_num))
+            curr_str = ''
+            curr_num = 0
+        elif c == ']':
+            prev_str, num = stack.pop()
+            curr_str = prev_str + curr_str * num
+        else:
+            curr_str += c
+    return curr_str
+
+# Approach: Stack-based parsing
+# Time Complexity: O(n * max_k)
+# Space Complexity: O(n)`,
   },
   {
     title: `Top K Frequent Elements`,
@@ -2418,6 +2625,7 @@ It is guaranteed that the answer is unique.
 
 Follow up: Your algorithm's time complexity must be better than \`O(n log n)\`, where n is the array's size.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Rotate Image`,
@@ -2448,6 +2656,7 @@ Constraints:
 \`1 <= n <= 20\`
 \`-1000 <= matrix[i][j] <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Task Scheduler`,
@@ -2492,6 +2701,18 @@ Constraints:
 
 The integer \`n\` is in the range \`[0, 100]\`.`,
     pseudocode: '',
+    solution: `def leastInterval(tasks, n):
+    freq = {}
+    for t in tasks:
+        freq[t] = freq.get(t, 0) + 1
+    max_freq = max(freq.values())
+    max_count = sum(1 for v in freq.values() if v == max_freq)
+    result = (max_freq - 1) * (n + 1) + max_count
+    return max(result, len(tasks))
+
+# Approach: Greedy (math based on max frequency)
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Search a 2D Matrix II`,
@@ -2520,6 +2741,7 @@ All the integers in each column are sorted in ascending order.
 
 \`-109 <= target <= 109\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Minimum Path Sum`,
@@ -2544,6 +2766,7 @@ Constraints:
 \`1 <= m, n <= 200\`
 \`0 <= grid[i][j] <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Tree Inorder Traversal`,
@@ -2577,6 +2800,22 @@ The number of nodes in the tree is in the range \`[0, 100]\`.
 Follow up:
 Recursive solution is trivial, could you do it iteratively?`,
     pseudocode: '',
+    solution: `def inorderTraversal(root):
+    result = []
+    stack = []
+    curr = root
+    while curr or stack:
+        while curr:
+            stack.append(curr)
+            curr = curr.left
+        curr = stack.pop()
+        result.append(curr.val)
+        curr = curr.right
+    return result
+
+# Approach: Iterative with explicit stack
+# Time Complexity: O(n)
+# Space Complexity: O(h) where h = tree height`,
   },
   {
     title: `Unique Binary Search Trees`,
@@ -2594,6 +2833,7 @@ Output: 1
 Constraints:
 \`1 <= n <= 19\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Tree Level Order Traversal`,
@@ -2617,6 +2857,7 @@ The number of nodes in the tree is in the range \`[0, 2000]\`.
 
 \`-1000 <= Node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximal Square`,
@@ -2641,6 +2882,7 @@ Constraints:
 \`1 <= m, n <= 300\`
 \`matrix[i][j]\` is \`'0'\` or \`'1'\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Partition Labels`,
@@ -2662,6 +2904,7 @@ Note:
 
 \`S\` will consist of lowercase English letters (\`'a'\` to \`'z'\`) only.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Rotate Array`,
@@ -2692,6 +2935,7 @@ Try to come up with as many solutions as you can. There are at least three diffe
 
 Could you do it in-place with \`O(1)\` extra space?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Perfect Squares`,
@@ -2715,6 +2959,7 @@ Explanation: 13 = 4 + 9.
 Constraints:
 \`1 <= n <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Partition Equal Subset Sum`,
@@ -2737,6 +2982,7 @@ Constraints:
 \`1 <= nums.length <= 200\`
 \`1 <= nums[i] <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Decode Ways`,
@@ -2788,6 +3034,7 @@ Constraints:
 \`1 <= s.length <= 100\`
 \`s\` contains only digits and may contain leading zero(s).`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Palindromic Substrings`,
@@ -2810,6 +3057,7 @@ Explanation: Six palindromic strings: a, a, a, aa, aa, aaa.
 Note:
 The input string length won't exceed 1000.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find All Anagrams in a String`,
@@ -2843,6 +3091,7 @@ The substring with start index = 1 is ba, which is an anagram of ab.
 
 The substring with start index = 2 is ab, which is an anagram of ab.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Flatten Binary Tree to Linked List`,
@@ -2870,6 +3119,7 @@ The number of nodes in the tree is in the range \`[0, 2000]\`.
 \`-100 <= Node.val <= 100\`
 Follow up: Can you flatten the tree in-place (with \`O(1)\` extra space)?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Sort List`,
@@ -2895,6 +3145,35 @@ The number of nodes in the list is in the range \`[0, 5 * 104]\`.
 
 \`-105 <= Node.val <= 105\``,
     pseudocode: '',
+    solution: `def sortList(head):
+    if not head or not head.next:
+        return head
+    # Find middle
+    slow, fast = head, head.next
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    mid = slow.next
+    slow.next = None
+    left = sortList(head)
+    right = sortList(mid)
+    # Merge two sorted lists
+    dummy = ListNode(0)
+    curr = dummy
+    while left and right:
+        if left.val <= right.val:
+            curr.next = left
+            left = left.next
+        else:
+            curr.next = right
+            right = right.next
+        curr = curr.next
+    curr.next = left or right
+    return dummy.next
+
+# Approach: Merge Sort on linked list
+# Time Complexity: O(n log n)
+# Space Complexity: O(log n) recursion stack`,
   },
   {
     title: `Daily Temperatures`,
@@ -2910,6 +3189,20 @@ Each temperature will be an integer in the range \`[30, 100]\`.`,
     difficulty: 'medium',
     examples: ``,
     pseudocode: '',
+    solution: `def dailyTemperatures(temperatures):
+    n = len(temperatures)
+    result = [0] * n
+    stack = []  # indices of temps waiting for a warmer day
+    for i in range(n):
+        while stack and temperatures[i] > temperatures[stack[-1]]:
+            j = stack.pop()
+            result[j] = i - j
+        stack.append(i)
+    return result
+
+# Approach: Monotonic decreasing stack
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Linked List Cycle II`,
@@ -2946,6 +3239,7 @@ The number of the nodes in the list is in the range \`[0, 104]\`.
 
 Follow up: Can you solve it using \`O(1)\` (i.e. constant) memory?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Target Sum`,
@@ -2973,6 +3267,7 @@ The sum of elements in the given array will not exceed 1000.
 
 Your output answer is guaranteed to be fitted in a 32-bit integer.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `House Robber III`,
@@ -3000,6 +3295,7 @@ The number of nodes in the tree is in the range \`[1, 104]\`.
 
 \`0 <= Node.val <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Jump Game II`,
@@ -3026,6 +3322,7 @@ Constraints:
 \`1 <= nums.length <= 1000\`
 \`0 <= nums[i] <= 105\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Shortest Unsorted Continuous Subarray`,
@@ -3053,6 +3350,7 @@ Constraints:
 \`-105 <= nums[i] <= 105\`
 Follow up: Can you solve it in \`O(n)\` time complexity?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Counting Bits`,
@@ -3085,6 +3383,7 @@ It is very easy to come up with a solution with run time \`O(32n)\`. Can you do 
 Could you solve it in \`O(n)\` space complexity?
 Can you do it without using any built-in function (i.e., like \`__builtin_popcount\` in C++)?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Tree Right Side View`,
@@ -3108,6 +3407,28 @@ The number of nodes in the tree is in the range \`[0, 100]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: `from collections import deque
+
+def rightSideView(root):
+    if not root:
+        return []
+    result = []
+    queue = deque([root])
+    while queue:
+        level_size = len(queue)
+        for i in range(level_size):
+            node = queue.popleft()
+            if i == level_size - 1:
+                result.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+    return result
+
+# Approach: BFS level order, take last node per level
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Kth Smallest Element in a BST`,
@@ -3129,6 +3450,7 @@ The number of nodes in the tree is \`n\`.
 \`0 <= Node.val <= 104\`
 Follow up: If the BST is modified often (i.e., we can do insert and delete operations) and you need to find the kth smallest frequently, how would you optimize?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Spiral Matrix`,
@@ -3149,6 +3471,7 @@ Constraints:
 \`1 <= m, n <= 10\`
 \`-100 <= matrix[i][j] <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Minimum Size Subarray Sum`,
@@ -3175,6 +3498,7 @@ Constraints:
 \`1 <= nums[i] <= 105\`
 Follow up: If you have figured out the \`O(n)\` solution, try coding another solution of which the time complexity is \`O(n log(n))\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Search Tree Iterator`,
@@ -3217,6 +3541,27 @@ At most \`105\` calls will be made to \`hasNext\`, and \`next\`.
 Follow up:
 Could you implement \`next()\` and \`hasNext()\` to run in average \`O(1)\` time and use \`O(h)\` memory, where \`h\` is the height of the tree?`,
     pseudocode: '',
+    solution: `class BSTIterator:
+    def __init__(self, root):
+        self.stack = []
+        self._push_left(root)
+
+    def _push_left(self, node):
+        while node:
+            self.stack.append(node)
+            node = node.left
+
+    def next(self):
+        node = self.stack.pop()
+        self._push_left(node.right)
+        return node.val
+
+    def hasNext(self):
+        return len(self.stack) > 0
+
+# Approach: Controlled inorder traversal with stack
+# Time Complexity: O(1) amortized per call
+# Space Complexity: O(h)`,
   },
   {
     title: `Course Schedule II`,
@@ -3255,6 +3600,7 @@ Constraints:
 \`ai != bi\`
 All the pairs \`[ai, bi]\` are distinct.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Best Time to Buy and Sell Stock with Cooldown`,
@@ -3279,6 +3625,7 @@ Constraints:
 \`1 <= prices.length <= 5000\`
 \`0 <= prices[i] <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Reverse Linked List II`,
@@ -3301,6 +3648,7 @@ The number of nodes in the list is \`n\`.
 \`1 <= left <= right <= n\`
 Follow up: Could you do it in one pass?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Kth Smallest Element in a Sorted Matrix`,
@@ -3327,6 +3675,7 @@ All the rows and columns of \`matrix\` are guaranteed to be sorted in non-degrea
 
 \`1 <= k <= n2\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Swap Nodes in Pairs`,
@@ -3351,6 +3700,7 @@ The number of nodes in the list is in the range \`[0, 100]\`.
 \`0 <= Node.val <= 100\`
 Follow up: Can you solve the problem without modifying the values in the list's nodes? (i.e., Only nodes themselves may be changed.)`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Insert Delete GetRandom O(1)`,
@@ -3395,6 +3745,7 @@ There will be at least one element in the data structure when \`getRandom\` is c
 
 Follow up: Could you implement the functions of the class with each function works in average \`O(1)\` time?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find All Duplicates in an Array`,
@@ -3413,6 +3764,7 @@ Output:
     difficulty: 'medium',
     examples: ``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `All Nodes Distance K in Binary Tree`,
@@ -3441,6 +3793,7 @@ The \`target\` node is a node in the tree.
 
 \`0 <= K <= 1000\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Evaluate Division`,
@@ -3480,6 +3833,7 @@ Constraints:
 \`1 <= Cj.length, Dj.length <= 5\`
 \`Ai, Bi, Cj, Dj\` consist of lower case English letters and digits.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find Minimum in Rotated Sorted Array`,
@@ -3518,6 +3872,7 @@ All the integers of \`nums\` are unique.
 
 \`nums\` is sorted and rotated between \`1\` and \`n\` times.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Binary Tree Zigzag Level Order Traversal`,
@@ -3541,6 +3896,32 @@ The number of nodes in the tree is in the range \`[0, 2000]\`.
 
 \`-100 <= Node.val <= 100\``,
     pseudocode: '',
+    solution: `from collections import deque
+
+def zigzagLevelOrder(root):
+    if not root:
+        return []
+    result = []
+    queue = deque([root])
+    left_to_right = True
+    while queue:
+        level = []
+        for _ in range(len(queue)):
+            node = queue.popleft()
+            level.append(node.val)
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+        if not left_to_right:
+            level.reverse()
+        result.append(level)
+        left_to_right = not left_to_right
+    return result
+
+# Approach: BFS with alternating direction
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Set Matrix Zeroes`,
@@ -3568,6 +3949,7 @@ Constraints:
 \`1 <= m, n <= 200\`
 \`-231 <= matrix[i][j] <= 231 - 1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Populating Next Right Pointers in Each Node`,
@@ -3599,6 +3981,7 @@ The number of nodes in the given tree is less than \`4096\`.
 
 \`-1000 <= node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Palindrome Partitioning`,
@@ -3619,6 +4002,7 @@ Constraints:
 \`1 <= s.length <= 16\`
 \`s\` contains only lowercase English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Rotting Oranges`,
@@ -3654,6 +4038,7 @@ Constraints:
 \`1 <= m, n <= 10\`
 \`grid[i][j]\` is \`0\`, \`1\`, or \`2\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Remove K Digits`,
@@ -3682,6 +4067,22 @@ Input: num = 10, k = 2
 Output: 0
 Explanation: Remove all the digits from the number and it is left with nothing which is 0.`,
     pseudocode: '',
+    solution: `def removeKdigits(num, k):
+    stack = []
+    for digit in num:
+        while k and stack and stack[-1] > digit:
+            stack.pop()
+            k -= 1
+        stack.append(digit)
+    # Remove remaining from the end
+    stack = stack[:len(stack) - k]
+    # Remove leading zeros
+    result = ''.join(stack).lstrip('0')
+    return result or '0'
+
+# Approach: Monotonic increasing stack (greedy)
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `4Sum`,
@@ -3703,6 +4104,7 @@ Constraints:
 \`-109 <= nums[i] <= 109\`
 \`-109 <= target <= 109\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Search a 2D Matrix`,
@@ -3726,6 +4128,7 @@ Constraints:
 \`1 <= m, n <= 100\`
 \`-104 <= matrix[i][j], target <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `3Sum Closest`,
@@ -3743,6 +4146,7 @@ Constraints:
 \`-10^3 <= nums[i] <= 10^3\`
 \`-10^4 <= target <= 10^4\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Reorder List`,
@@ -3767,6 +4171,7 @@ The number of nodes in the list is in the range \`[1, 5 * 104]\`.
 
 \`1 <= Node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Minimum Height Trees`,
@@ -3806,6 +4211,7 @@ All the pairs \`(ai, bi)\` are distinct.
 
 The given input is guaranteed to be a tree and there will be no repeated edges.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Palindromic Subsequence`,
@@ -3830,6 +4236,7 @@ Constraints:
 \`1 <= s.length <= 1000\`
 \`s\` consists only of lowercase English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Unique Binary Search Trees II`,
@@ -3847,6 +4254,7 @@ Output: [[1]]
 Constraints:
 \`1 <= n <= 8\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Odd Even Linked List`,
@@ -3871,6 +4279,7 @@ The number of nodes in the linked list is in the range \`[0, 104]\`.
 \`-106 <= Node.val <= 106\`
 Follow up: Could you solve it in \`O(1)\` space complexity and \`O(nodes)\` time complexity?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Max Area of Island`,
@@ -3897,6 +4306,7 @@ Given the above grid, return \`0\`.
 
 Note: The length of each dimension in the given \`grid\` does not exceed 50.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Cheapest Flights Within K Stops`,
@@ -3938,6 +4348,7 @@ The price of each flight will be in the range \`[1, 10000]\`.
 
 There will not be any duplicated flights or self cycles.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Largest Number`,
@@ -3966,6 +4377,23 @@ Constraints:
 \`1 <= nums.length <= 100\`
 \`0 <= nums[i] <= 109\``,
     pseudocode: '',
+    solution: `from functools import cmp_to_key
+
+def largestNumber(nums):
+    def compare(a, b):
+        if a + b > b + a:
+            return -1
+        elif a + b < b + a:
+            return 1
+        return 0
+    strs = [str(n) for n in nums]
+    strs.sort(key=cmp_to_key(compare))
+    result = ''.join(strs)
+    return '0' if result[0] == '0' else result
+
+# Approach: Custom sort comparator (compare a+b vs b+a)
+# Time Complexity: O(n log n * k) where k = avg digit length
+# Space Complexity: O(n)`,
   },
   {
     title: `Number of Provinces`,
@@ -3995,6 +4423,7 @@ Constraints:
 \`isConnected[i][i] == 1\`
 \`isConnected[i][j] == isConnected[j][i]\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Clone Graph`,
@@ -4056,6 +4485,7 @@ There is no repeated edges and no self-loops in the graph.
 
 The Graph is connected and all nodes can be visited starting from the given node.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `K Closest Points to Origin`,
@@ -4089,6 +4519,26 @@ Constraints:
 \`1 <= k <= points.length <= 104\`
 \`-104 < xi, yi < 104\``,
     pseudocode: '',
+    solution: `import heapq
+
+def kClosest(points, k):
+    return heapq.nsmallest(k, points, key=lambda p: p[0]**2 + p[1]**2)
+
+# Alternative using max-heap for O(n log k):
+# import heapq
+# def kClosest(points, k):
+#     heap = []
+#     for x, y in points:
+#         dist = -(x*x + y*y)
+#         if len(heap) < k:
+#             heapq.heappush(heap, (dist, x, y))
+#         else:
+#             heapq.heappushpop(heap, (dist, x, y))
+#     return [[x, y] for _, x, y in heap]
+
+# Approach: Min-heap / nsmallest
+# Time Complexity: O(n log k)
+# Space Complexity: O(k)`,
   },
   {
     title: `Top K Frequent Words`,
@@ -4118,6 +4568,7 @@ Input words contain only lowercase letters.
 Follow up:
 Try to solve it in O(n log k) time and O(n) extra space.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Design Add and Search Words Data Structure`,
@@ -4156,6 +4607,7 @@ wordDictionary.search(b..); // return True`,
 
 At most \`50000\` calls will be made to \`addWord\` and \`search\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Count Complete Tree Nodes`,
@@ -4184,6 +4636,7 @@ The tree is guaranteed to be complete.
 
 Follow up: Traversing the tree to count the number of nodes in the tree is an easy solution but with \`O(n)\` complexity. Could you find a faster algorithm?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Remove Duplicates from Sorted List II`,
@@ -4204,6 +4657,7 @@ The number of nodes in the list is in the range \`[0, 300]\`.
 \`-100 <= Node.val <= 100\`
 The list is guaranteed to be sorted in ascending order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Delete Node in a BST`,
@@ -4247,6 +4701,7 @@ Each node has a unique value.
 
 \`-105 <= key <= 105\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Convert Sorted List to Binary Search Tree`,
@@ -4278,6 +4733,7 @@ The number of nodes in \`head\` is in the range \`[0, 2 * 104]\`.
 
 \`-10^5 <= Node.val <= 10^5\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Trapping Rain Water`,
@@ -4299,6 +4755,28 @@ Constraints:
 \`0 <= n <= 3 * 104\`
 \`0 <= height[i] <= 105\``,
     pseudocode: '',
+    solution: `def trap(height):
+    left, right = 0, len(height) - 1
+    left_max = right_max = 0
+    water = 0
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] >= left_max:
+                left_max = height[left]
+            else:
+                water += left_max - height[left]
+            left += 1
+        else:
+            if height[right] >= right_max:
+                right_max = height[right]
+            else:
+                water += right_max - height[right]
+            right -= 1
+    return water
+
+# Approach: Two Pointers
+# Time Complexity: O(n)
+# Space Complexity: O(1)`,
   },
   {
     title: `Median of Two Sorted Arrays`,
@@ -4338,6 +4816,7 @@ Constraints:
 \`-106 <= nums1[i], nums2[i] <= 106\`
 Follow up: The overall run time complexity should be \`O(log (m+n))\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Merge k Sorted Lists`,
@@ -4375,6 +4854,7 @@ Constraints:
 
 The sum of \`lists[i].length\` won't exceed \`10^4\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Minimum Window Substring`,
@@ -4397,6 +4877,7 @@ Constraints:
 
 Follow up: Could you find an algorithm that runs in \`O(n)\` time?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Regular Expression Matching`,
@@ -4444,6 +4925,7 @@ Constraints:
 
 It is guaranteed for each appearance of the character \`'*'\`, there will be a previous valid character to match.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Largest Rectangle in Histogram`,
@@ -4466,6 +4948,22 @@ Constraints:
 \`1 <= heights.length <= 105\`
 \`0 <= heights[i] <= 104\``,
     pseudocode: '',
+    solution: `def largestRectangleArea(heights):
+    stack = []
+    max_area = 0
+    heights.append(0)  # sentinel to flush remaining
+    for i, h in enumerate(heights):
+        while stack and heights[stack[-1]] > h:
+            height = heights[stack.pop()]
+            width = i if not stack else i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+    heights.pop()  # remove sentinel
+    return max_area
+
+# Approach: Monotonic increasing stack
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `First Missing Positive`,
@@ -4489,6 +4987,7 @@ Constraints:
 \`-231 <= nums[i] <= 231 - 1\`
 Follow up: Could you implement an algorithm that runs in \`O(n)\` time and uses constant extra space?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Sliding Window Maximum`,
@@ -4531,6 +5030,26 @@ Constraints:
 \`-104 <= nums[i] <= 104\`
 \`1 <= k <= nums.length\``,
     pseudocode: '',
+    solution: `from collections import deque
+
+def maxSlidingWindow(nums, k):
+    dq = deque()  # stores indices, front = max
+    result = []
+    for i in range(len(nums)):
+        # Remove elements outside the window
+        while dq and dq[0] < i - k + 1:
+            dq.popleft()
+        # Remove smaller elements from back
+        while dq and nums[dq[-1]] < nums[i]:
+            dq.pop()
+        dq.append(i)
+        if i >= k - 1:
+            result.append(nums[dq[0]])
+    return result
+
+# Approach: Monotonic decreasing deque
+# Time Complexity: O(n)
+# Space Complexity: O(k)`,
   },
   {
     title: `Binary Tree Maximum Path Sum`,
@@ -4558,6 +5077,7 @@ The number of nodes in the tree is in the range \`[1, 3 * 104]\`.
 
 \`-1000 <= Node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Edit Distance`,
@@ -4591,6 +5111,7 @@ Constraints:
 \`0 <= word1.length, word2.length <= 500\`
 \`word1\` and \`word2\` consist of lowercase English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Valid Parentheses`,
@@ -4617,6 +5138,7 @@ Constraints:
 \`0 <= s.length <= 3 * 104\`
 \`s[i]\` is \`'('\`, or \`')'\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Consecutive Sequence`,
@@ -4638,6 +5160,7 @@ Constraints:
 \`-109 <= nums[i] <= 109\`
 Follow up: Could you implement the \`O(n)\` solution?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Word Ladder`,
@@ -4672,6 +5195,7 @@ Constraints:
 \`beginWord != endWord\`
 All the words in \`wordList\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Serialize and Deserialize Binary Tree`,
@@ -4703,6 +5227,7 @@ The number of nodes in the tree is in the range \`[0, 104]\`.
 
 \`-1000 <= Node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximal Rectangle`,
@@ -4737,6 +5262,28 @@ Constraints:
 \`0 <= row, cols <= 200\`
 \`matrix[i][j]\` is \`'0'\` or \`'1'\`.`,
     pseudocode: '',
+    solution: `def maximalRectangle(matrix):
+    if not matrix:
+        return 0
+    cols = len(matrix[0])
+    heights = [0] * (cols + 1)
+    max_area = 0
+    for row in matrix:
+        for j in range(cols):
+            heights[j] = heights[j] + 1 if row[j] == '1' else 0
+        # Largest rectangle in histogram using stack
+        stack = []
+        for i in range(cols + 1):
+            while stack and heights[stack[-1]] > heights[i]:
+                h = heights[stack.pop()]
+                w = i if not stack else i - stack[-1] - 1
+                max_area = max(max_area, h * w)
+            stack.append(i)
+    return max_area
+
+# Approach: Row-by-row histogram + monotonic stack
+# Time Complexity: O(m * n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Reverse Nodes in k-Group`,
@@ -4772,6 +5319,7 @@ The number of nodes in the list is in the range \`sz\`.
 \`0 <= Node.val <= 1000\`
 \`1 <= k <= sz\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Burst Balloons`,
@@ -4798,6 +5346,7 @@ Constraints:
 \`1 <= n <= 500\`
 \`0 <= nums[i] <= 100\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Best Time to Buy and Sell Stock III`,
@@ -4838,6 +5387,7 @@ Constraints:
 \`1 <= prices.length <= 105\`
 \`0 <= prices[i] <= 105\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Count of Smaller Numbers After Self`,
@@ -4869,6 +5419,41 @@ Constraints:
 \`1 <= nums.length <= 105\`
 \`-104 <= nums[i] <= 104\``,
     pseudocode: '',
+    solution: `def countSmaller(nums):
+    result = [0] * len(nums)
+    indices = list(range(len(nums)))
+
+    def merge_sort(lo, hi):
+        if hi - lo <= 1:
+            return
+        mid = (lo + hi) // 2
+        merge_sort(lo, mid)
+        merge_sort(mid, hi)
+        temp = []
+        i, j = lo, mid
+        while i < mid and j < hi:
+            if nums[indices[i]] <= nums[indices[j]]:
+                temp.append(indices[j])
+                j += 1
+            else:
+                result[indices[i]] += j - mid
+                temp.append(indices[i])
+                i += 1
+        while i < mid:
+            result[indices[i]] += j - mid
+            temp.append(indices[i])
+            i += 1
+        while j < hi:
+            temp.append(indices[j])
+            j += 1
+        indices[lo:hi] = temp
+
+    merge_sort(0, len(nums))
+    return result
+
+# Approach: Merge Sort with index tracking
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Remove Invalid Parentheses`,
@@ -4895,6 +5480,7 @@ Constraints:
 
 There will be at most \`20\` parentheses in \`s\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Word Break II`,
@@ -4925,6 +5511,7 @@ Constraints:
 
 All the strings of \`wordDict\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Longest Increasing Path in a Matrix`,
@@ -4955,6 +5542,7 @@ Constraints:
 \`1 <= m, n <= 200\`
 \`0 <= matrix[i][j] <= 231 - 1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Wildcard Matching`,
@@ -5000,6 +5588,7 @@ Constraints:
 
 \`p\` contains only lowercase English letters, \`'?'\` or \`'*'\`.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Sudoku Solver`,
@@ -5027,6 +5616,7 @@ Constraints:
 
 It is guaranteed that the input board has only one solution.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Split Array Largest Sum`,
@@ -5058,6 +5648,7 @@ Constraints:
 \`0 <= nums[i] <= 106\`
 \`1 <= m <= min(50, nums.length)\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Word Ladder II`,
@@ -5093,6 +5684,7 @@ Constraints:
 \`beginWord != endWord\`
 All the words in \`wordList\` are unique.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Best Time to Buy and Sell Stock IV`,
@@ -5120,6 +5712,7 @@ Constraints:
 \`0 <= prices.length <= 1000\`
 \`0 <= prices[i] <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Recover Binary Search Tree`,
@@ -5145,6 +5738,7 @@ The number of nodes in the tree is in the range \`[2, 1000]\`.
 
 \`-231 <= Node.val <= 231 - 1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Dungeon Game`,
@@ -5177,6 +5771,7 @@ Constraints:
 \`1 <= m, n <= 200\`
 \`-1000 <= dungeon[i][j] <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Critical Connections in a Network`,
@@ -5199,6 +5794,7 @@ Constraints:
 \`connections[i][0] != connections[i][1]\`
 There are no repeated connections.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Basic Calculator`,
@@ -5223,6 +5819,38 @@ Constraints:
 
 \`s\` represents a valid expression.`,
     pseudocode: '',
+    solution: `def calculate(s):
+    stack = []
+    result = 0
+    num = 0
+    sign = 1
+    for c in s:
+        if c.isdigit():
+            num = num * 10 + int(c)
+        elif c == '+':
+            result += sign * num
+            num = 0
+            sign = 1
+        elif c == '-':
+            result += sign * num
+            num = 0
+            sign = -1
+        elif c == '(':
+            stack.append(result)
+            stack.append(sign)
+            result = 0
+            sign = 1
+        elif c == ')':
+            result += sign * num
+            num = 0
+            result *= stack.pop()  # sign before parenthesis
+            result += stack.pop()  # result before parenthesis
+    result += sign * num
+    return result
+
+# Approach: Stack with sign tracking
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Russian Doll Envelopes`,
@@ -5250,6 +5878,7 @@ Constraints:
 \`envelopes[i].length == 2\`
 \`1 <= wi, hi <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Distinct Subsequences`,
@@ -5286,6 +5915,7 @@ Constraints:
 \`1 <= s.length, t.length <= 1000\`
 \`s\` and \`t\` consist of English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Trapping Rain Water II`,
@@ -5310,6 +5940,7 @@ After the rain, water is trapped between the blocks. The total volume of water t
 \`1 <= m, n <= 110\`
 \`0 <= heightMap[i][j] <= 20000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Maximum Frequency Stack`,
@@ -5355,6 +5986,29 @@ At most \`2 * 104\` calls will be made to \`push\` and \`pop\`.
 
 It is guaranteed that there will be at least one element in the stack before calling \`pop\`.`,
     pseudocode: '',
+    solution: `class FreqStack:
+    def __init__(self):
+        self.freq = {}
+        self.group = {}
+        self.max_freq = 0
+
+    def push(self, val):
+        f = self.freq.get(val, 0) + 1
+        self.freq[val] = f
+        if f > self.max_freq:
+            self.max_freq = f
+        self.group.setdefault(f, []).append(val)
+
+    def pop(self):
+        val = self.group[self.max_freq].pop()
+        self.freq[val] -= 1
+        if not self.group[self.max_freq]:
+            self.max_freq -= 1
+        return val
+
+# Approach: Stack per frequency + hash map
+# Time Complexity: O(1) for push and pop
+# Space Complexity: O(n)`,
   },
   {
     title: `Palindrome Partitioning II`,
@@ -5381,6 +6035,7 @@ Constraints:
 \`1 <= s.length <= 2000\`
 \`s\` consists of lower-case English letters only.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Palindrome Pairs`,
@@ -5406,6 +6061,7 @@ Constraints:
 \`0 <= words[i].length <= 300\`
 \`words[i]\` consists of lower-case English letters.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Shortest Subarray with Sum at Least K`,
@@ -5430,6 +6086,26 @@ Note:
 \`-10 ^ 5 <= A[i] <= 10 ^ 5\`
 \`1 <= K <= 10 ^ 9\``,
     pseudocode: '',
+    solution: `from collections import deque
+
+def shortestSubarray(nums, k):
+    n = len(nums)
+    prefix = [0] * (n + 1)
+    for i in range(n):
+        prefix[i + 1] = prefix[i] + nums[i]
+    dq = deque()
+    result = n + 1
+    for i in range(n + 1):
+        while dq and prefix[i] - prefix[dq[0]] >= k:
+            result = min(result, i - dq.popleft())
+        while dq and prefix[i] <= prefix[dq[-1]]:
+            dq.pop()
+        dq.append(i)
+    return result if result <= n else -1
+
+# Approach: Monotonic deque with prefix sums
+# Time Complexity: O(n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Subarrays with K Different Integers`,
@@ -5455,6 +6131,7 @@ Note:
 \`1 <= A[i] <= A.length\`
 \`1 <= K <= A.length\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Shortest Palindrome`,
@@ -5475,6 +6152,7 @@ Constraints:
 \`0 <= s.length <= 5 * 104\`
 \`s\` consists of lowercase English letters only.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Cherry Pickup`,
@@ -5519,6 +6197,7 @@ Constraints:
 \`grid[0][0] != -1\`
 \`grid[n - 1][n - 1] != -1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Find Minimum in Rotated Sorted Array II`,
@@ -5548,6 +6227,7 @@ Constraints:
 
 Follow up: This is the same as Find Minimum in Rotated Sorted Array but with duplicates. Would allow duplicates affect the run-time complexity? How and why?`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Frog Jump`,
@@ -5575,6 +6255,7 @@ Constraints:
 \`0 <= stones[i] <= 231 - 1\`
 \`stones[0] == 0\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Integer to English Words`,
@@ -5600,6 +6281,7 @@ Output: One Billion Two Hundred Thirty Four Million Five Hundred Sixty Seven Tho
 Constraints:
 \`0 <= num <= 231 - 1\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Vertical Order Traversal of a Binary Tree`,
@@ -5658,6 +6340,7 @@ The number of nodes in the tree is in the range \`[1, 1000]\`.
 
 \`0 <= Node.val <= 1000\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Smallest Range Covering Elements from K Lists`,
@@ -5700,6 +6383,7 @@ Constraints:
 \`-105 <= nums[i][j] <= 105\`
 \`nums[i]\` is sorted in non-decreasing order.`,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Unique Paths III`,
@@ -5742,6 +6426,7 @@ Note that the starting and ending square can be anywhere in the grid.
 Note:
 \`1 <= grid.length * grid[0].length <= 20\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Super Egg Drop`,
@@ -5779,6 +6464,7 @@ Constraints:
 \`1 <= k <= 100\`
 \`1 <= n <= 104\``,
     pseudocode: '',
+    solution: '',
   },
   {
     title: `Reverse Pairs`,
@@ -5799,6 +6485,41 @@ The length of the given array will not exceed \`50,000\`.
 
 All the numbers in the input array are in the range of 32-bit integer.`,
     pseudocode: '',
+    solution: `def reversePairs(nums):
+    count = [0]
+
+    def merge_sort(arr):
+        if len(arr) <= 1:
+            return arr
+        mid = len(arr) // 2
+        left = merge_sort(arr[:mid])
+        right = merge_sort(arr[mid:])
+        # Count important reverse pairs
+        j = 0
+        for i in range(len(left)):
+            while j < len(right) and left[i] > 2 * right[j]:
+                j += 1
+            count[0] += j
+        # Standard merge
+        merged = []
+        i = j = 0
+        while i < len(left) and j < len(right):
+            if left[i] <= right[j]:
+                merged.append(left[i])
+                i += 1
+            else:
+                merged.append(right[j])
+                j += 1
+        merged.extend(left[i:])
+        merged.extend(right[j:])
+        return merged
+
+    merge_sort(nums)
+    return count[0]
+
+# Approach: Merge Sort with pair counting
+# Time Complexity: O(n log n)
+# Space Complexity: O(n)`,
   },
   {
     title: `Find K-th Smallest Pair Distance`,
@@ -5824,6 +6545,7 @@ Note:
 
 \`1 <= k <= len(nums) * (len(nums) - 1) / 2\`.`,
     pseudocode: '',
+    solution: '',
   },
 ];
 
@@ -5837,13 +6559,13 @@ async function seed() {
   let paramIdx = 1;
 
   for (const q of questions) {
-    values.push(`($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2}, $${paramIdx + 3}, $${paramIdx + 4}, $${paramIdx + 5})`);
-    params.push(q.title, q.description, q.topics, q.difficulty, q.examples, q.pseudocode);
-    paramIdx += 6;
+    values.push(`($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2}, $${paramIdx + 3}, $${paramIdx + 4}, $${paramIdx + 5}, $${paramIdx + 6})`);
+    params.push(q.title, q.description, q.topics, q.difficulty, q.examples, q.pseudocode, q.solution);
+    paramIdx += 7;
   }
 
   await pool.query(
-    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode) VALUES ${values.join(', ')}`,
+    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode, solution) VALUES ${values.join(', ')}`,
     params
   );
 

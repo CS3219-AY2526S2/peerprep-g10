@@ -18,6 +18,7 @@ const EMPTY_FORM: QuestionFormData = {
   topics: [],
   examples: '',
   pseudocode: '',
+  solution: '',
   image_url: '',
 };
 
@@ -202,13 +203,25 @@ export default function QuestionForm({ initialData, onSubmit, submitLabel }: Que
 
       {/* Pseudocode */}
       <div>
-        <label className={labelClass}>Pseudocode</label>
+        <label className={labelClass}>Pseudocode / Starter Code</label>
         <textarea
           value={form.pseudocode}
           onChange={(e) => update('pseudocode', e.target.value)}
           rows={3}
           className={inputClass}
-          placeholder="Algorithm pseudocode..."
+          placeholder="Starter code shown in the collaboration editor..."
+        />
+      </div>
+
+      {/* Solution */}
+      <div>
+        <label className={labelClass}>Solution</label>
+        <textarea
+          value={form.solution}
+          onChange={(e) => update('solution', e.target.value)}
+          rows={6}
+          className={inputClass}
+          placeholder="Model answer shown after the session ends..."
         />
       </div>
 

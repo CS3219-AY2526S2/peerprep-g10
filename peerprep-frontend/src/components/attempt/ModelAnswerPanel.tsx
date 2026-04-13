@@ -16,12 +16,12 @@ export default function ModelAnswerPanel({ question }: ModelAnswerPanelProps) {
         <p className="text-sm leading-relaxed text-zinc-600">{question.description}</p>
       )}
 
-      {/* Sample Code from pseudocode */}
-      {question.pseudocode && (
+      {/* Sample Code from solution */}
+      {question.solution && (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-zinc-800">Sample Code</h3>
           <div className="flex flex-col gap-3">
-            {question.pseudocode.split('\n\n').map((block, i) => (
+            {question.solution.split('\n\n').map((block, i) => (
               <pre
                 key={i}
                 className="rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed text-zinc-700 overflow-x-auto whitespace-pre-wrap"
