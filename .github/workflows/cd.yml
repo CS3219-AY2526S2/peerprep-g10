@@ -323,7 +323,6 @@ jobs:
             --concurrency=80
             --vpc-connector=peerprep-connector
             --vpc-egress=private-ranges-only
-            ADMIN_SEED_PASSWORD=admin-seed-password:latest
             --service-account=${{ secrets.CLOUD_RUN_SA_EMAIL }}
             --allow-unauthenticated
           env_vars: ${{ env.RESOLVED_ENV_VARS }}
@@ -331,6 +330,7 @@ jobs:
             JWT_SECRET=peerprep-jwt-secret:latest
             SERVICE_SECRET_KEY=peerprep-service-secret:latest
             RESEND_API_KEY=peerprep-resend-key:latest
+            ADMIN_SEED_PASSWORD=admin-seed-password:latest
 
   # ── Post-deploy smoke test ─────────────────────────────────────────────────
   smoke-test:
