@@ -44,9 +44,9 @@ io.use(async (socket, next) => {
 });
 
 async function startServer() {
-  const redisUrl = process.env.COLAB_REDIS_BACKPLANE_URL;
+  const redisUrl = process.env.COLLAB_REDIS_BACKPLANE_URL;
   if (!redisUrl) {
-    throw new Error("AUTH_REDIS_URL is not set");
+    throw new Error("COLLAB_REDIS_BACKPLANE_URL is not set");
   }
 
   // Redis backplane for Socket.IO
@@ -59,7 +59,7 @@ async function startServer() {
   await pubClient.connect();
   await subClient.connect();
 
-  // io.adapter(createAdapter(pubClient, subClient));
+  io.adapter(createAdapter(pubClient, subClient));
 
   // Connect to auth-redis for ban checks and subscribe to ban events
   await connectAuthRedis();

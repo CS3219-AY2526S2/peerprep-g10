@@ -76,6 +76,15 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+  
+  collab-redis:
+    image: redis:7-alpine
+    container_name: collab-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   matching-service:
     build:
@@ -146,6 +155,7 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:admin123@collaboration-db:5432/peerprep
       AUTH_REDIS_URL: redis://auth-redis:6379
+      COLLAB_REDIS_BACKPLANE_URL: redis://collab-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
       USER_SERVICE_URL: http://user-service:3004
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
@@ -153,6 +163,8 @@ services:
       collaboration-db:
         condition: service_healthy
       auth-redis:
+        condition: service_healthy
+      collab-redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
