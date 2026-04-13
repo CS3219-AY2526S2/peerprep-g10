@@ -4,6 +4,7 @@ import { VerificationDB } from '../model/verificationModel';
 import { getDefaultAvatar, getRandomAvatar } from '../config/avatar';
 import { sendEmailChangeVerification } from '../config/email';
 import { Errors } from '../errors/AppError';
+import { BanService } from './banService';
 
 const SALT_ROUNDS = 12;
 
@@ -111,6 +112,15 @@ export const UserService = {
     // Admins are protected from being banned
     if (user.access_role === 'admin') throw Errors.CANNOT_BAN_ADMIN;
 
-    return UserDB.updateUserBanStatus(Number(userId), isBanned);
+    const updatedUser = await UserDB.updateUserBanStatus(Number(userId), isBanned);
+
+    // Sync the ban state to Redis and publish the Pub/Sub event for real-time socket disconnection
+    if (isBanned) {
+      await BanService.banUser(userId);
+    } else {
+      await BanService.unbanUser(userId);
+    }
+
+    return updatedUser;
   },
 };

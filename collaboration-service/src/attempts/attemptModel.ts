@@ -8,6 +8,7 @@ export interface QuestionSnapshot {
   description: string;
   examples: string;
   pseudocode: string;
+  solution: string;
 }
 
 export const AttemptModel = {

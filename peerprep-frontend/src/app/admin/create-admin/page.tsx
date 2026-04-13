@@ -57,7 +57,7 @@ export default function CreateAdminPage() {
           <Input id="confirmPassword" name="confirmPassword" label="Confirm Password" type="password" isPassword required />
         </form>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-5">
             <Button type="submit" disabled={loading} form="createAdminForm">
               {loading ? 'Creating...' : 'Add Admin'}
             </Button>

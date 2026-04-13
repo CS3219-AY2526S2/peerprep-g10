@@ -1,7 +1,15 @@
 import request from 'supertest';
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import attemptRoutes from '../../attempts/attemptRoutes';
 import { AttemptService } from '../../attempts/attemptService';
+
+// Mock the Redis ban lookup used by auth middleware
+jest.mock('../../config/authRedis', () => ({
+  banCheckClient: {
+    sIsMember: jest.fn().mockResolvedValue(false),
+  },
+}));
 
 // Mock the service
 jest.mock('../../attempts/attemptService', () => ({
@@ -12,6 +20,15 @@ jest.mock('../../attempts/attemptService', () => ({
     getAttemptedQuestionIdsByUser: jest.fn(),
   },
 }));
+
+process.env.JWT_SECRET = 'test-secret';
+process.env.SERVICE_SECRET_KEY = 'service-secret';
+
+const createAuthToken = (payload = { userId: 1, access_role: 'user' }) =>
+  jwt.sign(payload, process.env.JWT_SECRET as string);
+
+const authHeader = `Bearer ${createAuthToken()}`;
+const serviceAuthHeader = `Bearer ${process.env.SERVICE_SECRET_KEY}`;
 
 const mockService = AttemptService as jest.Mocked<typeof AttemptService>;
 
@@ -26,7 +43,7 @@ const mockAttempt = {
   userId: '1',
   partnerId: '2',
   questionId: '1',
-  questionSnapshot: { id: '1', title: 'Two Sum', description: '', topics: [], difficulty: 'easy', examples: '', pseudocode: '' },
+  questionSnapshot: { id: '1', title: 'Two Sum', description: '', topics: [], difficulty: 'easy', examples: '', pseudocode: '', solution: '' },
   partner: { id: '2', username: 'John Doe', profile_icon: '' },
   code: 'print("hello")',
   startedAt: '2024-01-01T10:00:00Z',
@@ -97,7 +114,9 @@ describe('GET /attempts/user/:userId', () => {
   it('returns list of attempts', async () => {
     mockService.getAttemptsByUser.mockResolvedValueOnce([mockAttempt]);
 
-    const res = await request(app).get('/attempts/user/1');
+    const res = await request(app)
+      .get('/attempts/user/1')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([mockAttempt]);
@@ -107,7 +126,9 @@ describe('GET /attempts/user/:userId', () => {
   it('returns empty array when user has no attempts', async () => {
     mockService.getAttemptsByUser.mockResolvedValueOnce([]);
 
-    const res = await request(app).get('/attempts/user/1');
+    const res = await request(app)
+      .get('/attempts/user/1')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
@@ -116,7 +137,9 @@ describe('GET /attempts/user/:userId', () => {
   it('returns 500 when service throws', async () => {
     mockService.getAttemptsByUser.mockRejectedValueOnce(new Error('DB error'));
 
-    const res = await request(app).get('/attempts/user/1');
+    const res = await request(app)
+      .get('/attempts/user/1')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(500);
   });
@@ -126,7 +149,9 @@ describe('GET /attempts/user/:userId/questions', () => {
   it('returns userId and questionIds array', async () => {
     mockService.getAttemptedQuestionIdsByUser.mockResolvedValueOnce(['1', '5', '12']);
 
-    const res = await request(app).get('/attempts/user/1/questions');
+    const res = await request(app)
+      .get('/attempts/user/1/questions')
+      .set('Authorization', serviceAuthHeader);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ userId: '1', questionIds: ['1', '5', '12'] });
@@ -135,7 +160,9 @@ describe('GET /attempts/user/:userId/questions', () => {
   it('returns empty questionIds array when user has no attempts', async () => {
     mockService.getAttemptedQuestionIdsByUser.mockResolvedValueOnce([]);
 
-    const res = await request(app).get('/attempts/user/1/questions');
+    const res = await request(app)
+      .get('/attempts/user/1/questions')
+      .set('Authorization', serviceAuthHeader);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ userId: '1', questionIds: [] });
@@ -144,7 +171,9 @@ describe('GET /attempts/user/:userId/questions', () => {
   it('returns 500 when service throws', async () => {
     mockService.getAttemptedQuestionIdsByUser.mockRejectedValueOnce(new Error('DB error'));
 
-    const res = await request(app).get('/attempts/user/1/questions');
+    const res = await request(app)
+      .get('/attempts/user/1/questions')
+      .set('Authorization', serviceAuthHeader);
 
     expect(res.status).toBe(500);
   });
@@ -154,7 +183,9 @@ describe('GET /attempts/:id', () => {
   it('returns attempt when found', async () => {
     mockService.getAttemptById.mockResolvedValueOnce(mockAttempt);
 
-    const res = await request(app).get('/attempts/attempt-uuid');
+    const res = await request(app)
+      .get('/attempts/attempt-uuid')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(mockAttempt);
@@ -163,7 +194,9 @@ describe('GET /attempts/:id', () => {
   it('returns 404 when attempt not found', async () => {
     mockService.getAttemptById.mockResolvedValueOnce(null);
 
-    const res = await request(app).get('/attempts/nonexistent-id');
+    const res = await request(app)
+      .get('/attempts/nonexistent-id')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('Attempt not found');
@@ -172,7 +205,9 @@ describe('GET /attempts/:id', () => {
   it('returns 500 when service throws', async () => {
     mockService.getAttemptById.mockRejectedValueOnce(new Error('DB error'));
 
-    const res = await request(app).get('/attempts/attempt-uuid');
+    const res = await request(app)
+      .get('/attempts/attempt-uuid')
+      .set('Authorization', authHeader);
 
     expect(res.status).toBe(500);
   });

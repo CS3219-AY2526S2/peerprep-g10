@@ -1,5 +1,3 @@
-import { Question } from '@/src/services/types';
-
 export type QuestionSnapshot = {
   id: string;
   title: string;
@@ -8,6 +6,7 @@ export type QuestionSnapshot = {
   difficulty: string;
   examples: string;
   pseudocode: string;
+  solution: string;
 };
 
 export type Attempt = {

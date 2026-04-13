@@ -7,6 +7,12 @@ jest.mock('../../model/userModel');
 jest.mock('../../model/verificationModel');
 jest.mock('../../config/avatar');
 jest.mock('../../config/email');
+jest.mock('../../services/banService', () => ({
+  BanService: {
+    banUser: jest.fn().mockResolvedValue(undefined),
+    unbanUser: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 jest.mock('bcrypt');
 
 const mockUser = {

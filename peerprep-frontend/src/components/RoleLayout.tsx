@@ -5,6 +5,7 @@ import { useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import { ROUTES } from '@/src/constant/route'
 import { Role } from '@/src/services/user/types';
+import ForbiddenPage from '@/src/components/ForbiddenPage';
 
 interface RoleLayoutProps {
   role: Role | Role[];
@@ -39,7 +40,7 @@ export default function RoleLayout({ role: requiredRole, children }: RoleLayoutP
   // Check if role matches
   const allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
   if (!allowed.includes(role)) {
-    notFound();
+    return ForbiddenPage();
   }
 
   return <>{children}</>;

@@ -38,7 +38,7 @@ export default function ProfilePage() {
   if (error || !user) return <div>Error...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-gray-50">
       {activeNotification && (
         <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
           <Notification
@@ -48,7 +48,7 @@ export default function ProfilePage() {
         </div>
       )}
       <div className="max-w-5xl mx-auto p-10">
-        <h1 className="text-3xl font-bold mb-8 text-zinc-900 dark:text-white">My Profile</h1>
+        <h1 className="text-3xl font-bold mb-8 text-zinc-900">My Profile</h1>
         {/* Profile Card */}
         <ProfileCard
           user={user!}
@@ -57,8 +57,8 @@ export default function ProfilePage() {
           onIconSuccess={(updatedUser) => handleIconSuccess(updatedUser, setUser)}
         />
         {/* Attempt History */}
-        <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">
+        <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900">
             Attempt History
           </h2>
 

@@ -2,6 +2,9 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { connectRedis, pubClient, subClient } from './config/redis';
+import { connectAuthRedis } from './config/authRedis';
+import { isUserBanned } from './middleware/authMiddleware';
+import { startBanSubscriber } from './banSubscriber';
 import app from './app';
 import { matchingService } from './services/matching.service';
 import { queueService } from './services/queue.service';
@@ -11,8 +14,11 @@ const PORT = process.env.PORT || 3002
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 async function startServer() {
-  // Connect to Redis Data Client
+  // Connect to Redis Data Client (matching-redis for queue operations)
   await connectRedis();
+
+  // Connect to auth-redis for ban blacklist checks
+  await connectAuthRedis();
 
   // Create HTTP server wrapping the Express app
   const httpServer = http.createServer(app);
@@ -28,7 +34,7 @@ async function startServer() {
   });
 
   // SocketIO Middleware
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const query = socket.handshake.query;
       const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
@@ -39,6 +45,12 @@ async function startServer() {
 
       // Verify the JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+
+      // Check the ban blacklist before allowing the socket connection
+      const banned = await isUserBanned(String(decoded.userId));
+      if (banned) {
+        return next(new Error("USER_BANNED"));
+      }
 
       let topics: string[] = [];
       let difficulties: string[] = [];
@@ -77,7 +89,7 @@ async function startServer() {
     }
   });
 
-  // Handle SocketIO Connections
+  // Handle SocketIO Connection
   io.on('connection', async (socket) => {
     console.log(`🔌 New client connected: ${socket.id} (User: ${socket.data.userId}, Filter unattempted: ${socket.data.filterUnattempted})`);
 
@@ -97,6 +109,9 @@ async function startServer() {
       queueService.removeUserFromMatchPool(socket.data.userId);
     });
   });
+
+  // Subscribe to ban events — disconnects matching sockets for banned users in real time
+  await startBanSubscriber(io);
 
   // Start app server
   httpServer.listen(PORT, () => {

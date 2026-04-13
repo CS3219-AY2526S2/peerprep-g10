@@ -23,6 +23,7 @@ async function fetchQuestionSnapshot(questionId: string): Promise<QuestionSnapsh
       description: q.description ?? '',
       examples: q.examples ?? '',
       pseudocode: q.pseudocode ?? '',
+      solution: q.solution ?? '',
     };
   } catch (err: any) {
     console.warn('fetchQuestionSnapshot error:', { questionId, message: err.message });

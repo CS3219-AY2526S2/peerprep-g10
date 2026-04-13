@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pool from '../db';
+import { authenticateToken, requireAuth } from '../middleware/authMiddleware';
+import { authorizeRoles } from '../middleware/roleMiddleware';
 
 const router = Router();
 
@@ -19,12 +21,22 @@ router.post('/random-unattempted', async (req: Request, res: Response) => {
   }
 
   const collabServiceUrl = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:3001';
+  const serviceToken = process.env.SERVICE_SECRET_KEY;
+
+  if (!serviceToken) {
+    res.status(500).json({ error: 'Service secret is not configured' });
+    return;
+  }
+
+  const serviceHeaders = {
+    Authorization: `Bearer ${serviceToken}`,
+  };
 
   let attemptedIntIds: number[] = [];
   try {
     const [userARes, userBRes] = await Promise.all([
-      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userAId)}/questions`),
-      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userBId)}/questions`),
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userAId)}/questions`, { headers: serviceHeaders }),
+      fetch(`${collabServiceUrl}/attempts/user/${encodeURIComponent(userBId)}/questions`, { headers: serviceHeaders }),
     ]);
 
     if (!userARes.ok || !userBRes.ok) {
@@ -81,14 +93,14 @@ router.get('/random', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// GET /questions — list all questions
-router.get('/', async (req: Request, res: Response) => {
+// GET /questions — list all questions (user and admin — ban check applied)
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
   const result = await pool.query('SELECT * FROM questions ORDER BY id');
   res.json(result.rows);
 });
 
-// GET /questions/:id — get a single question
-router.get('/:id', async (req: Request, res: Response) => {
+// GET /questions/:id — get a single question (user and admin — ban check applied)
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query('SELECT * FROM questions WHERE id = $1', [id]);
 
@@ -100,9 +112,9 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// POST /questions — create a new question
-router.post('/', async (req: Request, res: Response) => {
-  const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
+// POST /questions — create a new question (admin only — requires JWT + role check + ban check)
+router.post('/', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
+  const { title, description, topics, difficulty, examples, pseudocode, solution, image_url } = req.body;
 
   if (!title || !description || !topics || !difficulty) {
     res.status(400).json({ error: 'title, description, topics, and difficulty are required.' });
@@ -110,18 +122,18 @@ router.post('/', async (req: Request, res: Response) => {
   }
 
   const result = await pool.query(
-    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode, image_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, image_url ?? null]
+    `INSERT INTO questions (title, description, topics, difficulty, examples, pseudocode, solution, image_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, solution ?? null, image_url ?? null]
   );
 
   res.status(201).json(result.rows[0]);
 });
 
-// PUT /questions/:id — update a question
-router.put('/:id', async (req: Request, res: Response) => {
+// PUT /questions/:id — update a question (admin only — requires JWT + role check + ban check)
+router.put('/:id', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, topics, difficulty, examples, pseudocode, image_url } = req.body;
+  const { title, description, topics, difficulty, examples, pseudocode, solution, image_url } = req.body;
 
   if (!title || !description || !topics || !difficulty) {
     res.status(400).json({ error: 'title, description, topics, and difficulty are required.' });
@@ -130,8 +142,8 @@ router.put('/:id', async (req: Request, res: Response) => {
 
   const result = await pool.query(
     `UPDATE questions SET title = $1, description = $2, topics = $3, difficulty = $4,
-     examples = $5, pseudocode = $6, image_url = $7, updated_at = NOW() WHERE id = $8 RETURNING *`,
-    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, image_url ?? null, id]
+     examples = $5, pseudocode = $6, solution = $7, image_url = $8, updated_at = NOW() WHERE id = $9 RETURNING *`,
+    [title, description, topics, difficulty, examples ?? null, pseudocode ?? null, solution ?? null, image_url ?? null, id]
   );
 
   if (result.rows.length === 0) {
@@ -142,8 +154,8 @@ router.put('/:id', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-// DELETE /questions/:id — delete a question
-router.delete('/:id', async (req: Request, res: Response) => {
+// DELETE /questions/:id — delete a question (admin only — requires JWT + role check + ban check)
+router.delete('/:id', requireAuth, authorizeRoles('admin'), async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await pool.query('DELETE FROM questions WHERE id = $1 RETURNING *', [id]);
 

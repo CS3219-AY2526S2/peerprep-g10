@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import banRoutes from './routes/banRoutes';
 
 const app: Express = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -23,10 +24,11 @@ app.use(express.json()); // Parse incoming JSON payloads
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/ban', banRoutes);
 
 // Basic Health Check Route
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'User Service is running perfectly.' });
 });
 
-export default app; // We export this so server.ts can turn it on
+export default app;

@@ -64,6 +64,19 @@ services:
       timeout: 3s
       retries: 5
 
+  auth-redis:
+    image: redis:7-alpine
+    container_name: auth-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - auth-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   matching-service:
     build:
       context: ./matching-service
@@ -72,6 +85,7 @@ services:
       - ./matching-service/.env.example
     environment:
       REDIS_URL: redis://matching-redis:6379
+      AUTH_REDIS_URL: redis://auth-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
       COLLAB_SERVICE_URL: http://collaboration-service:3001
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
@@ -79,6 +93,8 @@ services:
       - "3002:3002"
     depends_on:
       redis:
+        condition: service_healthy
+      auth-redis:
         condition: service_healthy
       question-service:
         condition: service_healthy
@@ -99,12 +115,15 @@ services:
       - ./question-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@question-db:5432/question_service
+      AUTH_REDIS_URL: redis://auth-redis:6379
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
       COLLABORATION_SERVICE_URL: http://collaboration-service:3001
     ports:
       - "3003:3003"
     depends_on:
       question-db:
+        condition: service_healthy
+      auth-redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
@@ -126,11 +145,14 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://postgres:admin123@collaboration-db:5432/peerprep
+      AUTH_REDIS_URL: redis://auth-redis:6379
       QUESTION_SERVICE_URL: http://question-service:3003
       USER_SERVICE_URL: http://user-service:3004
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     depends_on:
       collaboration-db:
+        condition: service_healthy
+      auth-redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
@@ -177,11 +199,14 @@ services:
       - ./user-service/.env
     environment:
       DATABASE_URL: postgresql://peerprep:peerprep_dev@user-db:5432/user_service
+      AUTH_REDIS_URL: redis://auth-redis:6379
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     ports:
       - "3004:3004"
     depends_on:
       user-db:
+        condition: service_healthy
+      auth-redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3004/health"]
@@ -213,3 +238,4 @@ volumes:
   question-db-data:
   user-db-data:
   collaboration-db-data:
+  auth-redis-data:
