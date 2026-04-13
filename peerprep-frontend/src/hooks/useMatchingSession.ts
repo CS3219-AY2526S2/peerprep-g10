@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from '@/src/constant/api';
+import { ROUTES } from '@/src/constant/route';
 import { NotificationProps } from '@/src/components/Notification';
 
 interface MatchFoundPayload {
@@ -63,6 +64,34 @@ export function useMatchingSession({
     setIsMatching(false);
     setActiveNotification(null);
   }, [clearTimers]);
+
+  // Handles the ban notification and countdown before redirecting to login
+  const handleBanNotification = useCallback(() => {
+    localStorage.removeItem('token');
+
+    let remaining = 5;
+
+    const showBanNotification = () =>
+      setActiveNotification({
+        type: 'error',
+        title: 'Account Banned',
+        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
+        rightAction: 'none',
+      });
+
+    showBanNotification();
+
+    const interval = setInterval(() => {
+      remaining--;
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        window.location.href = `${ROUTES.LOGIN}?reason=banned`;
+      } else {
+        showBanNotification();
+      }
+    }, 1000);
+  }, []);
 
   const startMatch = useCallback(({ topic, difficulty, filterUnattempted, token }: StartMatchParams) => {
     if (isMatching) {
@@ -146,12 +175,24 @@ export function useMatchingSession({
       socketRef.current = null;
     });
 
+    // Force-logout event — server disconnects the socket when the user is banned mid-session
+    socket.on('force-logout', () => {
+      cancelMatch();
+      handleBanNotification();
+    });
+
     socket.on('connect_error', (err: Error) => {
       console.error('Connection rejected:', err.message);
       clearTimers();
       setIsMatching(false);
       socket.disconnect();
       socketRef.current = null;
+
+      // Banned users are blocked at connection time — show notification before redirecting
+      if (err.message === 'USER_BANNED') {
+        handleBanNotification();
+        return;
+      }
 
       if (err.message === 'Authentication error: Invalid or expired token') {
         onAuthError?.();

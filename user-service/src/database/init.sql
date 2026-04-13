@@ -10,12 +10,22 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Trigger to prevent deleting the last admin
+-- Trigger to prevent deleting the last admin.
+-- Uses SELECT ... FOR UPDATE to lock all admin rows before counting, so two
+-- concurrent DELETE requests for the final two admins cannot both pass the
+-- check simultaneously — the second transaction blocks until the first commits.
 CREATE OR REPLACE FUNCTION prevent_last_admin_delete()
 RETURNS TRIGGER AS $$
+DECLARE
+  admin_count INT;
 BEGIN
   IF OLD.access_role = 'admin' THEN
-    IF (SELECT COUNT(*) FROM users WHERE access_role = 'admin') <= 1 THEN
+    SELECT COUNT(*) INTO admin_count
+    FROM users
+    WHERE access_role = 'admin'
+    FOR UPDATE;
+
+    IF admin_count <= 1 THEN
       RAISE EXCEPTION 'LAST_ADMIN';
     END IF;
   END IF;

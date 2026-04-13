@@ -1,5 +1,6 @@
 import {Server as SocketIOServer, Socket} from "socket.io";
 import {pool} from "./db";
+import { isUserBanned } from "./middleware/authMiddleware";
 
 type PresenceUser = {
   userId: string;
@@ -33,240 +34,266 @@ function emitPresence(io: SocketIOServer, roomId: string) {
   io.to(roomId).emit("presence:update", {roomId, users});
 }
 
+// Safety-net: re-checks the ban list on each incoming socket event.
+// If the user was banned after connecting, this catches it before the handler runs.
+async function withBanCheck(socket: Socket, handler: () => Promise<void> | void) {
+  const userId = socket.data.userId;
+  if (userId && await isUserBanned(userId)) {
+    socket.emit("force-logout", { reason: "USER_BANNED" });
+    socket.disconnect(true);
+    return;
+  }
+  await handler();
+}
+
 export function registerRealtime(io: SocketIOServer) {
   io.on("connection", (socket: Socket) => {
     socket.on(
       "room:join",
       async (payload: {roomId: string; userId: string; displayName: string}) => {
-        try {
-          const { roomId, userId, displayName } = payload;
+        await withBanCheck(socket, async () => {
+          try {
+            const { roomId, userId, displayName } = payload;
 
-          if (!roomId || !userId) {
-            socket.emit("room:error", {message: "Invalid room join payload"});
-            return;
+            if (!roomId || !userId) {
+              socket.emit("room:error", {message: "Invalid room join payload"});
+              return;
+            }
+
+            const result = await pool.query(
+              `SELECT id, user1_id, user2_id
+              FROM rooms
+              WHERE id = $1`,
+              [roomId]
+            );
+
+            if (result.rows.length === 0) {
+              socket.emit("room:error", {message: "Room does not exist"});
+              return;
+            }
+
+            const room = result.rows[0];
+            const allowedUsers = [room.user1_id, room.user2_id];
+
+            if (!allowedUsers.includes(userId)) {
+              socket.emit("room:error", {message: "You are not authorized for this room"});
+              return;
+            }
+
+            if (!roomUsers.has(roomId)) {
+              roomUsers.set(roomId, new Map());
+            }
+
+            const usersMap = roomUsers.get(roomId)!;
+            const alreadyPresent = usersMap.has(userId);
+
+            if (!alreadyPresent && usersMap.size >= 2) {
+              socket.emit("room:error", {message: "Room is full"});
+              return;
+            }
+
+            socket.join(roomId);
+
+            usersMap.set(userId, {
+              userId,
+              displayName,
+              socketId: socket.id,
+            });
+
+            socket.data.roomId = roomId;
+            socket.data.userId = userId;
+            socket.data.authorized = true;
+
+            console.log(`User ${userId} joined room ${roomId}`);
+            emitPresence(io, roomId);
+          } catch (err) {
+            console.error("room:join failed:", err);
+            socket.emit("room:error", {message: "Failed to join room"});
           }
-
-          const result = await pool.query(
-            `SELECT id, user1_id, user2_id
-            FROM rooms
-            WHERE id = $1`,
-            [roomId]
-          );
-
-          if (result.rows.length === 0) {
-            socket.emit("room:error", {message: "Room does not exist"});
-            return;
-          }
-
-          const room = result.rows[0];
-          const allowedUsers = [room.user1_id, room.user2_id];
-
-          if (!allowedUsers.includes(userId)) {
-            socket.emit("room:error", {message: "You are not authorized for this room"});
-            return;
-          }
-
-          if (!roomUsers.has(roomId)) {
-            roomUsers.set(roomId, new Map());
-          }
-
-          const usersMap = roomUsers.get(roomId)!;
-          const alreadyPresent = usersMap.has(userId);
-
-          if (!alreadyPresent && usersMap.size >= 2) {
-            socket.emit("room:error", {message: "Room is full"});
-            return;
-          }
-
-          socket.join(roomId);
-
-          usersMap.set(userId, {
-            userId,
-            displayName,
-            socketId: socket.id,
-          });
-
-          socket.data.roomId = roomId;
-          socket.data.userId = userId;
-          socket.data.authorized = true;
-
-          console.log(`User ${userId} joined room ${roomId}`);
-          emitPresence(io, roomId);
-        } catch (err) {
-          console.error("room:join failed:", err);
-          socket.emit("room:error", {message: "Failed to join room"});
-        }
+        });
       }
     );
 
     socket.on(
       "chat:send",
       async (payload: {roomId: string; userId: string; message: string}) => {
-        try {
-          const {roomId, userId, message } = payload;
+        await withBanCheck(socket, async () => {
+          try {
+            const {roomId, userId, message } = payload;
 
-          if (!roomId || !userId || typeof message !== "string") {
-            socket.emit("chat:error", {message: "Invalid chat payload"});
-            return;
+            if (!roomId || !userId || typeof message !== "string") {
+              socket.emit("chat:error", {message: "Invalid chat payload"});
+              return;
+            }
+
+            if (!isAuthorizedSocket(socket, roomId, userId)) {
+              socket.emit("chat:error", { message: "Not authorized for this room" });
+              return;
+            }
+
+            const trimmed = message.trim();
+            if (!trimmed) {
+              return;
+            }
+
+            const roomCheck = await pool.query(`SELECT id FROM rooms WHERE id = $1`, [roomId]);
+            if (roomCheck.rows.length === 0) {
+              socket.emit("chat:error", {message: "Room does not exist"});
+              return;
+            }
+
+            const result = await pool.query(
+              `INSERT INTO chat_messages (room_id, user_id, message)
+               VALUES ($1, $2, $3)
+               RETURNING id, created_at`,
+              [roomId, userId, trimmed]
+            );
+
+            io.to(roomId).emit("chat:new", {
+              id: result.rows[0].id,
+              roomId,
+              userId,
+              message: trimmed,
+              createdAt: result.rows[0].created_at,
+            });
+          } catch (err) {
+            console.error("chat:send failed:", err);
+            socket.emit("chat:error", {message: "Failed to send message"});
           }
-
-          if (!isAuthorizedSocket(socket, roomId, userId)) {
-            socket.emit("chat:error", { message: "Not authorized for this room" });
-            return;
-          }
-
-          const trimmed = message.trim();
-          if (!trimmed) {
-            return;
-          }
-
-          const roomCheck = await pool.query(`SELECT id FROM rooms WHERE id = $1`, [roomId]);
-          if (roomCheck.rows.length === 0) {
-            socket.emit("chat:error", {message: "Room does not exist"});
-            return;
-          }
-
-          const result = await pool.query(
-            `INSERT INTO chat_messages (room_id, user_id, message)
-             VALUES ($1, $2, $3)
-             RETURNING id, created_at`,
-            [roomId, userId, trimmed]
-          );
-
-          io.to(roomId).emit("chat:new", {
-            id: result.rows[0].id,
-            roomId,
-            userId,
-            message: trimmed,
-            createdAt: result.rows[0].created_at,
-          });
-        } catch (err) {
-          console.error("chat:send failed:", err);
-          socket.emit("chat:error", {message: "Failed to send message"});
-        }
+        });
       }
     );
 
     socket.on("editor:replace", async (payload: {roomId: string; code: string}) => {
-      try {
-        const { roomId, code } = payload;
-
-        if (!roomId || typeof code !== "string") {
-          return;
-        }
-
-        if (!isAuthorizedSocket(socket, roomId)) {
-          socket.emit("editor:error", { message: "Not authorized for this room" });
-          return;
-        }
-
-        await pool.query(
-          `UPDATE rooms
-           SET current_code = $2
-           WHERE id = $1`,
-          [roomId, code]
-        );
-
-        socket.to(roomId).emit("editor:replace", {code});
-      } catch (err) {
-        console.error("editor:replace failed:", err);
-        socket.emit("editor:error", {message: "Failed to update editor state"});
-      }
-    });
-
-    socket.on(
-      "voice:offer",
-      (payload: { roomId: string; offer: RTCSessionDescriptionInit }) => {
+      await withBanCheck(socket, async () => {
         try {
-          const { roomId, offer } = payload;
+          const { roomId, code } = payload;
 
-          if (!roomId || !offer) {
-            socket.emit("voice:error", { message: "Invalid voice offer payload" });
+          if (!roomId || typeof code !== "string") {
             return;
           }
 
           if (!isAuthorizedSocket(socket, roomId)) {
-            socket.emit("voice:error", { message: "Not authorized for this room" });
+            socket.emit("editor:error", { message: "Not authorized for this room" });
             return;
           }
 
-          socket.to(roomId).emit("voice:offer", { offer });
+          await pool.query(
+            `UPDATE rooms
+             SET current_code = $2
+             WHERE id = $1`,
+            [roomId, code]
+          );
+
+          socket.to(roomId).emit("editor:replace", {code});
         } catch (err) {
-          console.error("voice:offer failed:", err);
-          socket.emit("voice:error", { message: "Failed to relay voice offer" });
+          console.error("editor:replace failed:", err);
+          socket.emit("editor:error", {message: "Failed to update editor state"});
         }
+      });
+    });
+
+    socket.on(
+      "voice:offer",
+      async (payload: { roomId: string; offer: RTCSessionDescriptionInit }) => {
+        await withBanCheck(socket, async () => {
+          try {
+            const { roomId, offer } = payload;
+
+            if (!roomId || !offer) {
+              socket.emit("voice:error", { message: "Invalid voice offer payload" });
+              return;
+            }
+
+            if (!isAuthorizedSocket(socket, roomId)) {
+              socket.emit("voice:error", { message: "Not authorized for this room" });
+              return;
+            }
+
+            socket.to(roomId).emit("voice:offer", { offer });
+          } catch (err) {
+            console.error("voice:offer failed:", err);
+            socket.emit("voice:error", { message: "Failed to relay voice offer" });
+          }
+        });
       }
     );
 
     socket.on(
       "voice:answer",
-      (payload: { roomId: string; answer: RTCSessionDescriptionInit }) => {
-        try {
-          const { roomId, answer } = payload;
+      async (payload: { roomId: string; answer: RTCSessionDescriptionInit }) => {
+        await withBanCheck(socket, async () => {
+          try {
+            const { roomId, answer } = payload;
 
-          if (!roomId || !answer) {
-            socket.emit("voice:error", { message: "Invalid voice answer payload" });
-            return;
+            if (!roomId || !answer) {
+              socket.emit("voice:error", { message: "Invalid voice answer payload" });
+              return;
+            }
+
+            if (!isAuthorizedSocket(socket, roomId)) {
+              socket.emit("voice:error", { message: "Not authorized for this room" });
+              return;
+            }
+
+            socket.to(roomId).emit("voice:answer", { answer });
+          } catch (err) {
+            console.error("voice:answer failed:", err);
+            socket.emit("voice:error", { message: "Failed to relay voice answer" });
           }
-
-          if (!isAuthorizedSocket(socket, roomId)) {
-            socket.emit("voice:error", { message: "Not authorized for this room" });
-            return;
-          }
-
-          socket.to(roomId).emit("voice:answer", { answer });
-        } catch (err) {
-          console.error("voice:answer failed:", err);
-          socket.emit("voice:error", { message: "Failed to relay voice answer" });
-        }
+        });
       }
     );
 
     socket.on(
       "voice:ice-candidate",
-      (payload: { roomId: string; candidate: RTCIceCandidateInit }) => {
-        try {
-          const { roomId, candidate } = payload;
+      async (payload: { roomId: string; candidate: RTCIceCandidateInit }) => {
+        await withBanCheck(socket, async () => {
+          try {
+            const { roomId, candidate } = payload;
 
-          if (!roomId || !candidate) {
-            socket.emit("voice:error", { message: "Invalid ICE candidate payload" });
-            return;
+            if (!roomId || !candidate) {
+              socket.emit("voice:error", { message: "Invalid ICE candidate payload" });
+              return;
+            }
+
+            if (!isAuthorizedSocket(socket, roomId)) {
+              socket.emit("voice:error", { message: "Not authorized for this room" });
+              return;
+            }
+
+            socket.to(roomId).emit("voice:ice-candidate", { candidate });
+          } catch (err) {
+            console.error("voice:ice-candidate failed:", err);
+            socket.emit("voice:error", { message: "Failed to relay ICE candidate" });
           }
-
-          if (!isAuthorizedSocket(socket, roomId)) {
-            socket.emit("voice:error", { message: "Not authorized for this room" });
-            return;
-          }
-
-          socket.to(roomId).emit("voice:ice-candidate", { candidate });
-        } catch (err) {
-          console.error("voice:ice-candidate failed:", err);
-          socket.emit("voice:error", { message: "Failed to relay ICE candidate" });
-        }
+        });
       }
     );
 
     socket.on(
       "voice:hangup",
-      (payload: { roomId: string }) => {
-        try {
-          const { roomId } = payload;
+      async (payload: { roomId: string }) => {
+        await withBanCheck(socket, async () => {
+          try {
+            const { roomId } = payload;
 
-          if (!roomId) {
-            socket.emit("voice:error", { message: "Invalid hangup payload" });
-            return;
+            if (!roomId) {
+              socket.emit("voice:error", { message: "Invalid hangup payload" });
+              return;
+            }
+
+            if (!isAuthorizedSocket(socket, roomId)) {
+              socket.emit("voice:error", { message: "Not authorized for this room" });
+              return;
+            }
+
+            socket.to(roomId).emit("voice:hangup");
+          } catch (err) {
+            console.error("voice:hangup failed:", err);
+            socket.emit("voice:error", { message: "Failed to relay hangup" });
           }
-
-          if (!isAuthorizedSocket(socket, roomId)) {
-            socket.emit("voice:error", { message: "Not authorized for this room" });
-            return;
-          }
-
-          socket.to(roomId).emit("voice:hangup");
-        } catch (err) {
-          console.error("voice:hangup failed:", err);
-          socket.emit("voice:error", { message: "Failed to relay hangup" });
-        }
+        });
       }
     );
 
