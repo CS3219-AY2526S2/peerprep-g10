@@ -23,10 +23,24 @@ type Props = {
 export default function CodeEditor({roomId, socket, userId, displayName, initialCode, onCodeChange}: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const onCodeChangeRef = useRef(onCodeChange);
+  const providerRef = useRef<SocketIOYjsProvider | null>(null);
 
   useEffect(() => {
     onCodeChangeRef.current = onCodeChange;
   }, [onCodeChange]);
+
+  useEffect(() => {
+    const provider = providerRef.current;
+    if (!provider) {
+      return;
+    }
+
+    provider.awareness.setLocalStateField("user", {
+      name: displayName || userId,
+      color: "#30bced",
+      colorLight: "#30bced33",
+    });
+  }, [displayName, userId]);
 
   useEffect(() => {
     if (!editorRef.current) {
@@ -49,21 +63,10 @@ export default function CodeEditor({roomId, socket, userId, displayName, initial
       doc: ydoc,
     });
 
+    providerRef.current = provider;
+
     const ytext = ydoc.getText("codemirror");
     const undoManager = new Y.UndoManager(ytext);
-
-    provider.awareness.setLocalStateField("user", {
-      name: displayName || userId,
-      color: "#30bced",
-      colorLight: "#30bced33",
-    });
-
-    // Seed initial code only if the shared text is empty
-    if (ytext.length === 0 && initialCode) {
-      ydoc.transact(() => {
-        ytext.insert(0, initialCode);
-      }, provider);
-    }
 
     const state = EditorState.create({
       doc: "",
@@ -77,11 +80,12 @@ export default function CodeEditor({roomId, socket, userId, displayName, initial
     });
 
   return () => {
+      providerRef.current = null;
       provider.destroy();
       ydoc.destroy();
       view.destroy();
     };
-  }, [roomId, socket, userId, displayName, initialCode]);
+  }, [roomId, socket, userId]);
 
   return <div ref={editorRef} style={{ height: "100%" }} />;
 }
