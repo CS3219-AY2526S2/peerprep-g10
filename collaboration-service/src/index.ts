@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import { createApp } from "./app";
 import { registerRealtime } from "./realtime";
 import { connectAuthRedis } from "./config/authRedis";
@@ -17,7 +19,7 @@ const io = new SocketIOServer(server, {
   cors: { origin: "*", credentials: true },
 });
 
-// Socket.IO middleware — verifies JWT and checks ban status on every new connection
+// Socket.IO middleware that verifies JWT and checks ban status on every new connection
 io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token;
 
@@ -41,12 +43,29 @@ io.use(async (socket, next) => {
   }
 });
 
-registerRealtime(io);
-
 async function startServer() {
+  const redisUrl = process.env.COLAB_REDIS_BACKPLANE_URL;
+  if (!redisUrl) {
+    throw new Error("AUTH_REDIS_URL is not set");
+  }
+
+  // Redis backplane for Socket.IO
+  const pubClient = createClient({url: redisUrl});
+  const subClient = pubClient.duplicate();
+
+  pubClient.on("error", (err) => console.error("Redis pubClient error:", err));
+  subClient.on("error", (err) => console.error("Redis subClient error:", err));
+
+  await pubClient.connect();
+  await subClient.connect();
+
+  io.adapter(createAdapter(pubClient, subClient));
+
   // Connect to auth-redis for ban checks and subscribe to ban events
   await connectAuthRedis();
   await startBanSubscriber(io);
+
+  registerRealtime(io);
 
   server.listen(Number(port), "0.0.0.0", () => {
     console.log(`[server]: Collaboration Service is running on port ${port}`);
