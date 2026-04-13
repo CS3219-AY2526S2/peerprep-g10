@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ isLoggedIn, isLoading, role, user, setUser, login, logout }}>
       {showBanNotification && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[480px] px-4">
+        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
           <Notification
             type="error"
             title="Account Banned"
