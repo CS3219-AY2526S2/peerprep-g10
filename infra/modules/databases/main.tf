@@ -25,8 +25,64 @@ variable "db_password_collab" {
   sensitive = true
 }
 
-resource "google_sql_database_instance" "main" {
-  name             = "peerprep-postgres"
+resource "google_sql_database_instance" "question" {
+  name             = "peerprep-question-postgres"
+  database_version = "POSTGRES_17"
+  region           = var.region
+
+  settings {
+    tier              = "db-g1-small"
+    availability_type = "ZONAL"
+
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = var.vpc_id
+    }
+
+    backup_configuration {
+      enabled    = true
+      start_time = "02:00"
+    }
+
+    database_flags {
+      name  = "max_connections"
+      value = "100"
+    }
+  }
+
+  deletion_protection = true
+}
+
+resource "google_sql_database_instance" "user" {
+  name             = "peerprep-user-postgres"
+  database_version = "POSTGRES_17"
+  region           = var.region
+
+  settings {
+    tier              = "db-g1-small"
+    availability_type = "ZONAL"
+
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = var.vpc_id
+    }
+
+    backup_configuration {
+      enabled    = true
+      start_time = "02:00"
+    }
+
+    database_flags {
+      name  = "max_connections"
+      value = "100"
+    }
+  }
+
+  deletion_protection = true
+}
+
+resource "google_sql_database_instance" "collab" {
+  name             = "peerprep-collab-postgres"
   database_version = "POSTGRES_17"
   region           = var.region
 
@@ -55,34 +111,34 @@ resource "google_sql_database_instance" "main" {
 
 resource "google_sql_database" "question_db" {
   name     = "question_service"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.question.name
 }
 
 resource "google_sql_database" "user_db" {
   name     = "user_service"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.user.name
 }
 
 resource "google_sql_database" "collaboration_db" {
   name     = "peerprep"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.collab.name
 }
 
 resource "google_sql_user" "question_user" {
   name     = "peerprep"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.question.name
   password = var.db_password_question
 }
 
 resource "google_sql_user" "user_user" {
   name     = "peerprep_user"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.user.name
   password = var.db_password_user
 }
 
 resource "google_sql_user" "collab_user" {
   name     = "postgres"
-  instance = google_sql_database_instance.main.name
+  instance = google_sql_database_instance.collab.name
   password = var.db_password_collab
 }
 
@@ -116,12 +172,28 @@ resource "google_redis_instance" "collab_cache" {
   display_name       = "PeerPrep Collab Cache"
 }
 
-output "cloud_sql_connection_name" {
-  value = google_sql_database_instance.main.connection_name
+output "cloud_sql_question_connection_name" {
+  value = google_sql_database_instance.question.connection_name
 }
 
-output "cloud_sql_private_ip" {
-  value = google_sql_database_instance.main.private_ip_address
+output "cloud_sql_question_private_ip" {
+  value = google_sql_database_instance.question.private_ip_address
+}
+
+output "cloud_sql_user_connection_name" {
+  value = google_sql_database_instance.user.connection_name
+}
+
+output "cloud_sql_user_private_ip" {
+  value = google_sql_database_instance.user.private_ip_address
+}
+
+output "cloud_sql_collab_connection_name" {
+  value = google_sql_database_instance.collab.connection_name
+}
+
+output "cloud_sql_collab_private_ip" {
+  value = google_sql_database_instance.collab.private_ip_address
 }
 
 output "redis_host" {

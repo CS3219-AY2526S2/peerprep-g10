@@ -5,7 +5,7 @@ on:
     workflows: ["CI"]
     types:
       - completed
-    branches: [main]
+    branches: [main, split-cloudsql-into-independent-instance]
 
 concurrency:
   group: cd-${{ github.ref }}
@@ -211,7 +211,7 @@ jobs:
             port:    3003
             changed: ${{ needs.changes.outputs.question }}
             env_vars: |-
-              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service
+              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$QUESTION_DB_PRIVATE_IP:5432/question_service
               FRONTEND_URL=https://__DOMAIN__
               COLLABORATION_SERVICE_URL=__COLLAB_URL__
               AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
@@ -224,7 +224,7 @@ jobs:
             port:    3004
             changed: ${{ needs.changes.outputs.user }}
             env_vars: |-
-              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service
+              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$USER_DB_PRIVATE_IP:5432/user_service
               FRONTEND_URL=https://__DOMAIN__
               GCS_BUCKET_URL=https://storage.googleapis.com/peerprep/avatars
               AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
@@ -242,7 +242,7 @@ jobs:
             port:    3001
             changed: ${{ needs.changes.outputs.collaboration }}
             env_vars: |-
-              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep
+              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$COLLAB_DB_PRIVATE_IP:5432/peerprep
               QUESTION_SERVICE_URL=__QUESTION_URL__
               USER_SERVICE_URL=__USER_URL__
               FRONTEND_URL=https://__DOMAIN__
@@ -290,7 +290,11 @@ jobs:
         if: matrix.changed == 'true'
         id: infra
         run: |
-          DB_IP=$(gcloud sql instances describe peerprep-postgres \
+          QUESTION_DB_IP=$(gcloud sql instances describe peerprep-question-postgres \
+            --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          USER_DB_IP=$(gcloud sql instances describe peerprep-user-postgres \
+            --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          COLLAB_DB_IP=$(gcloud sql instances describe peerprep-collab-postgres \
             --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
           REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
             --region=${{ env.REGION }} \
@@ -301,13 +305,17 @@ jobs:
           COLLAB_REDIS_HOST=$(gcloud redis instances describe peerprep-collab-redis \
             --region=${{ env.REGION }} \
             --format='value(host)')
-          echo "db_ip=$DB_IP"           >> $GITHUB_OUTPUT
+          echo "question_db_ip=$QUESTION_DB_IP" >> $GITHUB_OUTPUT
+          echo "user_db_ip=$USER_DB_IP"         >> $GITHUB_OUTPUT
+          echo "collab_db_ip=$COLLAB_DB_IP"     >> $GITHUB_OUTPUT
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
           echo "auth_redis_host=$AUTH_REDIS_HOST" >> $GITHUB_OUTPUT
           echo "collab_redis_host=$COLLAB_REDIS_HOST" >> $GITHUB_OUTPUT
 
           # Export to GITHUB_ENV so bash can evaluate them safely in the next string interpolation step
-          echo "DB_PRIVATE_IP=$DB_IP"   >> $GITHUB_ENV
+          echo "QUESTION_DB_PRIVATE_IP=$QUESTION_DB_IP" >> $GITHUB_ENV
+          echo "USER_DB_PRIVATE_IP=$USER_DB_IP"         >> $GITHUB_ENV
+          echo "COLLAB_DB_PRIVATE_IP=$COLLAB_DB_IP"     >> $GITHUB_ENV
           echo "REDIS_HOST=$REDIS_HOST" >> $GITHUB_ENV
           echo "AUTH_REDIS_HOST=$AUTH_REDIS_HOST" >> $GITHUB_ENV
           echo "COLLAB_REDIS_HOST=$COLLAB_REDIS_HOST" >> $GITHUB_ENV

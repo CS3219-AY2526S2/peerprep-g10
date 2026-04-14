@@ -14,10 +14,6 @@ variable "registry_url" {
   type = string
 }
 
-variable "db_connection" {
-  type = string
-}
-
 locals {
   services = ["frontend", "user", "question", "matching", "collaboration"]
 }

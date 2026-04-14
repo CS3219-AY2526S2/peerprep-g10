@@ -20,6 +20,9 @@ key.pem
 # terraform variable file
 terraform.tfvars
 
+# terraform plan
+*tfplan*
+
 # Environment variables
 .env
 .env.local

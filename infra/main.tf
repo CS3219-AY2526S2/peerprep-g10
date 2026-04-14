@@ -61,7 +61,6 @@ module "cloud_run" {
   region           = var.region
   vpc_connector_id = module.networking.vpc_connector_id
   registry_url     = module.artifact_registry.registry_url
-  db_connection    = module.databases.cloud_sql_connection_name
 }
 
 module "load_balancer" {
