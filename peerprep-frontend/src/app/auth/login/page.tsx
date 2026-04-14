@@ -11,7 +11,14 @@ import { login as loginApi} from '@/src/services/user/userApi';
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => {
+    if (typeof window === 'undefined') return '';
+
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason === 'deleted') return 'Your account has been deleted.';
+    if (reason === 'banned') return 'Your account has been banned.';
+    return '';
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,7 +34,21 @@ export default function LoginPage() {
         const role = login(token, user);
         router.push(role === 'admin' ? ROUTES.ADMIN : ROUTES.USER);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (typeof err?.message === 'string') {
+          if (err.message.toLowerCase().includes('deleted')) {
+            setError('Your account has been deleted.');
+            return;
+          }
+
+          if (err.message.toLowerCase().includes('banned')) {
+            setError('Your account has been banned.');
+            return;
+          }
+        }
+
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   };
 

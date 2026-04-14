@@ -23,10 +23,12 @@ export type Attempt = {
 };
 
 export type AttemptWithDetails = Attempt & {
-  partner: {
-    id: string;
-    username: string;
-    profile_icon: string;
-  };
+  partner:
+    | {
+        id?: string;
+        username?: string | null;
+        profile_icon?: string | null;
+      }
+    | null;
   question: QuestionSnapshot;
 };

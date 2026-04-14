@@ -6,7 +6,7 @@ import { createClient } from "redis";
 import { createApp } from "./app";
 import { registerRealtime } from "./realtime";
 import { connectAuthRedis } from "./config/authRedis";
-import { isUserBanned, verifyToken } from "./middleware/authMiddleware";
+import { isUserBanned, isUserDeleted, verifyToken } from "./middleware/authMiddleware";
 import { startBanSubscriber } from "./banSubscriber";
 
 dotenv.config();
@@ -29,6 +29,10 @@ io.use(async (socket, next) => {
 
   try {
     const decoded = verifyToken(token);
+
+    if (await isUserDeleted(String(decoded.userId))) {
+      return next(new Error("USER_DELETED"));
+    }
 
     const banned = await isUserBanned(String(decoded.userId));
     if (banned) {

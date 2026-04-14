@@ -210,48 +210,69 @@ jobs:
             name:    question
             port:    3003
             changed: ${{ needs.changes.outputs.question }}
-            env_vars: >-
-              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service,
-              FRONTEND_URL=https://__DOMAIN__,
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service
+              FRONTEND_URL=https://__DOMAIN__
               COLLABORATION_SERVICE_URL=__COLLAB_URL__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
 
           - service: user-service
             name:    user
             port:    3004
             changed: ${{ needs.changes.outputs.user }}
-            env_vars: >-
-              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service,
-              FRONTEND_URL=https://__DOMAIN__,
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service
+              FRONTEND_URL=https://__DOMAIN__
               GCS_BUCKET_URL=https://storage.googleapis.com/peerprep/avatars
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              ADMIN_SEED_EMAIL=admin@peerprep.com
+              ADMIN_SEED_USERNAME=admin
+              ADMIN_SEED_PROFILE_URL=https://api.dicebear.com/7.x/avataaars/svg?seed=admin
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+              RESEND_API_KEY=peerprep-resend-key:latest
+              ADMIN_SEED_PASSWORD=admin-seed-password:latest
 
           - service: collaboration-service
             name:    collaboration
             port:    3001
             changed: ${{ needs.changes.outputs.collaboration }}
-            env_vars: >-
-              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep,
-              QUESTION_SERVICE_URL=__QUESTION_URL__,
-              USER_SERVICE_URL=__USER_URL__,
+            env_vars: |-
+              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              USER_SERVICE_URL=__USER_URL__
               FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
 
           - service: matching-service
             name:    matching
             port:    3002
             changed: ${{ needs.changes.outputs.matching }}
-            env_vars: >-
-              REDIS_URL=redis://$REDIS_HOST:6379,
-              QUESTION_SERVICE_URL=__QUESTION_URL__,
-              COLLAB_SERVICE_URL=__COLLAB_URL__,
+            env_vars: |-
+              REDIS_URL=redis://$REDIS_HOST:6379
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              COLLAB_SERVICE_URL=__COLLAB_URL__
               FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
 
           - service: peerprep-frontend
             name:    frontend
             port:    3000
             changed: ${{ needs.changes.outputs.frontend }}
-            env_vars: >-
-              NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab,
-              NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching,
-              NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question,
+            env_vars: |-
+              NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab
+              NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching
+              NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question
               NEXT_PUBLIC_USER_SERVICE_URL=/api/user
 
     steps:
@@ -273,12 +294,17 @@ jobs:
           REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
             --region=${{ env.REGION }} \
             --format='value(host)')
+          AUTH_REDIS_HOST=$(gcloud redis instances describe peerprep-auth-redis \
+            --region=${{ env.REGION }} \
+            --format='value(host)')
           echo "db_ip=$DB_IP"           >> $GITHUB_OUTPUT
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
+          echo "auth_redis_host=$AUTH_REDIS_HOST" >> $GITHUB_OUTPUT
           
           # Export to GITHUB_ENV so bash can evaluate them safely in the next string interpolation step
           echo "DB_PRIVATE_IP=$DB_IP"   >> $GITHUB_ENV
           echo "REDIS_HOST=$REDIS_HOST" >> $GITHUB_ENV
+          echo "AUTH_REDIS_HOST=$AUTH_REDIS_HOST" >> $GITHUB_ENV
 
       - name: Resolve stable Cloud Run URLs
         if: matrix.changed == 'true'
@@ -293,7 +319,9 @@ jobs:
           ENV_VARS="${ENV_VARS//__USER_URL__/$U_URL}"
           ENV_VARS="${ENV_VARS//__COLLAB_URL__/$C_URL}"
           
-          echo "RESOLVED_ENV_VARS=$ENV_VARS" >> $GITHUB_ENV
+          echo "RESOLVED_ENV_VARS<<EOF" >> $GITHUB_ENV
+          echo "$ENV_VARS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Deploy ${{ matrix.name }} to Cloud Run
         if: matrix.changed == 'true'
@@ -313,11 +341,9 @@ jobs:
             --vpc-egress=private-ranges-only
             --service-account=${{ secrets.CLOUD_RUN_SA_EMAIL }}
             --allow-unauthenticated
-          env_vars: ${{ env.RESOLVED_ENV_VARS }}
-          secrets: |
-            JWT_SECRET=peerprep-jwt-secret:latest
-            SERVICE_SECRET_KEY=peerprep-service-secret:latest
-            RESEND_API_KEY=peerprep-resend-key:latest
+          env_vars: |-
+            ${{ env.RESOLVED_ENV_VARS }}
+          secrets: ${{ matrix.secrets || '' }}
 
   # ── Post-deploy smoke test ─────────────────────────────────────────────────
   smoke-test:

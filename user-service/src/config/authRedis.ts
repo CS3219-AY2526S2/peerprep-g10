@@ -8,7 +8,7 @@ const AUTH_REDIS_URL = process.env.AUTH_REDIS_URL || 'redis://localhost:6380';
 // Client for blacklist read/write operations (SADD, SREM, SISMEMBER on banned_users set)
 export const blacklistClient = createClient({ url: AUTH_REDIS_URL });
 
-// Dedicated client for publishing ban/unban events to the user:banned Pub/Sub channel
+// Dedicated client for publishing ban/unban/delete events to Redis Pub/Sub channels
 export const pubClient = blacklistClient.duplicate();
 
 // Event listeners for blacklist client

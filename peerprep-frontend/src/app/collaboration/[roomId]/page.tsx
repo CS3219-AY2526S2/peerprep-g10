@@ -250,27 +250,29 @@ export default function RoomPage() {
 
     
     // Force-logout event — server disconnects the socket when the user is banned mid-session
-    const handleForceLogout = async () => {
+    const handleAccountStatusLogout = async (reason: 'banned' | 'deleted') => {
       socket.disconnect();
       // Save attempt while the token is still in localStorage
       await handleSaveAttemptRef.current();
       localStorage.removeItem('token');
       
       let remaining = 5;
-      const showBanNotification = () => setActiveNotification({
+      const showNotification = () => setActiveNotification({
         type: 'error',
-        title: 'Account Banned',
-        message: `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
+        title: reason === 'deleted' ? 'Deleted' : 'Banned',
+        message: reason === 'deleted'
+          ? `Your account has been deleted. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`
+          : `Your account has been banned. Redirecting to login in ${remaining} second${remaining !== 1 ? 's' : ''}...`,
         rightAction: 'none',
       });
-      showBanNotification();
+      showNotification();
       const interval = setInterval(() => {
         remaining--;
         if (remaining <= 0) {
           clearInterval(interval);
-          router.replace(`${ROUTES.LOGIN}?reason=banned`);
+          router.replace(`${ROUTES.LOGIN}?reason=${reason}`);
         } else {
-          showBanNotification();
+          showNotification();
         }
       }, 1000);
     };
@@ -283,12 +285,33 @@ export default function RoomPage() {
     }
 
     socket.on("room:joined", handleRoomJoined);
+    const handleForceLogout = async (payload?: { reason?: 'USER_BANNED' | 'USER_DELETED' }) => {
+      await handleAccountStatusLogout(payload?.reason === 'USER_DELETED' ? 'deleted' : 'banned');
+    };
+
+    const handleConnectError = async (err: { message: string }) => {
+      if (err.message === 'USER_BANNED') {
+        await handleAccountStatusLogout('banned');
+        return;
+      }
+
+      if (err.message === 'USER_DELETED') {
+        await handleAccountStatusLogout('deleted');
+        return;
+      }
+
+      console.error('Socket connect error:', err.message);
+      alert(err.message);
+      router.push('/');
+    };
+
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("chat:new", handleChatNew);
     socket.on("chat:error", handleChatError);
     socket.on("editor:error", handleEditorError);
     socket.on("room:error", handleRoomError);
     socket.on("force-logout", handleForceLogout);
+    socket.on("connect_error", handleConnectError);
 
     return () => {
       socket.off("room:joined", handleRoomJoined);
@@ -300,6 +323,7 @@ export default function RoomPage() {
       socket.off("force-logout", handleForceLogout);
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
 
       // socket.disconnect();
     };
