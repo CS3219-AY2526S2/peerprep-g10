@@ -106,6 +106,16 @@ resource "google_redis_instance" "auth_cache" {
   display_name       = "PeerPrep Auth Cache"
 }
 
+resource "google_redis_instance" "collab_cache" {
+  name               = "peerprep-collab-redis"
+  tier               = "BASIC"
+  memory_size_gb     = 1
+  region             = var.region
+  authorized_network = var.vpc_id
+  redis_version      = "REDIS_7_0"
+  display_name       = "PeerPrep Collab Cache"
+}
+
 output "cloud_sql_connection_name" {
   value = google_sql_database_instance.main.connection_name
 }
@@ -128,4 +138,12 @@ output "auth_redis_host" {
 
 output "auth_redis_port" {
   value = google_redis_instance.auth_cache.port
+}
+
+output "collab_redis_host" {
+  value = google_redis_instance.collab_cache.host
+}
+
+output "collab_redis_port" {
+  value = google_redis_instance.collab_cache.port
 }
