@@ -4,54 +4,74 @@ import { useEffect, useRef } from "react";
 import { EditorView, basicSetup } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { python } from "@codemirror/lang-python";
+import { yCollab } from "y-codemirror.next";
+import * as Y from "yjs";
 import type { Socket } from "socket.io-client";
+import { SocketIOYjsProvider } from "./SocketIO-YJS-provider";
+import { keymap } from "@codemirror/view";
+import { insertNewline } from "@codemirror/commands";
 
 type Props = {
   roomId: string;
   socket: Socket;
   userId: string;
+  displayName: string;
   initialCode: string;
   onCodeChange?: (code: string) => void;
 };
 
-export default function CodeEditor({ roomId, socket, initialCode, onCodeChange }: Props) {
+export default function CodeEditor({roomId, socket, userId, displayName, initialCode, onCodeChange}: Props) {
   const editorRef = useRef<HTMLDivElement | null>(null);
-  const viewRef = useRef<EditorView | null>(null);
-  const applyingRemoteRef = useRef(false);
   const onCodeChangeRef = useRef(onCodeChange);
+  const providerRef = useRef<SocketIOYjsProvider | null>(null);
 
   useEffect(() => {
     onCodeChangeRef.current = onCodeChange;
   }, [onCodeChange]);
 
   useEffect(() => {
-    if (!editorRef.current) {
+    const provider = providerRef.current;
+    if (!provider) {
       return;
     }
 
+    provider.awareness.setLocalStateField("user", {
+      name: displayName || userId,
+      color: "#30bced",
+      colorLight: "#30bced33",
+    });
+  }, [displayName, userId]);
+
+  useEffect(() => {
+    if (!editorRef.current) {
+      return;
+    }
+      
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) {
         return;
       }
 
-      if (applyingRemoteRef.current) {
-        return;
-      }
-
       const code = update.state.doc.toString();
       onCodeChangeRef.current?.(code);
-
-      console.log("sending editor:replace", code);
-
-      socket.emit("editor:replace", {
-        roomId,
-        code,
-      });
     });
 
+    const ydoc = new Y.Doc();
+    const provider = new SocketIOYjsProvider({
+      roomId,
+      socket,
+      doc: ydoc,
+    });
+
+    providerRef.current = provider;
+
+    const ytext = ydoc.getText("codemirror");
+    const undoManager = new Y.UndoManager(ytext);
+
     const state = EditorState.create({
-      doc: initialCode,
-      extensions: [basicSetup, python(), updateListener],
+      doc: "",
+      extensions: [keymap.of([{key: "Enter", run: insertNewline}]),
+      basicSetup, python(), updateListener, yCollab(ytext, provider.awareness, {undoManager}),],
     });
 
     const view = new EditorView({
@@ -59,44 +79,13 @@ export default function CodeEditor({ roomId, socket, initialCode, onCodeChange }
       parent: editorRef.current,
     });
 
-    viewRef.current = view;
-
-    const handleRemoteReplace = (payload: { code: string }) => {
-      console.log("received editor:replace", payload.code);
-
-      const currentView = viewRef.current;
-      if (!currentView) {
-        return;
-      }
-
-      const currentCode = currentView.state.doc.toString();
-      if (currentCode === payload.code) {
-        return;
-      }
-
-      applyingRemoteRef.current = true;
-
-      currentView.dispatch({
-        changes: {
-          from: 0,
-          to: currentCode.length,
-          insert: payload.code,
-        },
-      });
-
-      applyingRemoteRef.current = false;
-
-      onCodeChangeRef.current?.(payload.code);
-    };
-
-    socket.on("editor:replace", handleRemoteReplace);
-
-    return () => {
-      socket.off("editor:replace", handleRemoteReplace);
+  return () => {
+      providerRef.current = null;
+      provider.destroy();
+      ydoc.destroy();
       view.destroy();
-      viewRef.current = null;
     };
-  }, [roomId, socket, initialCode]);
+  }, [roomId, socket, userId]);
 
   return <div ref={editorRef} style={{ height: "100%" }} />;
 }

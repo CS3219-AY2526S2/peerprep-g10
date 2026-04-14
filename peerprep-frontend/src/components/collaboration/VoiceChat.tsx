@@ -7,13 +7,14 @@ type VoiceChatProps = {
   socket: Socket;
   roomId: string;
   userId: string;
+  displayName?: string;
 };
 
 const rtcConfig: RTCConfiguration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-export default function VoiceChat({ socket, roomId, userId }: VoiceChatProps) {
+export default function VoiceChat({socket, roomId, userId, displayName}: VoiceChatProps) {
   const [hasLocalAudio, setHasLocalAudio] = useState(false);
   const [hasConnection, setHasConnection] = useState(false);
 
@@ -262,7 +263,7 @@ export default function VoiceChat({ socket, roomId, userId }: VoiceChatProps) {
   return (
     <div style={{ border: "1px solid #ccc", padding: "12px", borderRadius: "8px" }}>
       <h3>Voice Chat</h3>
-      <p>User: {userId}</p>
+      <p>User: {displayName || userId}</p>
       <p>Status: {status}</p>
 
       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>

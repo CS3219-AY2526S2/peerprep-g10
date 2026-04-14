@@ -1,11 +1,10 @@
 "use client";
 
-import CodeEditor from "@/src/components/collaboration/CodeEditor";
-import { useEffect, useRef, useState } from "react";
+import CodeEditor from "@/src/components/collaboration/CodeEditor"
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import styles from "./room.module.css";
-import { Navbar } from "@/src/components/navbar/Navbar";
 import VoiceChat from "@/src/components/collaboration/VoiceChat";
 import { API_BASE } from "@/src/constant/api";
 import { saveAttempt } from '@/src/services/attempt/attemptApi';
@@ -13,6 +12,12 @@ import { ROUTES } from '@/src/constant/route';
 import Notification, { NotificationProps } from '@/src/components/Notification';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_COLLAB_BACKEND_URL || "/api/collab";
+
+type ParticipantInfo = {
+  userId: string;
+  displayName: string;
+  profileIcon?: string;
+};
 
 type ChatMessage = {
   id?: string;
@@ -25,6 +30,7 @@ type ChatMessage = {
 type PresenceUser = {
   userId: string;
   displayName: string;
+  profileIcon?: string;
 };
 
 type TestCase = {
@@ -54,7 +60,8 @@ export default function RoomPage() {
 
   const roomId = params.roomId as string;
   const userId = searchParams.get("user") ?? "user1";
-  const displayName = userId;
+
+  const [joinedRoom, setJoinedRoom] = useState(false);
 
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -62,6 +69,9 @@ export default function RoomPage() {
   const [text, setText] = useState("");
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loadingRoom, setLoadingRoom] = useState(true);
+
+  const currentPresenceUser = users.find((u) => u.userId === userId);
+  const displayName = currentPresenceUser?.displayName || userId;
 
   const [chatWidth, setChatWidth] = useState(360);
   const [isDraggingChat, setIsDraggingChat] = useState(false);
@@ -73,6 +83,27 @@ export default function RoomPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+
+  const participantList: ParticipantInfo[] = useMemo(() => {
+    if (!room) return [];
+
+    const presenceMap = new Map(users.map((u) => [u.userId, {displayName: u.displayName, profileIcon: u.profileIcon},]));
+
+    return [
+      {
+        userId: room.user1Id,
+        displayName: presenceMap.get(room.user1Id)?.displayName ?? room.user1Id,
+        profileIcon: presenceMap.get(room.user1Id)?.profileIcon,
+      },
+      {
+        userId: room.user2Id,
+        displayName: presenceMap.get(room.user2Id)?.displayName ?? room.user2Id,
+        profileIcon: presenceMap.get(room.user2Id)?.profileIcon,
+      },
+    ];
+  }, [room, users]);
+
+  const onlineUserIds = useMemo(() => new Set(users.map((u) => u.userId)), [users]);
 
   // Pass the JWT in the socket handshake so the server's io.use() middleware can verify
   // the user and check the ban blacklist before the connection is accepted
@@ -101,7 +132,6 @@ export default function RoomPage() {
     const partnerId = room.user1Id === userId ? room.user2Id : room.user1Id;
 
     try {
-      // Saving attempt
       await saveAttempt({
         roomId: room.id,
         userId,
@@ -119,7 +149,7 @@ export default function RoomPage() {
         title: 'Attempt saved',
         message: 'Your code and attempt details have been saved successfully.',
       });
-      setTimeout(() => setAttemptSaved(false), 2000); // Reset button after 2 seconds
+      setTimeout(() => setAttemptSaved(false), 2000);
     } catch (err) {
       console.error('Failed to save attempt:', err);
       setActiveNotification({
@@ -134,6 +164,7 @@ export default function RoomPage() {
   handleSaveAttemptRef.current = handleSaveAttempt;
 
   const handleLeaveSession = async () => {
+    socket.emit("room:leave", {roomId, userId});
     await handleSaveAttempt();
     router.push(ROUTES.USER);
   };
@@ -152,7 +183,7 @@ export default function RoomPage() {
 
         // Initialise currentCodeRef
         currentCodeRef.current = data.currentCode ?? '';
-        setSessionStartedAt(Date.now());
+        setSessionStartedAt(new Date(data.createdAt).getTime());
       } catch (err) {
         console.error("Failed to load room:", err);
       } finally {
@@ -177,12 +208,23 @@ export default function RoomPage() {
 
     loadRoom();
     loadChatHistory();
+    setJoinedRoom(false);
 
-    socket.emit("room:join", {
-      roomId,
-      userId,
-      displayName,
-    });
+    const handleConnect = () => {
+      console.log("Socket connected:", socket.id);
+      socket.emit("room:join", {roomId, userId});
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.log("Socket disconnected:", reason);
+      setJoinedRoom(false);
+    };
+
+    const handleRoomJoined = (payload: { roomId: string; userId: string }) => {
+      if (payload.roomId === roomId && payload.userId === userId) {
+        setJoinedRoom(true);
+      }
+    };
 
     const handlePresenceUpdate = (payload: { roomId: string; users: PresenceUser[] }) => {
       setUsers(payload.users);
@@ -202,6 +244,11 @@ export default function RoomPage() {
       router.push("/");
     };
 
+    const handleEditorError = (err: { message: string }) => {
+      console.error("Editor error:", err.message);
+    };
+
+    
     // Force-logout event — server disconnects the socket when the user is banned mid-session
     const handleAccountStatusLogout = async (reason: 'banned' | 'deleted') => {
       socket.disconnect();
@@ -230,6 +277,14 @@ export default function RoomPage() {
       }, 1000);
     };
 
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+
+    if (socket.connected) {
+      handleConnect();
+    }
+
+    socket.on("room:joined", handleRoomJoined);
     const handleForceLogout = async (payload?: { reason?: 'USER_BANNED' | 'USER_DELETED' }) => {
       await handleAccountStatusLogout(payload?.reason === 'USER_DELETED' ? 'deleted' : 'banned');
     };
@@ -253,23 +308,26 @@ export default function RoomPage() {
     socket.on("presence:update", handlePresenceUpdate);
     socket.on("chat:new", handleChatNew);
     socket.on("chat:error", handleChatError);
+    socket.on("editor:error", handleEditorError);
     socket.on("room:error", handleRoomError);
     socket.on("force-logout", handleForceLogout);
     socket.on("connect_error", handleConnectError);
 
     return () => {
-      socket.emit("room:leave", { roomId, userId });
-
+      socket.off("room:joined", handleRoomJoined);
       socket.off("presence:update", handlePresenceUpdate);
       socket.off("chat:new", handleChatNew);
       socket.off("chat:error", handleChatError);
+      socket.off("editor:error", handleEditorError);
       socket.off("room:error", handleRoomError);
       socket.off("force-logout", handleForceLogout);
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
 
       // socket.disconnect();
     };
-  }, [roomId, socket, displayName, userId, router]);
+  }, [roomId, socket, userId, router]);
 
   useEffect(() => {
     if (!sessionStartedAt) return;
@@ -391,28 +449,17 @@ export default function RoomPage() {
   }
 
   if (loadingRoom) {
-    return (
-      <>
-        <Navbar />
-        <main className={styles.page}>Loading room...</main>
-      </>
-    );
+    return <main className={styles.page}>Loading room...</main>;
   }
 
   if (!room) {
-    return (
-      <>
-        <Navbar />
-        <main className={styles.page}>Room not found.</main>
-      </>
-    );
+    return <main className={styles.page}>Room not found.</main>;
   }
 
   const safeMessages = Array.isArray(messages) ? messages : [];
 
   return (
     <>
-      <Navbar />
       {activeNotification && (
         <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
           <Notification
@@ -496,13 +543,16 @@ export default function RoomPage() {
 
           <section className={styles.editorPanel}>
             <div className={styles.editorArea}>
-              <CodeEditor
-                roomId={roomId}
-                socket={socket}
-                userId={userId}
-                initialCode={room.currentCode}
-                onCodeChange={(code) => { currentCodeRef.current = code; }}
-              />
+              {joinedRoom ? (
+                <CodeEditor
+                  roomId={roomId}
+                  socket={socket}
+                  userId={userId}
+                  displayName={displayName}
+                  initialCode={room.currentCode}
+                  onCodeChange={(code) => { currentCodeRef.current = code; }}
+                />
+              ) : (<div>Joining collaboration session</div>)}
             </div>
           </section>
 
@@ -574,18 +624,33 @@ export default function RoomPage() {
 
         <div className={styles.footerBar}>
           <div className={styles.footerLeft}>
-            {socket && roomId && userId && (<VoiceChat socket={socket} roomId={roomId} userId={userId} />)}
+            {socket && roomId && userId && (<VoiceChat socket={socket} roomId={roomId} userId={userId} displayName={displayName}/>)}
           </div>
 
           <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>
 
           <div className={styles.participants}>
-            {users.map((user) => (
-              <div key={user.userId} className={styles.participant}>
-                <div className={styles.avatar}>◯</div>
-                <span>{user.displayName}</span>
-              </div>
-            ))}
+            {participantList.map((participant) => {
+              const isOnline = onlineUserIds.has(participant.userId);
+
+              return (
+                <div key={participant.userId} className={styles.participant}>
+                  <div className={styles.avatar}>
+                    {participant.profileIcon ? (
+                      <img src={participant.profileIcon}
+                        alt={`${participant.displayName} avatar`}
+                        className={styles.avatarImage}
+                      />
+                    ) : (
+                      <span>◯</span>
+                    )}
+                  </div>
+
+                  <span>{participant.displayName}</span>
+                  <span>{isOnline ? "Online" : "Offline"}</span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Save attempt button */}
