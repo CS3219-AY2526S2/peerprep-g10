@@ -5,7 +5,7 @@ on:
     workflows: ["CI"]
     types:
       - completed
-    branches: [main, split-cloudsql-into-independent-instance]
+    # branches: [main]
 
 concurrency:
   group: cd-${{ github.ref }}
