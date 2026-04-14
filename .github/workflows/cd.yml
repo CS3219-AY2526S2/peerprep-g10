@@ -1,11 +1,15 @@
 name: CD
 
+# on:
+#   workflow_run:
+#     workflows: ["CI"]
+#     types:
+#       - completed
+#     branches: [main]
+
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
-    # branches: [main]
+  pull_request:
+    branches: [main]
 
 concurrency:
   group: cd-${{ github.ref }}
