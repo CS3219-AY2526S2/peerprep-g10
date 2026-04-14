@@ -247,6 +247,7 @@ jobs:
               USER_SERVICE_URL=__USER_URL__
               FRONTEND_URL=https://__DOMAIN__
               AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              COLLAB_REDIS_BACKPLANE_URL=redis://$COLLAB_REDIS_HOST:6379
             secrets: |-
               JWT_SECRET=peerprep-jwt-secret:latest
               SERVICE_SECRET_KEY=peerprep-service-secret:latest
@@ -297,14 +298,19 @@ jobs:
           AUTH_REDIS_HOST=$(gcloud redis instances describe peerprep-auth-redis \
             --region=${{ env.REGION }} \
             --format='value(host)')
+          COLLAB_REDIS_HOST=$(gcloud redis instances describe peerprep-collab-redis \
+            --region=${{ env.REGION }} \
+            --format='value(host)')
           echo "db_ip=$DB_IP"           >> $GITHUB_OUTPUT
           echo "redis_host=$REDIS_HOST" >> $GITHUB_OUTPUT
           echo "auth_redis_host=$AUTH_REDIS_HOST" >> $GITHUB_OUTPUT
-          
+          echo "collab_redis_host=$COLLAB_REDIS_HOST" >> $GITHUB_OUTPUT
+
           # Export to GITHUB_ENV so bash can evaluate them safely in the next string interpolation step
           echo "DB_PRIVATE_IP=$DB_IP"   >> $GITHUB_ENV
           echo "REDIS_HOST=$REDIS_HOST" >> $GITHUB_ENV
           echo "AUTH_REDIS_HOST=$AUTH_REDIS_HOST" >> $GITHUB_ENV
+          echo "COLLAB_REDIS_HOST=$COLLAB_REDIS_HOST" >> $GITHUB_ENV
 
       - name: Resolve stable Cloud Run URLs
         if: matrix.changed == 'true'
@@ -312,7 +318,7 @@ jobs:
           Q_URL=$(gcloud run services describe peerprep-question --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/question")
           U_URL=$(gcloud run services describe peerprep-user --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/user")
           C_URL=$(gcloud run services describe peerprep-collaboration --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/collab")
-          
+
           ENV_VARS="${{ matrix.env_vars }}"
           ENV_VARS="${ENV_VARS//__DOMAIN__/${{ secrets.DOMAIN }}}"
           ENV_VARS="${ENV_VARS//__QUESTION_URL__/$Q_URL}"

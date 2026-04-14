@@ -18,6 +18,14 @@ output "redis_host" {
   value = module.databases.redis_host
 }
 
+output "auth_redis_host" {
+  value = module.databases.auth_redis_host
+}
+
+output "collab_redis_host" {
+  value = module.databases.collab_redis_host
+}
+
 output "workload_identity_provider" {
   value = google_iam_workload_identity_pool_provider.github.name
 }
