@@ -248,4 +248,68 @@ describe("MatchingService Unit Tests", () => {
       expect(CollabClient.createSession).not.toHaveBeenCalled();
     });
   });
+
+  describe("tryExpandedMatch", () => {
+    const topic = "Arrays";
+    const originalDifficulties = ["easy"];
+    const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: [topic], difficulty: ["easy"], joinedAt: 1000, filterUnattempted: false };
+    const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: [topic], difficulty: ["easy", "medium"], joinedAt: 2000, filterUnattempted: false };
+
+    beforeEach(() => {
+      (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
+        if (id === "userA") return Promise.resolve(ticketA);
+        if (id === "userB") return Promise.resolve(ticketB);
+        return Promise.resolve(null);
+      });
+    });
+
+    it("should skip failedExpandedCandidates", async () => {
+      (queueService.getCandidatesInQueue as jest.Mock).mockResolvedValue(["userA", "userB"]);
+      const failedCandidates = new Set<string>();
+      failedCandidates.add("userB");
+      const result = await matchingService.tryExpandedMatch(ioMock as Server, "userA", [topic], originalDifficulties, failedCandidates);
+      expect(result).toBe(false);
+      expect(toMock).not.toHaveBeenCalled();
+    });
+
+    it("should propose relaxed match if valid candidate found", async () => {
+      (queueService.getCandidatesInQueue as jest.Mock).mockResolvedValue(["userA", "userB"]);
+      const failedCandidates = new Set<string>();
+      const result = await matchingService.tryExpandedMatch(ioMock as Server, "userA", [topic], originalDifficulties, failedCandidates);
+      expect(result).toBe(true);
+      expect(toMock).toHaveBeenCalledWith("socketA");
+      expect(payloadA).toMatchObject({
+        candidateId: "userB",
+        sharedTopics: [topic],
+        sharedDifficulties: ["medium"]
+      });
+    });
+
+    it("should return false if no missing difficulties left", async () => {
+      const result = await matchingService.tryExpandedMatch(ioMock as Server, "userA", [topic], ["easy", "medium", "hard"], new Set());
+      expect(result).toBe(false);
+      expect(queueService.getCandidatesInQueue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("executeMatch direct tests", () => {
+    it("should return success: false when candidate leaves queue (lock fails)", async () => {
+      const topic = "Arrays";
+      const difficulty = "Easy";
+      const ticketA: MatchTicket = { userId: "userA", socketId: "socketA", topic: [topic], difficulty: [difficulty], joinedAt: 1000, filterUnattempted: false };
+      const ticketB: MatchTicket = { userId: "userB", socketId: "socketB", topic: [topic], difficulty: [difficulty], joinedAt: 2000, filterUnattempted: false };
+
+      (queueService.getTicket as jest.Mock).mockImplementation((id: string) => {
+        if (id === "userA") return Promise.resolve(ticketA);
+        if (id === "userB") return Promise.resolve(ticketB);
+        return Promise.resolve(null);
+      });
+
+      (queueService.removeBothUserFromMatchPool as jest.Mock).mockResolvedValue(false); // Locking fails
+
+      const result = await matchingService.executeMatch(ioMock as Server, "userA", "userB", [topic], [difficulty]);
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe("The found candidate has joined other match or left the queue");
+    });
+  });
 });

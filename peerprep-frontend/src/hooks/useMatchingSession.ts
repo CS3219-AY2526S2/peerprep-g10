@@ -42,6 +42,7 @@ export function useMatchingSession({
   const elapsedSecondsRef = useRef(0);
   const [isMatching, setIsMatching] = useState(false);
   const [activeNotification, setActiveNotification] = useState<NotificationProps | null>(null);
+  const [relaxedNotification, setRelaxedNotification] = useState<NotificationProps | null>(null);
 
   const clearTimers = useCallback(() => {
     if (matchingTimeoutRef.current) {
@@ -63,6 +64,7 @@ export function useMatchingSession({
     socketRef.current = null;
     setIsMatching(false);
     setActiveNotification(null);
+    setRelaxedNotification(null);
   }, [clearTimers]);
 
   // Handles the account-status notification and countdown before redirecting to login
@@ -213,6 +215,42 @@ export function useMatchingSession({
         rightAction: 'close',
       });
     });
+
+    socket.on('PROPOSE_RELAXED_MATCH', (payload: { candidateId: string, sharedTopics: string[], sharedDifficulties: string[] }) => {
+      const difficultyStr = payload.sharedDifficulties.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(' or ');
+      setRelaxedNotification({
+        type: 'info',
+        title: `Found a coding partner attempting ${difficultyStr} difficulty`,
+        message: 'Would you like to try another difficulty for faster matching?',
+        rightAction: 'close',
+        onClose: () => {
+          socket.emit('DECLINE_RELAXED_MATCH', { candidateId: payload.candidateId });
+          setRelaxedNotification(null);
+        },
+        actionButton: {
+          label: 'Challenge',
+          variant: 'filled',
+          onClick: () => {
+            socket.emit('ACCEPT_RELAXED_MATCH', payload);
+            setRelaxedNotification(current => current ? { ...current, rightAction: 'spinner', actionButton: undefined } : null);
+          }
+        }
+      });
+    });
+
+    socket.on('RELAXED_MATCH_UNAVAILABLE', (payload?: { reason?: string }) => {
+      if (payload?.reason) {
+        setRelaxedNotification({
+          type: 'warning',
+          title: 'Challenge Unavailable',
+          message: payload.reason,
+          rightAction: 'none'
+        });
+        setTimeout(() => setRelaxedNotification(null), 5000);
+      } else {
+        setRelaxedNotification(null);
+      }
+    });
   }, [cancelMatch, clearTimers, handleAccountStatusNotification, isMatching, onAuthError, onMatchFound, timeoutInSeconds]);
 
   useEffect(() => {
@@ -225,9 +263,11 @@ export function useMatchingSession({
 
   return {
     activeNotification,
+    relaxedNotification,
     isMatching,
     startMatch,
     cancelMatch,
     setActiveNotification,
+    setRelaxedNotification,
   };
 }

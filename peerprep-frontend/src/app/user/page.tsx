@@ -35,7 +35,7 @@ export default function UserDashboard() {
     router.push(ROUTES.ROOM(roomId, userId));
   }
 
-  const { activeNotification, isMatching, startMatch, setActiveNotification } = useMatchingSession({
+  const { activeNotification, relaxedNotification, isMatching, startMatch, setActiveNotification, setRelaxedNotification } = useMatchingSession({
     onAuthError: logout,
     onMatchFound: enterCollaborationRoom
   });
@@ -90,12 +90,26 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
 
-      {activeNotification && (
-        <div className="fixed top-24 right-8 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <Notification 
-            {...activeNotification} 
-            onClose={() => setActiveNotification(null)} 
-          />
+      {(activeNotification || relaxedNotification) && (
+        <div className="fixed top-24 right-8 z-50 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          {activeNotification && (
+            <Notification 
+              {...activeNotification} 
+              onClose={() => setActiveNotification(null)} 
+            />
+          )}
+          {relaxedNotification && (
+            <Notification 
+              {...relaxedNotification}
+              onClose={() => {
+                if (relaxedNotification.onClose) {
+                  relaxedNotification.onClose();
+                } else {
+                  setRelaxedNotification(null);
+                }
+              }}
+            />
+          )}
         </div>
       )}
 
