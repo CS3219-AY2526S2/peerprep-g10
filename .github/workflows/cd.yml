@@ -1,15 +1,11 @@
 name: CD
 
-# on:
-#   workflow_run:
-#     workflows: ["CI"]
-#     types:
-#       - completed
-#     branches: [main]
-
 on:
-  pull_request:
-    branches: [main]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [main, split-cloudsql-into-independent-instance]
 
 concurrency:
   group: cd-${{ github.ref }}
