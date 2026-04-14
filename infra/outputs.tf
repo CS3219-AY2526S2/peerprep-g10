@@ -10,8 +10,28 @@ output "cloud_run_sa_email" {
   value = module.cloud_run.cloud_run_sa_email
 }
 
-output "cloud_sql_private_ip" {
-  value = module.databases.cloud_sql_private_ip
+output "cloud_sql_question_connection_name" {
+  value = module.databases.cloud_sql_question_connection_name
+}
+
+output "cloud_sql_question_private_ip" {
+  value = module.databases.cloud_sql_question_private_ip
+}
+
+output "cloud_sql_user_connection_name" {
+  value = module.databases.cloud_sql_user_connection_name
+}
+
+output "cloud_sql_user_private_ip" {
+  value = module.databases.cloud_sql_user_private_ip
+}
+
+output "cloud_sql_collab_connection_name" {
+  value = module.databases.cloud_sql_collab_connection_name
+}
+
+output "cloud_sql_collab_private_ip" {
+  value = module.databases.cloud_sql_collab_private_ip
 }
 
 output "redis_host" {
