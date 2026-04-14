@@ -91,7 +91,7 @@ services:
       context: ./matching-service
     container_name: matching-service
     env_file:
-      - ./matching-service/.env.example
+      - ./matching-service/.env
     environment:
       REDIS_URL: redis://matching-redis:6379
       AUTH_REDIS_URL: redis://auth-redis:6379
