@@ -75,8 +75,8 @@ class MatchingService {
 
     // Iteratively try to match with valid partners in case another concurrent request grabbed our first choice
     for (const partner of validPartners) {
-      const isMatched = await this.executeMatch(io, userId, partner.ticket.userId, partner.sharedTopics as string[], partner.sharedDifficulties as string[]);
-      if (isMatched) {
+      const matchResult = await this.executeMatch(io, userId, partner.ticket.userId, partner.sharedTopics as string[], partner.sharedDifficulties as string[]);
+      if (matchResult.success) {
         return true;
       }
     }
@@ -167,11 +167,11 @@ class MatchingService {
   /**
    * Atomically removes both users from Redis and create a session.
    */
-  public async executeMatch(io: Server, userA: string, userB: string, sharedTopics: string[], sharedDifficulties: string[]): Promise<boolean> {
+  public async executeMatch(io: Server, userA: string, userB: string, sharedTopics: string[], sharedDifficulties: string[]): Promise<{ success: boolean, reason?: string }> {
     const ticketA = await queueService.getTicket(userA);
     const ticketB = await queueService.getTicket(userB);
 
-    if (!ticketA || !ticketB) return false;
+    if (!ticketA || !ticketB) return { success: false, reason: 'The found candidate has joined other match or left the queue' };
 
     // Verify users still have overlapping properties, but respect the accepted relaxed difficulties 
     // userA is the one who initiated or relaxed the match, so we verify against the proposed shared parameters
@@ -179,13 +179,13 @@ class MatchingService {
     const currentSharedDifficulties = sharedDifficulties.filter(d => ticketB.difficulty.includes(d)); // User A might not have this difficulty historically
 
     if (currentSharedTopics.length === 0 || currentSharedDifficulties.length === 0) {
-      return false;
+      return { success: false, reason: 'The found candidate has joined other match or left the queue' };
     }
 
     const isRemovedSuccess = await queueService.removeBothUserFromMatchPool(ticketA, ticketB);
 
     if (!isRemovedSuccess) {
-      return false;
+      return { success: false, reason: 'The found candidate has joined other match or left the queue' };
     }
 
     let question: any = null;
@@ -219,7 +219,7 @@ class MatchingService {
         // Re-insert both users with their original joinedAt to preserve TTL
         await queueService.addUserToMatchPool(ticketA.userId, ticketA.socketId, ticketA.topic, ticketA.difficulty, ticketA.filterUnattempted, ticketA.joinedAt);
         await queueService.addUserToMatchPool(ticketB.userId, ticketB.socketId, ticketB.topic, ticketB.difficulty, ticketB.filterUnattempted, ticketB.joinedAt);
-        return false;
+        return { success: false, reason: 'There are no common unattempted questions between you and found candidate' };
       }
 
       console.log(`[MATCH_EXECUTION_ERROR] Failed to fetch question for ${userA} & ${userB}:`, error);
@@ -228,7 +228,7 @@ class MatchingService {
 
       io.to(ticketA.socketId).emit('MATCH_ERROR', { message: errMsg });
       io.to(ticketB.socketId).emit('MATCH_ERROR', { message: errMsg });
-      return false;
+      return { success: false, reason: errMsg };
     }
 
     console.log(`🎉 MATCH SUCCESS: ${userA} & ${userB} (Topic: ${matchedTopic}, Difficulty: ${matchedDifficulty})`);
@@ -254,7 +254,7 @@ class MatchingService {
       // Emit Match Found to User B
       io.to(ticketB.socketId).emit('MATCH_FOUND', payload);
 
-      return true;
+      return { success: true };
 
     } catch (error) {
       console.log(`[MATCH_EXECUTION_ERROR] Failed to create session for ${userA} & ${userB}:`, error);
@@ -264,7 +264,7 @@ class MatchingService {
       // Notify users of the error
       io.to(ticketA.socketId).emit('MATCH_ERROR', { message: errMsg });
       io.to(ticketB.socketId).emit('MATCH_ERROR', { message: errMsg });
-      return false;
+      return { success: false, reason: errMsg };
     }
   }
 }

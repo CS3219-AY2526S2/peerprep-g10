@@ -143,11 +143,11 @@ async function startServer() {
     }
 
     socket.on('ACCEPT_RELAXED_MATCH', async (data: { candidateId: string, sharedTopics: string[], sharedDifficulties: string[] }) => {
-      const isMatched = await matchingService.executeMatch(io, socket.data.userId, data.candidateId, data.sharedTopics, data.sharedDifficulties);
-      if (!isMatched) {
+      const matchResult = await matchingService.executeMatch(io, socket.data.userId, data.candidateId, data.sharedTopics, data.sharedDifficulties);
+      if (!matchResult.success) {
         failedExpandedCandidates.add(data.candidateId);
         socket.data.isPrompting = false;
-        socket.emit('RELAXED_MATCH_UNAVAILABLE');
+        socket.emit('RELAXED_MATCH_UNAVAILABLE', { reason: matchResult.reason });
       } else {
         cleanupTimers();
       }

@@ -238,8 +238,18 @@ export function useMatchingSession({
       });
     });
 
-    socket.on('RELAXED_MATCH_UNAVAILABLE', () => {
-      setRelaxedNotification(null);
+    socket.on('RELAXED_MATCH_UNAVAILABLE', (payload?: { reason?: string }) => {
+      if (payload?.reason) {
+        setRelaxedNotification({
+          type: 'warning',
+          title: 'Challenge Unavailable',
+          message: payload.reason,
+          rightAction: 'none'
+        });
+        setTimeout(() => setRelaxedNotification(null), 5000);
+      } else {
+        setRelaxedNotification(null);
+      }
     });
   }, [cancelMatch, clearTimers, handleAccountStatusNotification, isMatching, onAuthError, onMatchFound, timeoutInSeconds]);
 
