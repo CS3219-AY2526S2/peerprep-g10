@@ -108,10 +108,60 @@ async function startServer() {
     );
     await matchingService.findMatch(io, socket.data.userId, socket.data.topic, socket.data.difficulty);
 
+    const failedExpandedCandidates = new Set<string>();
+    let relaxationTimer: NodeJS.Timeout | null = null;
+    let relaxationInterval: NodeJS.Timeout | null = null;
+
+    const cleanupTimers = () => {
+      if (relaxationTimer) clearTimeout(relaxationTimer);
+      if (relaxationInterval) clearInterval(relaxationInterval);
+    };
+
+    // Conditional Relaxation feature: Start 60s timer if user hasn't selected all difficulties
+    if (socket.data.difficulty.length < 3) {
+      relaxationTimer = setTimeout(async () => {
+        const ticket = await queueService.getTicket(socket.data.userId);
+        if (!ticket) return;
+
+        const tryExpand = async () => {
+          const currentTicket = await queueService.getTicket(socket.data.userId);
+          if (!currentTicket) {
+            cleanupTimers();
+            return;
+          }
+          if (socket.data.isPrompting) return;
+
+          const found = await matchingService.tryExpandedMatch(io, socket.data.userId, socket.data.topic, socket.data.difficulty, failedExpandedCandidates);
+          if (found) {
+            socket.data.isPrompting = true;
+          }
+        };
+
+        await tryExpand();
+        relaxationInterval = setInterval(tryExpand, 5000);
+      }, 60 * 1000);
+    }
+
+    socket.on('ACCEPT_RELAXED_MATCH', async (data: { candidateId: string, sharedTopics: string[], sharedDifficulties: string[] }) => {
+      const isMatched = await matchingService.executeMatch(io, socket.data.userId, data.candidateId, data.sharedTopics, data.sharedDifficulties);
+      if (!isMatched) {
+        failedExpandedCandidates.add(data.candidateId);
+        socket.data.isPrompting = false;
+        socket.emit('RELAXED_MATCH_UNAVAILABLE');
+      } else {
+        cleanupTimers();
+      }
+    });
+
+    socket.on('DECLINE_RELAXED_MATCH', (data: { candidateId: string }) => {
+      failedExpandedCandidates.add(data.candidateId);
+      socket.data.isPrompting = false;
+    });
+
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);
-      // Remove user from queue if user disconnects
       queueService.removeUserFromMatchPool(socket.data.userId);
+      cleanupTimers();
     });
   });
 
