@@ -281,7 +281,7 @@ export default function VoiceChat({socket, roomId, userId, displayName}: VoiceCh
           title={micEnabled ? "Mute microphone" : "Unmute microphone"}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
         >
-          {micEnabled ? <MicOff size={16} /> : <Mic size={16} />}
+          {micEnabled ? <Mic size={16} /> : <MicOff size={16} />}
         </button>
 
         <button
