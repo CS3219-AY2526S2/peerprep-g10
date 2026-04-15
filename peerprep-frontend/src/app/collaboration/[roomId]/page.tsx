@@ -4,6 +4,7 @@ import CodeEditor from "@/src/components/collaboration/CodeEditor"
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
+import { MessageCircle, X } from "lucide-react";
 import styles from "./room.module.css";
 import VoiceChat from "@/src/components/collaboration/VoiceChat";
 import { API_BASE } from "@/src/constant/api";
@@ -478,14 +479,6 @@ export default function RoomPage() {
           </div>
 
           <div className={styles.topBarRight}>
-            <button
-              type="button"
-              className={styles.chatToggleTopButton}
-              onClick={toggleChatPanel}
-            >
-              {isChatOpen ? "Hide Chat" : "Show Chat"}
-            </button>
-
             {/* Leave Session button */}
             <button className={styles.leaveButton} onClick={handleLeaveSession}>
               Leave Session
@@ -569,10 +562,12 @@ export default function RoomPage() {
               <strong>Chat</strong>
               <button
                 type="button"
-                className={styles.chatToggleButton}
+                className={styles.iconButton}
                 onClick={toggleChatPanel}
+                aria-label={isChatOpen ? "Close chat" : "Open chat"}
+                title={isChatOpen ? "Close chat" : "Open chat"}
               >
-                {isChatOpen ? "Hide" : "Show"}
+                {isChatOpen ? <X size={16} /> : <MessageCircle size={16} />}
               </button>
             </div>
             {isChatOpen && (
@@ -624,7 +619,21 @@ export default function RoomPage() {
 
         <div className={styles.footerBar}>
           <div className={styles.footerLeft}>
-            {socket && roomId && userId && (<VoiceChat socket={socket} roomId={roomId} userId={userId} displayName={displayName}/>)}
+            {socket && roomId && userId && (
+              <VoiceChat socket={socket} roomId={roomId} userId={userId} displayName={displayName} />
+            )}
+
+            <div className={styles.footerDivider} aria-hidden="true" />
+
+            <button
+              type="button"
+              className={`${styles.iconButton} ${styles.chatDockButton}`}
+              onClick={toggleChatPanel}
+              aria-label={isChatOpen ? "Close chat" : "Open chat"}
+              title={isChatOpen ? "Close chat" : "Open chat"}
+            >
+              <MessageCircle size={16} />
+            </button>
           </div>
 
           <div className={styles.timer}> Elapsed: {formatElapsedTime(elapsedSeconds)} </div>
