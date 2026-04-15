@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03‑12
+// Scope: Generate the intitial implementation
+// Author review: Edited as the project progressed
+
 "use client";
 
 import { useEffect, useRef } from "react";

@@ -1,3 +1,8 @@
+# AI Assistance Disclosure:
+# Tool: ChatGPT date: 2026‑03‑23
+# Scope: Generate initial dockerfile for collaboration service
+# Author review: Kept as is as it works
+
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./

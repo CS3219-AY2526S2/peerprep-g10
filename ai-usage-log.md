@@ -134,3 +134,139 @@ It suggested edits for workflow syntax and step wiring in staging and production
 - [ ] Rejected
 # Author Notes:
 I checked trigger conditions and job dependencies, edited commands to match our scripts, and validated workflow syntax.
+
+
+# Yan Xu
+
+## Entry 1
+collaboration-service\src\realtime.ts collaboration-service\src\app.ts collaboration-service\src\index.ts peerprep-frontend\src\app\collaboration\[roomId]\page.tsx peerprep-frontend\src\app\collaboration\[roomId]\room.module.css peerprep-frontend\src\components\collaboration\CodeEditor.tsx
+# Date/Time:
+2026-03-12
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"I am working on an application called PeerPrep. It is a collaborative app that enables user to do leetcode style coding questions. In particular I need help with the collaboration page. This ![1776272905952](image/ai-usage-log/1776272905952.png) is what my group have imagined the collaboration page to be. We plan to use Express, TypeScript, PostgreSQL. For the code editor we have found CodeMirror to be suitable. Could you help me get started?"
+# Scope:
+I used ChatGPT to generate a initial base code for the collaboration frontend and backend
+# Output Summary:
+It provided me with the initial code for collaboration frontend and backend
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is not what was envisioned and was full of bugs. It is heavily modified as the project progresses
+
+## Entry 2
+collaboration-service\Dockerfile
+# Date/Time:
+2026-03-23
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"Based on your understanding of my peerprep project, could you help me generate a Dockerfile?"
+# Scope:
+I used ChatGPT to generate a Dockerfile for the collaboration service
+# Output Summary:
+It provided me with the Dockerfile
+# Action Taken:
+- [x] Accepted as-is
+- [ ] Modified
+- [ ] Rejected
+# Author Notes:
+The Dockerfile is kept as is as it works well
+
+## Entry 3
+peerprep-frontend\src\components\collaboration\VoiceChat.tsx collaboration-service\src\realtime.ts peerprep-frontend\src\app\collaboration\[roomId]\page.tsx
+# Date/Time:
+2026-03-28
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"For the peerprep project I want to implement a voice call feature as we want users to be able to communicate so that they can effectively collaborate. For the voice call I wanted to use WebRTC. Could you help me get started?"
+# Scope:
+I used ChatGPT to generate a initial base code for the voice call feature as well as help in integrating with the collaboration frontend and backend
+# Output Summary:
+It provided me with the initial code for the voice call feature, as well as showed me how to integrate with the collaboration frontend and backend
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified to get the integration to work. Furthermore more changes are added as the project progresses
+
+## Entry 4
+nginx\default.conf
+# Date/Time:
+2026-03-28
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"The Voice call feature requires HTTPS to work. As the services of peerprep are currently hosted on HTTP, could you help me generate a nginx configuration file to reverse proxy all the traffic onto HTTPS? The collaboration service is on http://collaboration-service:3001/, the frontend is on http://peerprep-frontend:3000/, the matching service is on http://matching-service:3002/, the user service is on http://user-service:3004/ and the question service is on http://question-service:3003/"
+# Scope:
+I used ChatGPT to generate a initial base NGINX configuration file to get voice call to work
+# Output Summary:
+It provided me with the initial base NGINX configuration file with routes to each of the services
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified as the project progresses
+
+## Entry 5
+peerprep-frontend\src\components\collaboration\SocketIO-YJS-provider.ts collaboration-service\src\realtime.ts peerprep-frontend\src\app\collaboration\[roomId]\page.tsx
+# Date/Time:
+2026-03-30
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"The code editor is currently only replacing the code when a user types. Could you help me with the implementation of the YJS backbone with CRDT for the code editor?"
+# Scope:
+I used ChatGPT to generate a initial base code for the YJS code editor backbone and integration with the collaboration service backend and frontend
+# Output Summary:
+It provided me with the initial base code for the YJS code editor backbone and how to integrate with the collaboration service backend and frontend
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified as the project progresses
+
+## Entry 6
+collaboration-service/src/__tests__/attempts/collaboration.test.ts
+# Date/Time:
+2026‑04‑14
+# Tool:
+ChatGPT 5.4
+# Prompt/Command:
+"Could you help me generate some test for the collaboration service?"
+# Scope:
+I used ChatGPT to generate some tests for the collaboration service
+# Output Summary:
+It provided me with the tests
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial tests is changed while debugging
+
+## Entry 7
+collaboration-service\jest.config.js
+# Date/Time:
+2026‑04‑14
+# Tool:
+ChatGPT 5.4
+# Prompt/Command:
+"I have some errors with running the collaboration service tests. Could you help me configure Jest to handle dependencies such as yjs, y-protocols, and lib0?"
+# Scope:
+I used ChatGPT to generate the regex to handle yjs, y-protocols, and lib0 dependencies and install the correct dependencies
+# Output Summary:
+It provided me with the initial regex
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The output is not used directly as-is. I adjusted the Jest configuration while debugging and verified the final setup by rerunning the collaboration service tests

@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03‑12
+// Scope: Generate the intitial implementation
+// Author review: Edited as the project progressed and added new features
+
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { pool } from "./db";

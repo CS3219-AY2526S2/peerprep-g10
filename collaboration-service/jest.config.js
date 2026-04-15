@@ -1,3 +1,8 @@
+// # AI Assistance Disclosure:
+// # Tool: ChatGPT date: 2026‑04-14
+// # Scope: Generate configuration for transform and transformIgnorePatterns to get collaboration service tests to work
+// # Author review: Kept as is as it works
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
