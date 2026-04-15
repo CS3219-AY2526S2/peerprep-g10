@@ -44,7 +44,8 @@ jobs:
     env:
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       REGION: ${{ secrets.GCP_REGION }}
-      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+      SOURCE_ARTIFACT_PROJECT_ID: ${{ secrets.SOURCE_ARTIFACT_PROJECT_ID || vars.SOURCE_ARTIFACT_PROJECT_ID || 'peerprep-staging' }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.SOURCE_ARTIFACT_PROJECT_ID || vars.SOURCE_ARTIFACT_PROJECT_ID || 'peerprep-staging' }}/peerprep
     steps:
       - uses: google-github-actions/auth@v2
         with:
@@ -65,19 +66,25 @@ jobs:
             local name="$1"
             local image="$REGISTRY/peerprep-${name}:${SOURCE_SHA}"
             local digest
+            local describe_output
 
-            digest=$(gcloud artifacts docker images describe "$image" \
-              --project="$PROJECT_ID" \
-              --format='value(image_summary.digest)' 2>/dev/null || true)
+            describe_output=$(gcloud artifacts docker images describe "$image" \
+              --project="$SOURCE_ARTIFACT_PROJECT_ID" \
+              --format='value(image_summary.digest)' 2>&1) || true
+            digest=$(printf '%s' "$describe_output" | tr -d '\r')
 
-            if [ -n "$digest" ]; then
+            if [ -n "$digest" ] && [[ ! "$digest" =~ [[:space:]] ]]; then
               echo "${name}=true" >> "$GITHUB_OUTPUT"
               echo "${name}_digest=$digest" >> "$GITHUB_OUTPUT"
               echo "Found $name digest: $digest"
-            else
+            elif printf '%s' "$describe_output" | grep -qiE 'NOT_FOUND|not found|Requested entity was not found'; then
               echo "${name}=false" >> "$GITHUB_OUTPUT"
               echo "${name}_digest=" >> "$GITHUB_OUTPUT"
               echo "No image found for $name at tag $SOURCE_SHA, skipping deployment"
+            else
+              echo "::error::Failed to query $image in project $SOURCE_ARTIFACT_PROJECT_ID"
+              echo "::error::$describe_output"
+              exit 1
             fi
           }
 
@@ -100,7 +107,8 @@ jobs:
     env:
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       REGION: ${{ secrets.GCP_REGION }}
-      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+      SOURCE_ARTIFACT_PROJECT_ID: ${{ secrets.SOURCE_ARTIFACT_PROJECT_ID || vars.SOURCE_ARTIFACT_PROJECT_ID || 'peerprep-staging' }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.SOURCE_ARTIFACT_PROJECT_ID || vars.SOURCE_ARTIFACT_PROJECT_ID || 'peerprep-staging' }}/peerprep
     strategy:
       fail-fast: false
       max-parallel: 1
