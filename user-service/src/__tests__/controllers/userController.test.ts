@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for Express user controller endpoints including profile management, admin actions, and avatar handling. Included mocking of UserService and validation of success/error cases.
+// Author review: Accepted as-is and integrated into test suite to improve backend controller test coverage.
 import { Request, Response } from 'express';
 import {
   getProfile, deleteUser, updateUserProfile,

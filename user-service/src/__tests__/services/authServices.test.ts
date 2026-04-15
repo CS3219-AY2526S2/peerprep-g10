@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for AuthService covering registration, login, email verification, and resend verification flows. Included mocking of UserDB, VerificationDB, bcrypt, and jsonwebtoken with extensive success and error case coverage.
+// Author review: Accepted as-is and integrated into test suite to validate authentication business logic and error handling across service layer.
 import { AuthService } from '../../services/authServices';
 import { UserDB } from '../../model/userModel';
 import { VerificationDB } from '../../model/verificationModel';

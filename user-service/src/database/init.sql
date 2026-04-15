@@ -11,9 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Trigger to prevent deleting the last admin.
--- Uses SELECT ... FOR UPDATE to lock all admin rows before counting, so two
--- concurrent DELETE requests for the final two admins cannot both pass the
--- check simultaneously — the second transaction blocks until the first commits.
 CREATE OR REPLACE FUNCTION prevent_last_admin_delete()
 RETURNS TRIGGER AS $$
 DECLARE

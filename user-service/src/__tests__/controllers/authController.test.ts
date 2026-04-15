@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for Express authentication controllers (register, login, verify email, resend verification) including mocked AuthService interactions and success/error cases.
+// Author review: Accepted as-is and integrated into test suite to improve backend API test coverage.
 import { Request, Response } from 'express';
 import { registerUser, loginUser, verifyEmail, resendVerification } from '../../controllers/authController';
 import { AuthService } from '../../services/authServices';

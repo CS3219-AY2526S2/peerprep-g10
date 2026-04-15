@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for handleAppError utility function including AppError (e.g. EMAIL_EXISTS), Zod validation errors, and unknown error fallback handling with Express Response mocking.
+// Author review: Accepted as-is and integrated into test suite to validate HTTP error response behavior across different error types.
 import { Response } from 'express';
 import { handleAppError } from '../../errors/handleAppError';
 import { AppError } from '../../errors/AppError';

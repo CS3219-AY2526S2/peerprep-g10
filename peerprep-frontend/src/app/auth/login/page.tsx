@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT (GPT-5.3), date: 2026-04-13
+// Scope: Assisted in debugging ESLint errors (react-hooks/exhaustive-deps, setState in useEffect, TypeScript lint issues) and refactoring React components for correct hook usage.
+// Author review: Refactored logic to reduce unnecessary useEffect usage, resolved dependency warnings, improved typing, and verified correctness through linting and testing.
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
