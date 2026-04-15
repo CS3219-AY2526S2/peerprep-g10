@@ -1,3 +1,8 @@
+# AI Assistance Disclosure:
+# Tool: GitHub Copilot (model: GPT-5.3-Codex), date: 2026-04-08
+# Scope: I used Copilot to help with implementation work in this file, mainly drafting/refactoring config and troubleshooting issues.
+# Author review: I reviewed each suggestion, kept only what fit this project, rewrote parts where needed, and validated the final configuration myself.
+
 output "lb_ip" {
   value = module.load_balancer.lb_ip
 }
