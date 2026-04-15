@@ -2,6 +2,7 @@ import app from './app';
 import pool from './config/db'; // Your Postgres connection
 import { connectAuthRedis } from './config/authRedis';
 import { seedAdminIfNotExists } from './database/seedAdmin';
+import { initDb } from './database/initDb';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -12,6 +13,8 @@ async function startServer() {
   try {
     await pool.query('SELECT NOW()');
     console.log('Connected to PostgreSQL on port 5432');
+
+    await initDb();
 
     // Seed the default admin account if it doesn't already exist
     await seedAdminIfNotExists(pool);
