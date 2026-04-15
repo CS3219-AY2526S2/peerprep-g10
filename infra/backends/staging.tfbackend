@@ -1,0 +1,2 @@
+bucket = "peerprep-staging-tfstate"
+prefix = "staging/state"

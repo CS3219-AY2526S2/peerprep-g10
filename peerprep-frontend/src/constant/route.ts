@@ -1,0 +1,15 @@
+export const ROUTES = {
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  CHECK_EMAIL: '/auth/check-email',
+  USER_PROFILE: '/user/profile',
+  USER_ATTEMPT_DETAILS: (attemptId: string) => `/user/attempts/${attemptId}`,
+  USER: '/user',
+  ROOM: (roomId: string, userId: string) => `/collaboration/${roomId}?user=${userId}`,
+  ADMIN: '/admin',
+  ADMIN_PROFILE: '/admin/profile',
+  ADMIN_TAB: (tab: 'questions' | 'users') => `/admin?tab=${tab}`,
+  ADMIN_CREATE_ADMIN: '/admin/create-admin',
+  ADMIN_QUESTIONS_CREATE: '/admin/questions/create',
+  ADMIN_QUESTIONS_EDIT: (id: number) => `/admin/questions/${id}/edit`,
+};

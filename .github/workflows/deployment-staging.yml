@@ -1,0 +1,401 @@
+# AI Assistance Disclosure:
+# Tool: GitHub Copilot (model: GPT-5.3-Codex), date: 2026-04-12
+# Scope: I used Copilot to help with implementation work in this file, mainly drafting/refactoring config and troubleshooting issues.
+# Author review: I reviewed each suggestion, kept only what fit this project, rewrote parts where needed, and validated the final configuration myself.
+
+name: Deployment Staging
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [main]
+
+concurrency:
+  group: deployment-staging-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+jobs:
+  check-ci-success:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - run: echo "CI workflow succeeded. Proceeding with staging deployment."
+
+  changes:
+    needs: [check-ci-success]
+    runs-on: ubuntu-latest
+    outputs:
+      question: ${{ steps.filter.outputs.question }}
+      user: ${{ steps.filter.outputs.user }}
+      matching: ${{ steps.filter.outputs.matching }}
+      collaboration: ${{ steps.filter.outputs.collaboration }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Resolve compare range for this push
+        id: range
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflowId = context.payload.workflow_run.workflow_id;
+            const currentRunId = context.payload.workflow_run.id;
+            const currentCreatedAt = new Date(context.payload.workflow_run.created_at).getTime();
+            const branch = context.payload.workflow_run.head_branch;
+            const headSha = context.payload.workflow_run.head_sha;
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner,
+              repo,
+              workflow_id: workflowId,
+              branch,
+              event: 'push',
+              per_page: 100,
+            });
+
+            const previousPushRun = runs.find((run) =>
+              run.id !== currentRunId &&
+              run.head_sha !== headSha &&
+              new Date(run.created_at).getTime() < currentCreatedAt
+            );
+
+            let baseSha = previousPushRun?.head_sha;
+
+            if (!baseSha) {
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner,
+                repo,
+                ref: headSha,
+              });
+              baseSha = commit.parents?.[0]?.sha || headSha;
+            }
+
+            core.setOutput('base_sha', baseSha);
+            core.setOutput('head_sha', headSha);
+            core.info(`Comparing changes from ${baseSha} to ${headSha}`);
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ steps.range.outputs.base_sha }}
+          ref: ${{ steps.range.outputs.head_sha }}
+          filters: |
+            question:
+              - 'question-service/**'
+            user:
+              - 'user-service/**'
+            matching:
+              - 'matching-service/**'
+            collaboration:
+              - 'collaboration-service/**'
+            frontend:
+              - 'peerprep-frontend/**'
+
+  build-push:
+    needs: [changes]
+    if: >-
+      needs.changes.outputs.question == 'true' ||
+      needs.changes.outputs.user == 'true' ||
+      needs.changes.outputs.matching == 'true' ||
+      needs.changes.outputs.collaboration == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ secrets.GCP_REGION }}
+      ARTIFACT_REGION: ${{ secrets.ARTIFACT_REGION }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: question-service
+            name: question
+            changed: ${{ needs.changes.outputs.question }}
+          - service: user-service
+            name: user
+            changed: ${{ needs.changes.outputs.user }}
+          - service: matching-service
+            name: matching
+            changed: ${{ needs.changes.outputs.matching }}
+          - service: collaboration-service
+            name: collaboration
+            changed: ${{ needs.changes.outputs.collaboration }}
+          - service: peerprep-frontend
+            name: frontend
+            changed: ${{ needs.changes.outputs.frontend }}
+
+    steps:
+      - uses: actions/checkout@v4
+        if: matrix.changed == 'true'
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+
+      - uses: google-github-actions/auth@v2
+        if: matrix.changed == 'true'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: matrix.changed == 'true'
+
+      - name: Set gcloud project
+        if: matrix.changed == 'true'
+        run: gcloud config set project "$PROJECT_ID"
+
+      - name: Configure Docker for Artifact Registry
+        if: matrix.changed == 'true'
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        if: matrix.changed == 'true'
+        env:
+          IMAGE_SHA: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:${{ env.SOURCE_SHA }}
+          IMAGE_LATEST: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:staging-latest
+        run: |
+          BUILD_ARGS=""
+          if [ "${{ matrix.name }}" = "frontend" ]; then
+            BUILD_ARGS="--build-arg NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab \
+                        --build-arg NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching \
+                        --build-arg NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question \
+                        --build-arg NEXT_PUBLIC_USER_SERVICE_URL=/api/user"
+          fi
+
+          docker build \
+            --cache-from "$IMAGE_LATEST" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            $BUILD_ARGS \
+            -t "$IMAGE_SHA" \
+            -t "$IMAGE_LATEST" \
+            ./${{ matrix.service }}
+          docker push "$IMAGE_SHA"
+          docker push "$IMAGE_LATEST"
+
+  deploy:
+    needs: [changes, build-push]
+    if: >-
+      needs.changes.outputs.question == 'true' ||
+      needs.changes.outputs.user == 'true' ||
+      needs.changes.outputs.matching == 'true' ||
+      needs.changes.outputs.collaboration == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ secrets.GCP_REGION }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - service: question-service
+            name: question
+            port: 3003
+            changed: ${{ needs.changes.outputs.question }}
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service
+              FRONTEND_URL=https://__DOMAIN__
+              COLLABORATION_SERVICE_URL=__COLLAB_URL__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: user-service
+            name: user
+            port: 3004
+            changed: ${{ needs.changes.outputs.user }}
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service
+              FRONTEND_URL=https://__DOMAIN__
+              GCS_BUCKET_URL=https://storage.googleapis.com/peerprep/avatars
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              ADMIN_SEED_EMAIL=admin@peerprep.com
+              ADMIN_SEED_USERNAME=admin
+              ADMIN_SEED_PROFILE_URL=https://api.dicebear.com/7.x/avataaars/svg?seed=admin
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+              RESEND_API_KEY=peerprep-resend-key:latest
+              ADMIN_SEED_PASSWORD=admin-seed-password:latest
+
+          - service: collaboration-service
+            name: collaboration
+            port: 3001
+            changed: ${{ needs.changes.outputs.collaboration }}
+            env_vars: |-
+              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              USER_SERVICE_URL=__USER_URL__
+              FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              COLLAB_REDIS_BACKPLANE_URL=redis://$COLLAB_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: matching-service
+            name: matching
+            port: 3002
+            changed: ${{ needs.changes.outputs.matching }}
+            env_vars: |-
+              REDIS_URL=redis://$REDIS_HOST:6379
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              COLLAB_SERVICE_URL=__COLLAB_URL__
+              FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: peerprep-frontend
+            name: frontend
+            port: 3000
+            changed: ${{ needs.changes.outputs.frontend }}
+            env_vars: |-
+              NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab
+              NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching
+              NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question
+              NEXT_PUBLIC_USER_SERVICE_URL=/api/user
+
+    steps:
+      - uses: google-github-actions/auth@v2
+        if: matrix.changed == 'true'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: matrix.changed == 'true'
+
+      - name: Set gcloud project
+        if: matrix.changed == 'true'
+        run: gcloud config set project "$PROJECT_ID"
+
+      - name: Resolve runtime infrastructure values
+        if: matrix.changed == 'true'
+        run: |
+          set -euo pipefail
+
+          DB_INSTANCE=""
+          case "${{ matrix.name }}" in
+            question)
+              DB_INSTANCE="peerprep-question-postgres"
+              ;;
+            user)
+              DB_INSTANCE="peerprep-user-postgres"
+              ;;
+            collaboration)
+              DB_INSTANCE="peerprep-collab-postgres"
+              ;;
+          esac
+
+          DB_IP=""
+          if [ -n "$DB_INSTANCE" ]; then
+            DB_IP=$(gcloud sql instances describe "$DB_INSTANCE" \
+              --project="$PROJECT_ID" \
+              --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          fi
+
+          REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+          AUTH_REDIS_HOST=$(gcloud redis instances describe peerprep-auth-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+          COLLAB_REDIS_HOST=$(gcloud redis instances describe peerprep-collab-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+
+          echo "DB_PRIVATE_IP=$DB_IP" >> "$GITHUB_ENV"
+          echo "REDIS_HOST=$REDIS_HOST" >> "$GITHUB_ENV"
+          echo "AUTH_REDIS_HOST=$AUTH_REDIS_HOST" >> "$GITHUB_ENV"
+          echo "COLLAB_REDIS_HOST=$COLLAB_REDIS_HOST" >> "$GITHUB_ENV"
+
+      - name: Resolve stable Cloud Run URLs
+        if: matrix.changed == 'true'
+        run: |
+          set -euo pipefail
+
+          Q_URL=$(gcloud run services describe peerprep-question --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+          U_URL=$(gcloud run services describe peerprep-user --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+          C_URL=$(gcloud run services describe peerprep-collaboration --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+
+          [ -n "$Q_URL" ] || Q_URL="https://${{ secrets.DOMAIN }}/api/question"
+          [ -n "$U_URL" ] || U_URL="https://${{ secrets.DOMAIN }}/api/user"
+          [ -n "$C_URL" ] || C_URL="https://${{ secrets.DOMAIN }}/api/collab"
+
+          ENV_VARS="${{ matrix.env_vars }}"
+          ENV_VARS="${ENV_VARS//__DOMAIN__/${{ secrets.DOMAIN }}}"
+          ENV_VARS="${ENV_VARS//__QUESTION_URL__/$Q_URL}"
+          ENV_VARS="${ENV_VARS//__USER_URL__/$U_URL}"
+          ENV_VARS="${ENV_VARS//__COLLAB_URL__/$C_URL}"
+
+          echo "RESOLVED_ENV_VARS<<EOF" >> "$GITHUB_ENV"
+          echo "$ENV_VARS" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Deploy ${{ matrix.name }} to Cloud Run (staging)
+        if: matrix.changed == 'true'
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service: peerprep-${{ matrix.name }}
+          image: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}:${{ env.SOURCE_SHA }}
+          region: ${{ env.REGION }}
+          flags: >-
+            --port=${{ matrix.port }}
+            --min-instances=1
+            --max-instances=10
+            --memory=512Mi
+            --cpu=1
+            --concurrency=80
+            --vpc-connector=peerprep-connector
+            --vpc-egress=private-ranges-only
+            --service-account=${{ secrets.CLOUD_RUN_SA_EMAIL }}
+            --allow-unauthenticated
+          env_vars: |-
+            ${{ env.RESOLVED_ENV_VARS }}
+          secrets: ${{ matrix.secrets || '' }}
+
+  smoke-test:
+    needs: [changes, deploy]
+    if: |
+      needs.changes.outputs.question == 'true' ||
+      needs.changes.outputs.user == 'true' ||
+      needs.changes.outputs.matching == 'true' ||
+      needs.changes.outputs.collaboration == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Health checks
+        run: |
+          BASE="https://${{ secrets.DOMAIN }}"
+          for path in /api/user/health /api/question/health /api/matching/health /api/collab/health; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$BASE$path")
+            echo "$path -> $status"
+            [ "$status" = "200" ] || { echo "FAILED: $path returned $status"; exit 1; }
+          done

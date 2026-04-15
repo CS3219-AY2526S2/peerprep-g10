@@ -1,0 +1,130 @@
+import pool from '../config/db';
+
+export const UserDB = {
+  async findByEmailOrUsername(email: string, username: string) {
+    const result = await pool.query(
+      'SELECT id, username, email FROM users WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+    return result.rows[0];
+  },
+
+  async findByEmail(email: string) {
+    const result = await pool.query(
+      `SELECT id, username, email, password, access_role, profile_icon, is_verified, is_banned
+       FROM users WHERE email = $1`,
+      [email]
+    );
+    return result.rows[0];
+  },
+
+  async createUser(username: string, email: string, passwordHash: string, profileIcon: string) {
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password, profile_icon)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, username, access_role`,
+      [username, email, passwordHash, profileIcon]
+    );
+    return result.rows[0];
+  },
+
+  async getUserById(id: string) {
+    const result = await pool.query(
+      `SELECT id, username, email, password, access_role, profile_icon, is_verified, is_banned
+       FROM users WHERE id = $1`,
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async getUsersByIds(ids: string[]) {
+    const result = await pool.query(
+      'SELECT id, username, email, access_role, profile_icon, is_banned FROM users WHERE id = ANY($1)',
+      [ids]
+    );
+    return result.rows;
+  },
+
+  async getAllUsers() {
+    const result = await pool.query(
+      'SELECT id, username, email, access_role, profile_icon, is_verified, is_banned FROM users'
+    );
+    return result.rows;
+  },
+
+  async deleteUser(id: number) {
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING id',
+      [id]
+    );
+    return result.rowCount;
+  },
+
+  async updateProfile(id: string, username: string, email: string) {
+    const result = await pool.query(
+      `UPDATE users SET username = $1, email = $2
+       WHERE id = $3
+       RETURNING id, username, email, profile_icon`,
+      [username, email, id]
+    );
+    return result.rows[0];
+  },
+
+  async updatePassword(id: string, hashedPassword: string) {
+    const result = await pool.query(
+      'UPDATE users SET password = $1 WHERE id = $2 RETURNING id',
+      [hashedPassword, id]
+    );
+    return result.rows[0];
+  },
+
+  async updateProfileIcon(id: string, profileIcon: string) {
+    const result = await pool.query(
+      `UPDATE users SET profile_icon = $1
+       WHERE id = $2
+       RETURNING id, username, email, profile_icon`,
+      [profileIcon, id]
+    );
+    return result.rows[0];
+  },
+
+  async createAdmin(username: string, email: string, hashedPassword: string, profileIcon: string) {
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password, access_role, is_verified, profile_icon)
+       VALUES ($1, $2, $3, 'admin', TRUE, $4)
+       RETURNING id, username, access_role`,
+      [username, email, hashedPassword, profileIcon]
+    );
+    return result.rows[0];
+  },
+
+  async updateUserBanStatus(id: number, isBanned: boolean) {
+    const result = await pool.query(
+      `UPDATE users SET is_banned = $1
+       WHERE id = $2
+       RETURNING id, username, email, access_role, profile_icon, is_banned`,
+      [isBanned, id]
+    );
+    return result.rows[0];
+  },
+
+  async markVerified(id: number) {
+    const result = await pool.query(
+      `UPDATE users SET is_verified = TRUE
+       WHERE id = $1
+       RETURNING id, username, email, access_role, profile_icon, is_banned`,
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async updateEmail(id: number, newEmail: string) {
+    const result = await pool.query(
+      `UPDATE users SET email = $1
+       WHERE id = $2
+       RETURNING id, username, email, access_role, profile_icon, is_banned`,
+      [newEmail, id]
+    );
+    return result.rows[0];
+  },
+};

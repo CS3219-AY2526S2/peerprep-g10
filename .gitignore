@@ -1,0 +1,46 @@
+# Dependency directories
+node_modules/
+
+# Build directories
+dist/
+
+# generated Key and Certificates
+cert.pem
+key.pem
+
+# Local .terraform directories
+**/.terraform/*
+.terraform/
+.terraform.*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# terraform variable file
+*.tfvars
+
+# terraform plan
+*tfplan*
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# dump files
+dump.rdb
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE folders
+.vscode/
+.idea/
+
+# Helper docs
+docs
+
+nginx/certs
