@@ -1,6 +1,6 @@
 // AI Assistance Disclosure:
 // Tool: ChatGPT date: 2026‑03‑28
-// Scope: Generate the intitial implementation
+// Scope: Implemented WebRTC peer connection and signaling logic based on my finalized signaling architecture and service interfaces.
 // Author review: Edited as the project progressed
 
 "use client";

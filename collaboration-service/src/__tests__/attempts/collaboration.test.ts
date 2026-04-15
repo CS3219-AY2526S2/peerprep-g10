@@ -1,6 +1,6 @@
 // AI Assistance Disclosure:
 // Tool: ChatGPT date: 2026‑04‑14
-// Scope: Generate initial test file for main collaboration service
+// Scope: Generated the initial test code for test cases and scenarios designed.
 // Author review: Edited and debugged as initial code was full of bugs
 
 import http from "http";

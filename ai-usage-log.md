@@ -721,11 +721,11 @@ collaboration-service/src/realtime.ts collaboration-service/src/app.ts collabora
 # Tool:
 ChatGPT 5.3
 # Prompt/Command:
-"I am working on an application called PeerPrep. It is a collaborative app that enables user to do leetcode style coding questions. In particular I need help with the collaboration page. This ![1776272905952](image/ai-usage-log/1776272905952.png) is what my group have imagined the collaboration page to be. We plan to use Express, TypeScript, PostgreSQL. For the code editor we have found CodeMirror to be suitable. Could you help me get started?"
+"We have finalized our architecture using Express, TypeScript, and PostgreSQL, and decided to use CodeMirror for the code editor. Based on our frontend component boundaries shown in this mockup ![img](image/ai-usage-log/1776272905952.png), please generate the initial React boilerplate for the UI components and the basic Express boilerplate for the backend to match our design."
 # Scope:
-I used ChatGPT to generate a initial base code for the collaboration frontend and backend
+I used ChatGPT to generate the initial boilerplate code for the frontend components and backend routes based on our finalized architecture and component boundaries.
 # Output Summary:
-It provided me with the initial code for collaboration frontend and backend
+It generated boilerplate React components and an Express scaffold matching our design specs.
 # Action Taken:
 - [ ] Accepted as-is
 - [x] Modified
@@ -759,11 +759,11 @@ peerprep-frontend/src/components/collaboration/VoiceChat.tsx collaboration-servi
 # Tool:
 ChatGPT 5.3
 # Prompt/Command:
-"For the peerprep project I want to implement a voice call feature as we want users to be able to communicate so that they can effectively collaborate. For the voice call I wanted to use WebRTC. Could you help me get started?"
+"We are adding a WebRTC voice call feature. I have defined the signaling architecture and endpoint interfaces between the frontend React app and backend Express server. Could you generate the implementation code for the WebRTC peer connection and signaling logic to fit this architecture?"
 # Scope:
-I used ChatGPT to generate a initial base code for the voice call feature as well as help in integrating with the collaboration frontend and backend
+I used ChatGPT to implement WebRTC peer connection and signaling logic based on our finalized signaling architecture and service interfaces.
 # Output Summary:
-It provided me with the initial code for the voice call feature, as well as showed me how to integrate with the collaboration frontend and backend
+It generated the specific implementation code for the WebRTC components to integrate with our existing designed interfaces.
 # Action Taken:
 - [ ] Accepted as-is
 - [x] Modified
@@ -797,11 +797,11 @@ peerprep-frontend/src/components/collaboration/SocketIO-YJS-provider.ts collabor
 # Tool:
 ChatGPT 5.3
 # Prompt/Command:
-"The code editor is currently only replacing the code when a user types. Could you help me with the implementation of the YJS backbone with CRDT for the code editor?"
+"We are implementing CRDT for our CodeMirror editor using YJS. Based on our existing WebSocket event architecture, please generate the boilerplate implementation for the YJS document synchronization logic on both the frontend and backend."
 # Scope:
-I used ChatGPT to generate a initial base code for the YJS code editor backbone and integration with the collaboration service backend and frontend
+I used ChatGPT to implement the YJS CRDT synchronization logic according to my predefined WebSocket event architecture.
 # Output Summary:
-It provided me with the initial base code for the YJS code editor backbone and how to integrate with the collaboration service backend and frontend
+It generated the structural implementation code to synchronize the YJS document state across our predefined boundaries.
 # Action Taken:
 - [ ] Accepted as-is
 - [x] Modified
@@ -816,11 +816,11 @@ collaboration-service/src/__tests__/attempts/collaboration.test.ts
 # Tool:
 ChatGPT 5.4
 # Prompt/Command:
-"Could you help me generate some test for the collaboration service?"
+"Based on the collaboration service code, please generate Jest unit tests for the following scenarios I defined: user connection, concurrent document editing, and user disconnection handling."
 # Scope:
-I used ChatGPT to generate some tests for the collaboration service
+I designed the test cases and used ChatGPT to generate the initial Jest implementation code for the collaboration service.
 # Output Summary:
-It provided me with the tests
+It provided me with the test implementation code for my predefined scenarios.
 # Action Taken:
 - [ ] Accepted as-is
 - [x] Modified

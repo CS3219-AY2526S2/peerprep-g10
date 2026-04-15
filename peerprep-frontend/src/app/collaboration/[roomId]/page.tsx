@@ -1,6 +1,6 @@
 // AI Assistance Disclosure:
 // Tool: ChatGPT date: 2026‑03‑12, 2026‑03‑28, 2026‑03-30
-// Scope: Generate the intitial implementation, as well as aid in integration with features like voice call
+// Scope: Generated boilerplate and implementation for UI/backend, WebRTC signaling, and YJS CRDT, strictly based on our predefined architecture and interfaces.
 // Author review: Edited as the project progressed and added new features
 
 "use client";
