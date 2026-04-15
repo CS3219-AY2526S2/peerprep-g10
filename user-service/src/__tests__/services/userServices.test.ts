@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for UserService including user deletion, password updates, admin creation, and banning logic. Included mocking of UserDB and bcrypt with full coverage of success and error scenarios.
+// Author review: Accepted as-is and integrated into test suite to validate user management business logic and enforcement of system constraints.
 import { UserService } from '../../services/userServices';
 import { UserDB } from '../../model/userModel';
 import { Errors } from '../../errors/AppError';

@@ -1,3 +1,12 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT (GPT-5.3), date: 2026-04-06
+// Scope: Assisted in debugging ESLint errors and refactoring React hooks usage.
+// Author review: Refactored logic, improved typing, and verified correctness.
+
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-02
+// Scope: Generated React SVG component for verify email status icon.
+// Author review: Accepted as-is and integrated directly into UI.
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';

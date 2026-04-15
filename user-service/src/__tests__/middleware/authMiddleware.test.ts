@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for Express authentication middleware including JWT token validation, service token verification, and user ban/deletion checks. Mocked jsonwebtoken, UserDB, and BanService dependencies.
+// Author review: Accepted as-is and integrated into test suite to validate authentication middleware behavior and authorization flows.
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticateToken, authenticateServiceToken } from '../../middleware/authMiddleware';

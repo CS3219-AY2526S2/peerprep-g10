@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for Express role-based authorization middleware authorizeRoles including role validation, unauthorized access handling, and multi-role support.
+// Author review: Accepted as-is and integrated into test suite to validate access control logic and middleware behavior.
 import { Request, Response, NextFunction } from 'express';
 import { authorizeRoles } from '../../middleware/roleMiddleware';
 

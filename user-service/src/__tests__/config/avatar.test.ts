@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated Jest unit tests for avatar utility functions including URL validation, bucket path correctness, and avatar key verification.
+// Author review: Accepted as-is and integrated directly into test suite to improve coverage.
 import { getDefaultAvatar, getRandomAvatar, AVATAR_OPTIONS } from '../../config/avatar';
 
 describe('avatar config', () => {
