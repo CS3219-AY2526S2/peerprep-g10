@@ -198,9 +198,28 @@ jobs:
       - name: Resolve runtime infrastructure values
         if: matrix.changed == 'true' && matrix.digest != ''
         run: |
-          DB_IP=$(gcloud sql instances describe peerprep-postgres \
-            --project="$PROJECT_ID" \
-            --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          set -euo pipefail
+
+          DB_INSTANCE=""
+          case "${{ matrix.name }}" in
+            question)
+              DB_INSTANCE="peerprep-question-postgres"
+              ;;
+            user)
+              DB_INSTANCE="peerprep-user-postgres"
+              ;;
+            collaboration)
+              DB_INSTANCE="peerprep-collab-postgres"
+              ;;
+          esac
+
+          DB_IP=""
+          if [ -n "$DB_INSTANCE" ]; then
+            DB_IP=$(gcloud sql instances describe "$DB_INSTANCE" \
+              --project="$PROJECT_ID" \
+              --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          fi
+
           REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
             --project="$PROJECT_ID" \
             --region="$REGION" \
