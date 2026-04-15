@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03-30
+// Scope: Implemented the YJS CRDT synchronization logic according to my predefined WebSocket event architecture.
+// Author review: Edited as the project progressed
+
 import * as Y from "yjs";
 import * as awarenessProtocol from "y-protocols/awareness.js";
 import type { Socket } from "socket.io-client";

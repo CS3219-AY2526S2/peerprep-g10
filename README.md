@@ -224,3 +224,32 @@ npm run test
 cd matching-service
 npm run test:integration
 ```
+
+
+### AI Use Summary
+
+This project used AI tools only for permitted implementation-related tasks such as boilerplate generation, implementation assistance, debugging, refactoring suggestions, test generation, and UI asset generation. AI was not used for requirements elicitation, architecture/design decisions, prioritizing requirements, or drafting decision rationales/trade-off justifications.
+
+### Tools used
+
+ChatGPT (GPT-5.3 / GPT-5.4)
+GitHub Copilot (GPT-5.3-Codex)
+Claude (Sonnet 4.5)
+
+### Allowed uses in this project
+
+Boilerplate and implementation scaffolding for backend services, frontend pages/components, infrastructure, and configuration files
+Debugging help for Jest, ESLint, React hooks, and workflow/configuration issues
+Refactoring suggestions for service logic and frontend state handling
+Test generation for selected backend/frontend components
+UI asset generation such as SVG illustrations and logo components
+Documentation/code-comment improvement where applicable
+
+### Examples of AI-assisted work
+
+Matching service app setup, Redis helpers, matching flow, and client scaffolding
+Collaboration service starter code, WebRTC voice chat integration, Yjs-based editor sync, Dockerfile, Jest config, and collaboration tests
+Question service DDL generation, CRUD route scaffolding, admin CRUD UI, CI/test harness, seed content support, and unattempted-question endpoint
+User service unit tests and frontend lint/debugging fixes
+Terraform and GitHub Actions workflow scaffolding
+Frontend SVG assets and logo generation

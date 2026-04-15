@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03‑28
+// Scope: Implemented WebRTC peer connection and signaling logic based on my finalized signaling architecture and service interfaces.
+// Author review: Edited as the project progressed
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";

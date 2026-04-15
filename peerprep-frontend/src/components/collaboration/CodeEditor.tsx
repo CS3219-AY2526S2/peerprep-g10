@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03‑12
+// Scope: Generated the initial boilerplate code based on our finalized architecture and component boundaries.
+// Author review: Edited as the project progressed
+
 "use client";
 
 import { useEffect, useRef } from "react";

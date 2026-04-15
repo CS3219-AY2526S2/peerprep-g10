@@ -711,3 +711,138 @@ Generated Jest test suite for authorizeRoles middleware covering:
 
 ## Author Notes:
 Integrated generated middleware tests into role-based authorization test suite. Verified correct access control behavior and middleware flow control using Jest.
+
+# Yan Xu
+
+## Entry 1
+collaboration-service/src/realtime.ts collaboration-service/src/app.ts collaboration-service/src/index.ts peerprep-frontend/src/app/collaboration/[roomId]/page.tsx peerprep-frontend/src/app/collaboration/[roomId]/room.module.css peerprep-frontend/src/components/collaboration/CodeEditor.tsx
+# Date/Time:
+2026-03-12
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"We have finalized our architecture using Express, TypeScript, and PostgreSQL, and decided to use CodeMirror for the code editor. Based on our frontend component boundaries shown in this mockup ![img](image/ai-usage-log/1776272905952.png), please generate the initial React boilerplate for the UI components and the basic Express boilerplate for the backend to match our design."
+# Scope:
+I used ChatGPT to generate the initial boilerplate code for the frontend components and backend routes based on our finalized architecture and component boundaries.
+# Output Summary:
+It generated boilerplate React components and an Express scaffold matching our design specs.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is not what was envisioned and was full of bugs. It is heavily modified as the project progresses
+
+## Entry 2
+collaboration-service/Dockerfile
+# Date/Time:
+2026-03-23
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"Based on your understanding of my peerprep project, could you help me generate a Dockerfile?"
+# Scope:
+I used ChatGPT to generate a Dockerfile for the collaboration service
+# Output Summary:
+It provided me with the Dockerfile
+# Action Taken:
+- [x] Accepted as-is
+- [ ] Modified
+- [ ] Rejected
+# Author Notes:
+The Dockerfile is kept as is as it works well
+
+## Entry 3
+peerprep-frontend/src/components/collaboration/VoiceChat.tsx collaboration-service/src/realtime.ts peerprep-frontend/src/app/collaboration/[roomId]/page.tsx
+# Date/Time:
+2026-03-28
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"We are adding a WebRTC voice call feature. I have defined the signaling architecture and endpoint interfaces between the frontend React app and backend Express server. Could you generate the implementation code for the WebRTC peer connection and signaling logic to fit this architecture?"
+# Scope:
+I used ChatGPT to implement WebRTC peer connection and signaling logic based on our finalized signaling architecture and service interfaces.
+# Output Summary:
+It generated the specific implementation code for the WebRTC components to integrate with our existing designed interfaces.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified to get the integration to work. Furthermore more changes are added as the project progresses
+
+## Entry 4
+nginx/default.conf
+# Date/Time:
+2026-03-28
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"The Voice call feature requires HTTPS to work. As the services of peerprep are currently hosted on HTTP, could you help me generate a nginx configuration file to reverse proxy all the traffic onto HTTPS? The collaboration service is on http://collaboration-service:3001/, the frontend is on http://peerprep-frontend:3000/, the matching service is on http://matching-service:3002/, the user service is on http://user-service:3004/ and the question service is on http://question-service:3003/"
+# Scope:
+I used ChatGPT to generate a initial base NGINX configuration file to get voice call to work
+# Output Summary:
+It provided me with the initial base NGINX configuration file with routes to each of the services
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified as the project progresses
+
+## Entry 5
+peerprep-frontend/src/components/collaboration/SocketIO-YJS-provider.ts collaboration-service/src/realtime.ts peerprep-frontend/src/app/collaboration/[roomId]/page.tsx
+# Date/Time:
+2026-03-30
+# Tool:
+ChatGPT 5.3
+# Prompt/Command:
+"We are implementing CRDT for our CodeMirror editor using YJS. Based on our existing WebSocket event architecture, please generate the boilerplate implementation for the YJS document synchronization logic on both the frontend and backend."
+# Scope:
+I used ChatGPT to implement the YJS CRDT synchronization logic according to my predefined WebSocket event architecture.
+# Output Summary:
+It generated the structural implementation code to synchronize the YJS document state across our predefined boundaries.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial code is modified as the project progresses
+
+## Entry 6
+collaboration-service/src/__tests__/attempts/collaboration.test.ts
+# Date/Time:
+2026‑04‑14
+# Tool:
+ChatGPT 5.4
+# Prompt/Command:
+"Based on the collaboration service code, please generate Jest unit tests for the following scenarios I defined: user connection, concurrent document editing, and user disconnection handling."
+# Scope:
+I designed the test cases and used ChatGPT to generate the initial Jest implementation code for the collaboration service.
+# Output Summary:
+It provided me with the test implementation code for my predefined scenarios.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The initial tests is changed while debugging
+
+## Entry 7
+collaboration-service/jest.config.js
+# Date/Time:
+2026‑04‑14
+# Tool:
+ChatGPT 5.4
+# Prompt/Command:
+"I have some errors with running the collaboration service tests. Could you help me configure Jest to handle dependencies such as yjs, y-protocols, and lib0?"
+# Scope:
+I used ChatGPT to generate the regex to handle yjs, y-protocols, and lib0 dependencies and install the correct dependencies
+# Output Summary:
+It provided me with the initial regex
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+The output is not used directly as-is. I adjusted the Jest configuration while debugging and verified the final setup by rerunning the collaboration service tests

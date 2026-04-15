@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT date: 2026‑03‑12
+// Scope: Generated the initial boilerplate code based on our finalized architecture and component boundaries.
+// Author review: Edited as the project progressed and added new features
+
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { pool } from "./db";
