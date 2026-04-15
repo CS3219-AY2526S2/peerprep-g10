@@ -1,3 +1,11 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05 (PR #46), 2026-04-07 (PR #53)
+// Scope: Generated the Testcontainers + Supertest integration harness
+//   (Postgres container setup, schema initialisation, JWT signing, mocked
+//   ban-check Redis client) and the initial test cases for the CRUD and
+//   random-unattempted flows.
+// Author review: Reviewed for correctness and integrated into the test suite.
+
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,

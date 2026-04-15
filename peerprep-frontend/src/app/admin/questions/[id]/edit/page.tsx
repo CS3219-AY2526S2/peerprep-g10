@@ -1,3 +1,9 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-11 (PR #14), 2026-04-13 (PR #75)
+// Scope: Generated the admin "edit question" page (fetch existing question
+//   by id, pre-populate the QuestionForm, submit updates) and the later
+//   split of starter pseudocode from model solution in the form flow.
+// Author review: Reviewed for correctness and integrated as-is.
 'use client';
 
 import { useEffect, useState } from 'react';

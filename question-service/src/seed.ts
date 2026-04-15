@@ -1,3 +1,11 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05 (PR #47)
+// Scope: Generated model solutions for LeetCode questions (Sort and
+//   Stacks/Queues topics) since the Kaggle source dataset
+//   (https://www.kaggle.com/datasets/gzipchrist/leetcode-problem-dataset)
+//   lacked worked solutions.
+// Author review: Integrated generated content into the seed script.
+
 import dotenv from 'dotenv';
 dotenv.config();
 

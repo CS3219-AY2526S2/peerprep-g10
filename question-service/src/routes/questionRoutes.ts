@@ -1,3 +1,12 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-08 (PR #10), 2026-04-07 (PR #53)
+// Scope: Generated the Express CRUD routes for the question repository
+//   (list/get/create/update/delete with validation) and the
+//   `/random-unattempted` endpoint that coordinates with the collaboration
+//   service to pick a question neither user has attempted.
+// Author review: Reviewed for correctness and integrated with minor
+//   adjustments to match our auth/role middleware conventions.
+
 import { Router, Request, Response } from 'express';
 import pool from '../db';
 import { authenticateToken, requireAuth } from '../middleware/authMiddleware';

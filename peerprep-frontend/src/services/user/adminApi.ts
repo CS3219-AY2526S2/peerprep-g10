@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: ChatGPT (GPT-5.3), date: 2026-04-06
+// Scope: Assisted in debugging ESLint errors and refactoring React hooks usage.
+// Author review: Refactored logic, improved typing, and verified correctness.
 import { API_BASE } from '@/src/constant/api';
 import { User } from './types';
 
