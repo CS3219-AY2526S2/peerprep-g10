@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-11 (PR #14)
+// Scope: Generated the fetch-based API client for the question service
+//   (list/get/create/update/delete and topic fetch) with typed responses.
+// Author review: Reviewed for correctness and integrated as-is.
 import { API_BASE } from '@/src/constant/api';
 import { Question, QuestionFormData } from './types';
 

@@ -1,3 +1,9 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-11 (PR #14)
+// Scope: Generated the admin "create question" page wiring the QuestionForm
+//   component to the createQuestion API client and handling post-submit
+//   navigation.
+// Author review: Reviewed for correctness and integrated as-is.
 'use client';
 
 import { useRouter } from 'next/navigation';
