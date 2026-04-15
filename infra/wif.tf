@@ -1,6 +1,8 @@
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "github-pool"
   display_name              = "GitHub Actions Pool"
+
+  depends_on = [time_sleep.api_propagation]
 }
 
 resource "google_iam_workload_identity_pool_provider" "github" {
@@ -24,6 +26,8 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 resource "google_service_account" "cicd_sa" {
   account_id   = "peerprep-cicd"
   display_name = "PeerPrep CI/CD Service Account"
+
+  depends_on = [time_sleep.api_propagation]
 }
 
 resource "google_project_iam_member" "cicd_roles" {

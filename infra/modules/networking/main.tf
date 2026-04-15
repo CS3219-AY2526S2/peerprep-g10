@@ -27,6 +27,7 @@ resource "google_vpc_access_connector" "connector" {
   network       = google_compute_network.vpc.name
   min_instances = 2
   max_instances = 10
+  max_throughput = 1000
 }
 
 resource "google_compute_global_address" "private_ip_range" {

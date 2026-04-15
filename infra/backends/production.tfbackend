@@ -1,0 +1,2 @@
+bucket = "pivotal-racer-490116-c3-tfstate"
+prefix = "production/state"

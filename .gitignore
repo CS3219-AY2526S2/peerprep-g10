@@ -18,7 +18,7 @@ key.pem
 *.tfstate.*
 
 # terraform variable file
-terraform.tfvars
+*.tfvars
 
 # terraform plan
 *tfplan*
