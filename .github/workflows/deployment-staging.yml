@@ -332,9 +332,15 @@ jobs:
       - name: Resolve stable Cloud Run URLs
         if: matrix.changed == 'true'
         run: |
-          Q_URL=$(gcloud run services describe peerprep-question --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/question")
-          U_URL=$(gcloud run services describe peerprep-user --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/user")
-          C_URL=$(gcloud run services describe peerprep-collaboration --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/collab")
+          set -euo pipefail
+
+          Q_URL=$(gcloud run services describe peerprep-question --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+          U_URL=$(gcloud run services describe peerprep-user --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+          C_URL=$(gcloud run services describe peerprep-collaboration --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)
+
+          [ -n "$Q_URL" ] || Q_URL="https://${{ secrets.DOMAIN }}/api/question"
+          [ -n "$U_URL" ] || U_URL="https://${{ secrets.DOMAIN }}/api/user"
+          [ -n "$C_URL" ] || C_URL="https://${{ secrets.DOMAIN }}/api/collab"
 
           ENV_VARS="${{ matrix.env_vars }}"
           ENV_VARS="${ENV_VARS//__DOMAIN__/${{ secrets.DOMAIN }}}"
