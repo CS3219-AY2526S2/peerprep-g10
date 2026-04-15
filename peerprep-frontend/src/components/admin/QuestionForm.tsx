@@ -1,3 +1,10 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-11 (PR #14), 2026-04-05 (PR #47)
+// Scope: Generated the admin question form (controlled inputs for
+//   title/description/examples, difficulty select, topic chip-picker with
+//   topic fetch, pseudocode and solution fields) styled with Tailwind.
+// Author review: Reviewed for correctness and integrated with minor
+//   adjustments to types and routing.
 'use client';
 
 import { useEffect, useState } from 'react';

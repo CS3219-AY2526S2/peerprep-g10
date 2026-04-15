@@ -1,3 +1,10 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-08 (PR #10)
+// Scope: Translated the hand-designed schema for the `questions` table
+//   (difficulty enum, `TEXT[]` topics column, GIN index for multi-topic
+//   filtering) into Postgres DDL.
+// Author review: Reviewed for correctness and integrated as-is.
+
 import pool from './db';
 
 export async function initDb(): Promise<void> {

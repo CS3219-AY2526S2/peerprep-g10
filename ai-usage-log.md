@@ -134,3 +134,120 @@ It suggested edits for workflow syntax and step wiring in staging and production
 - [ ] Rejected
 # Author Notes:
 I checked trigger conditions and job dependencies, edited commands to match our scripts, and validated workflow syntax.
+
+# Kang Jun
+
+## Entry 1
+question-service/src/init-db.ts
+# Date/Time:
+2026-03-08
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Translate this hand-designed schema for a `questions` table (SERIAL id, unique title, description, TEXT[] topics with GIN index, difficulty enum, examples/pseudocode/solution/image_url, timestamps) into Postgres DDL."
+# Scope:
+I used Claude to convert my schema design into the actual DDL statements.
+# Output Summary:
+It produced the `CREATE TYPE` / `CREATE TABLE` / `CREATE INDEX` statements matching the design.
+# Action Taken:
+- [x] Accepted as-is
+- [ ] Modified
+- [ ] Rejected
+# Author Notes:
+I verified the DDL against the schema I had planned and ran it locally to confirm the indexes behaved as expected.
+
+## Entry 2
+question-service/src/routes/questionRoutes.ts
+# Date/Time:
+2026-03-08
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Generate Express CRUD routes for list/get/create/update/delete against the `questions` table using `pg`, with input validation."
+# Scope:
+I used Claude to draft the initial CRUD route handlers for the question service.
+# Output Summary:
+It produced a first pass of the CRUD Express router.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+I adjusted the handlers to plug into our auth/role middleware conventions and tightened error responses before merging.
+
+## Entry 3
+peerprep-frontend/src/components/admin/QuestionForm.tsx, peerprep-frontend/src/components/admin/QuestionTable.tsx, peerprep-frontend/src/services/questionApi.ts, peerprep-frontend/src/app/admin/questions/create/page.tsx, peerprep-frontend/src/app/admin/questions/[id]/edit/page.tsx
+# Date/Time:
+2026-03-11
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Generate a Next.js admin dashboard for question CRUD: a QuestionForm with title/description/examples/difficulty/topics/pseudocode/solution inputs, a QuestionTable with edit/delete actions, a fetch-based API client, and create/edit pages wiring them together, styled with Tailwind."
+# Scope:
+I used Claude to generate the admin question CRUD UI, API client, and the create/edit pages.
+# Output Summary:
+It produced the form, table, API client, and two page components in Tailwind-styled React.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+I reviewed types, adjusted routing constants, and verified the UI against the backend before keeping the code.
+
+## Entry 4
+.github/workflows/ci.yml, question-service/src/__tests__/integration.test.ts
+# Date/Time:
+2026-04-05
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Translate this hand-designed CI pipeline (paths-filter → per-service matrix of npm ci/typecheck/test/build, frontend lint+build, Docker image verify) into GitHub Actions YAML, and generate a Testcontainers + Supertest integration harness for question-service with initial CRUD test cases."
+# Scope:
+I used Claude to convert my CI design into YAML and to scaffold the integration test harness.
+# Output Summary:
+It produced the GitHub Actions workflow and a Testcontainers-backed integration test file.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+I adjusted service paths, Node version, and added edge-case coverage before merging.
+
+## Entry 5
+question-service/src/seed.ts
+# Date/Time:
+2026-04-05
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Given these LeetCode questions from the Kaggle dataset (https://www.kaggle.com/datasets/gzipchrist/leetcode-problem-dataset) which lacks worked answers, generate model solutions for the Sort and Stacks/Queues topics matching the existing Question interface."
+# Scope:
+I used Claude to generate model solutions for questions where the Kaggle source did not include answers.
+# Output Summary:
+It produced worked solutions and example blocks for the requested topic batches.
+# Action Taken:
+- [ ] Accepted as-is
+- [x] Modified
+- [ ] Rejected
+# Author Notes:
+I reviewed each solution for correctness, trimmed/reformatted content to match the schema, and validated via the seed script against the integration test suite.
+
+## Entry 6
+question-service/src/routes/questionRoutes.ts, question-service/src/__tests__/integration.test.ts
+# Date/Time:
+2026-04-07
+# Tool:
+Claude (model: Sonnet 4.5)
+# Prompt/Command:
+"Add a `/random-unattempted` endpoint that takes { userAId, userBId, topics, difficulties }, calls the collaboration service for each user's attempted question IDs, and picks a random matching question neither has attempted; include integration tests using nock."
+# Scope:
+I used Claude to generate the random-unattempted endpoint and its integration tests.
+# Output Summary:
+It produced the new endpoint plus the corresponding test cases.
+# Action Taken:
+- [x] Accepted as-is
+- [ ] Modified
+- [ ] Rejected
+# Author Notes:
+I verified the service-to-service call and confirmed the tests ran green locally and in CI.
+

@@ -1,3 +1,10 @@
+# AI Assistance Disclosure:
+# Tool: Claude, date: 2026-04-05 (PR #46)
+# Scope: Translated the hand-designed CI pipeline (per-service change
+#   detection, matrix of install → typecheck → test → build, frontend
+#   lint + build, Docker image verification) into GitHub Actions YAML.
+# Author review: Reviewed for correctness and integrated with minor
+#   adjustments to service paths and Node version.
 name: CI
 
 on:

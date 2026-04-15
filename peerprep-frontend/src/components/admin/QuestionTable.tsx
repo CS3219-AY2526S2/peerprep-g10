@@ -1,3 +1,8 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-03-11 (PR #14), 2026-04-05 (PR #47)
+// Scope: Generated the admin question listing table (columns for title,
+//   topics, difficulty badge, edit/delete actions) styled with Tailwind.
+// Author review: Reviewed for correctness and integrated as-is.
 'use client';
 
 import { Question } from '@/src/services/types';
