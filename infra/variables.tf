@@ -54,3 +54,11 @@ variable "admin_seed_password" {
   type        = string
   sensitive   = true
 }
+
+variable "artifact_registry_reader_service_accounts" {
+  description = "Service account emails that need read access to Artifact Registry in this project (for cross-project image promotion)."
+  type        = list(string)
+  default = [
+    "peerprep-cicd@pivotal-racer-490116-c3.iam.gserviceaccount.com"
+  ]
+}
