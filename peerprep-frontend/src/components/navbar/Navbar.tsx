@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-13
+// Scope: Generated React SVG logo component for PeerPrep frontend branding.
+// Author review: Accepted as-is and integrated directly into UI (navbar/header).
 'use client';
 import Link from 'next/link';
 import { useAuth } from '@/src/context/AuthContext';

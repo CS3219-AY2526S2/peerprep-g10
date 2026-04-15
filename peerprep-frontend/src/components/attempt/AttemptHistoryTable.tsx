@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-05
+// Scope: Generated React SVG component for empty state in User Attempt History page.
+// Author review: Accepted as-is and integrated directly into UI.
 'use client';
 
 import { useState } from 'react';

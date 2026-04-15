@@ -1,3 +1,7 @@
+// AI Assistance Disclosure:
+// Tool: Claude, date: 2026-04-11
+// Scope: Generated React SVG component for forbidden/access denied page.
+// Author review: Accepted as-is and integrated directly into UI.
 'use client';
 
 import { useRouter } from 'next/navigation';
