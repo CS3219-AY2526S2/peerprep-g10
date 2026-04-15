@@ -1,3 +1,9 @@
+/**
+ * AI Assistance Disclosure:
+ * Tool: GitHub Copilot (model: GPT-5.3-Codex), date: 2026-03-07
+ * Scope: I used Copilot to help with implementation work in this file, mainly drafting/refactoring code and troubleshooting issues.
+ * Author review: I reviewed each suggestion, kept only what fit this project, rewrote parts where needed, and tested the final behavior myself.
+ */
 import { Server } from 'socket.io';
 import { queueService } from './queue.service';
 import { QuestionClient } from '../clients/question.client';

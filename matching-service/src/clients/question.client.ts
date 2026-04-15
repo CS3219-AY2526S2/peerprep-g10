@@ -1,3 +1,9 @@
+/**
+ * AI Assistance Disclosure:
+ * Tool: GitHub Copilot (model: GPT-5.3-Codex), date: 2026-03-13
+ * Scope: I used Copilot to help with implementation work in this file, mainly drafting/refactoring code and troubleshooting issues.
+ * Author review: I reviewed each suggestion, kept only what fit this project, rewrote parts where needed, and tested the final behavior myself.
+ */
 import axios from 'axios';
 
 const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:3003';

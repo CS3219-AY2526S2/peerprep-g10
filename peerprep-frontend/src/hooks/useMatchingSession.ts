@@ -1,3 +1,9 @@
+/**
+ * AI Assistance Disclosure:
+ * Tool: GitHub Copilot (model: GPT-5.3-Codex), date: 2026-03-26
+ * Scope: I used Copilot to help with implementation work in this file, mainly drafting/refactoring code and troubleshooting issues.
+ * Author review: I reviewed each suggestion, kept only what fit this project, rewrote parts where needed, and tested the final behavior myself.
+ */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from '@/src/constant/api';
