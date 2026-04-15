@@ -1,0 +1,280 @@
+name: Deployment Production
+
+on:
+  workflow_run:
+    workflows: ["Deployment Staging"]
+    types:
+      - completed
+    branches: [main]
+
+concurrency:
+  group: deployment-production-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+jobs:
+  check-staging-success:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - run: echo "Staging deployment succeeded. Waiting for production approval gate."
+
+  detect-images:
+    needs: [check-staging-success]
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      question: ${{ steps.detect.outputs.question }}
+      user: ${{ steps.detect.outputs.user }}
+      matching: ${{ steps.detect.outputs.matching }}
+      collaboration: ${{ steps.detect.outputs.collaboration }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      question_digest: ${{ steps.detect.outputs.question_digest }}
+      user_digest: ${{ steps.detect.outputs.user_digest }}
+      matching_digest: ${{ steps.detect.outputs.matching_digest }}
+      collaboration_digest: ${{ steps.detect.outputs.collaboration_digest }}
+      frontend_digest: ${{ steps.detect.outputs.frontend_digest }}
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ secrets.GCP_REGION }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set gcloud project
+        run: gcloud config set project "$PROJECT_ID"
+
+      - name: Detect immutable image digests from staging build
+        id: detect
+        run: |
+          set -euo pipefail
+
+          detect_service() {
+            local name="$1"
+            local image="$REGISTRY/peerprep-${name}:${SOURCE_SHA}"
+            local digest
+
+            digest=$(gcloud artifacts docker images describe "$image" \
+              --project="$PROJECT_ID" \
+              --format='value(image_summary.digest)' 2>/dev/null || true)
+
+            if [ -n "$digest" ]; then
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+              echo "${name}_digest=$digest" >> "$GITHUB_OUTPUT"
+              echo "Found $name digest: $digest"
+            else
+              echo "${name}=false" >> "$GITHUB_OUTPUT"
+              echo "${name}_digest=" >> "$GITHUB_OUTPUT"
+              echo "No image found for $name at tag $SOURCE_SHA, skipping deployment"
+            fi
+          }
+
+          detect_service question
+          detect_service user
+          detect_service matching
+          detect_service collaboration
+          detect_service frontend
+
+  deploy:
+    needs: [detect-images]
+    if: |
+      needs.detect-images.outputs.question == 'true' ||
+      needs.detect-images.outputs.user == 'true' ||
+      needs.detect-images.outputs.matching == 'true' ||
+      needs.detect-images.outputs.collaboration == 'true' ||
+      needs.detect-images.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ secrets.GCP_REGION }}
+      REGISTRY: ${{ secrets.ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.ARTIFACT_PROJECT_ID }}/peerprep
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - service: question-service
+            name: question
+            port: 3003
+            changed: ${{ needs.detect-images.outputs.question }}
+            digest: ${{ needs.detect-images.outputs.question_digest }}
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep:$(gcloud secrets versions access latest --secret=db-password-question)@$DB_PRIVATE_IP:5432/question_service
+              FRONTEND_URL=https://__DOMAIN__
+              COLLABORATION_SERVICE_URL=__COLLAB_URL__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: user-service
+            name: user
+            port: 3004
+            changed: ${{ needs.detect-images.outputs.user }}
+            digest: ${{ needs.detect-images.outputs.user_digest }}
+            env_vars: |-
+              DATABASE_URL=postgresql://peerprep_user:$(gcloud secrets versions access latest --secret=db-password-user)@$DB_PRIVATE_IP:5432/user_service
+              FRONTEND_URL=https://__DOMAIN__
+              GCS_BUCKET_URL=https://storage.googleapis.com/peerprep/avatars
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              ADMIN_SEED_EMAIL=admin@peerprep.com
+              ADMIN_SEED_USERNAME=admin
+              ADMIN_SEED_PROFILE_URL=https://api.dicebear.com/7.x/avataaars/svg?seed=admin
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+              RESEND_API_KEY=peerprep-resend-key:latest
+              ADMIN_SEED_PASSWORD=admin-seed-password:latest
+
+          - service: collaboration-service
+            name: collaboration
+            port: 3001
+            changed: ${{ needs.detect-images.outputs.collaboration }}
+            digest: ${{ needs.detect-images.outputs.collaboration_digest }}
+            env_vars: |-
+              DATABASE_URL=postgresql://postgres:$(gcloud secrets versions access latest --secret=db-password-collab)@$DB_PRIVATE_IP:5432/peerprep
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              USER_SERVICE_URL=__USER_URL__
+              FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+              COLLAB_REDIS_BACKPLANE_URL=redis://$COLLAB_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: matching-service
+            name: matching
+            port: 3002
+            changed: ${{ needs.detect-images.outputs.matching }}
+            digest: ${{ needs.detect-images.outputs.matching_digest }}
+            env_vars: |-
+              REDIS_URL=redis://$REDIS_HOST:6379
+              QUESTION_SERVICE_URL=__QUESTION_URL__
+              COLLAB_SERVICE_URL=__COLLAB_URL__
+              FRONTEND_URL=https://__DOMAIN__
+              AUTH_REDIS_URL=redis://$AUTH_REDIS_HOST:6379
+            secrets: |-
+              JWT_SECRET=peerprep-jwt-secret:latest
+              SERVICE_SECRET_KEY=peerprep-service-secret:latest
+
+          - service: peerprep-frontend
+            name: frontend
+            port: 3000
+            changed: ${{ needs.detect-images.outputs.frontend }}
+            digest: ${{ needs.detect-images.outputs.frontend_digest }}
+            env_vars: |-
+              NEXT_PUBLIC_COLLAB_SERVICE_URL=/api/collab
+              NEXT_PUBLIC_MATCHING_SERVICE_URL=/api/matching
+              NEXT_PUBLIC_QUESTION_SERVICE_URL=/api/question
+              NEXT_PUBLIC_USER_SERVICE_URL=/api/user
+
+    steps:
+      - uses: google-github-actions/auth@v2
+        if: matrix.changed == 'true' && matrix.digest != ''
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: matrix.changed == 'true' && matrix.digest != ''
+
+      - name: Set gcloud project
+        if: matrix.changed == 'true' && matrix.digest != ''
+        run: gcloud config set project "$PROJECT_ID"
+
+      - name: Resolve runtime infrastructure values
+        if: matrix.changed == 'true' && matrix.digest != ''
+        run: |
+          DB_IP=$(gcloud sql instances describe peerprep-postgres \
+            --project="$PROJECT_ID" \
+            --format="json" | jq -r '.ipAddresses[] | select(.type=="PRIVATE") | .ipAddress' | head -n 1)
+          REDIS_HOST=$(gcloud redis instances describe peerprep-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+          AUTH_REDIS_HOST=$(gcloud redis instances describe peerprep-auth-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+          COLLAB_REDIS_HOST=$(gcloud redis instances describe peerprep-collab-redis \
+            --project="$PROJECT_ID" \
+            --region="$REGION" \
+            --format='value(host)')
+
+          echo "DB_PRIVATE_IP=$DB_IP" >> "$GITHUB_ENV"
+          echo "REDIS_HOST=$REDIS_HOST" >> "$GITHUB_ENV"
+          echo "AUTH_REDIS_HOST=$AUTH_REDIS_HOST" >> "$GITHUB_ENV"
+          echo "COLLAB_REDIS_HOST=$COLLAB_REDIS_HOST" >> "$GITHUB_ENV"
+
+      - name: Resolve stable Cloud Run URLs
+        if: matrix.changed == 'true' && matrix.digest != ''
+        run: |
+          Q_URL=$(gcloud run services describe peerprep-question --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/question")
+          U_URL=$(gcloud run services describe peerprep-user --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/user")
+          C_URL=$(gcloud run services describe peerprep-collaboration --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)' 2>/dev/null || echo "https://${{ secrets.DOMAIN }}/api/collab")
+
+          ENV_VARS="${{ matrix.env_vars }}"
+          ENV_VARS="${ENV_VARS//__DOMAIN__/${{ secrets.DOMAIN }}}"
+          ENV_VARS="${ENV_VARS//__QUESTION_URL__/$Q_URL}"
+          ENV_VARS="${ENV_VARS//__USER_URL__/$U_URL}"
+          ENV_VARS="${ENV_VARS//__COLLAB_URL__/$C_URL}"
+
+          echo "RESOLVED_ENV_VARS<<EOF" >> "$GITHUB_ENV"
+          echo "$ENV_VARS" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Deploy ${{ matrix.name }} to Cloud Run (production)
+        if: matrix.changed == 'true' && matrix.digest != ''
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service: peerprep-${{ matrix.name }}
+          image: ${{ env.REGISTRY }}/peerprep-${{ matrix.name }}@${{ matrix.digest }}
+          region: ${{ env.REGION }}
+          flags: >-
+            --port=${{ matrix.port }}
+            --min-instances=1
+            --max-instances=10
+            --memory=512Mi
+            --cpu=1
+            --concurrency=80
+            --vpc-connector=peerprep-connector
+            --vpc-egress=private-ranges-only
+            --service-account=${{ secrets.CLOUD_RUN_SA_EMAIL }}
+            --allow-unauthenticated
+          env_vars: |-
+            ${{ env.RESOLVED_ENV_VARS }}
+          secrets: ${{ matrix.secrets || '' }}
+
+  smoke-test:
+    needs: [detect-images, deploy]
+    if: |
+      needs.detect-images.outputs.question == 'true' ||
+      needs.detect-images.outputs.user == 'true' ||
+      needs.detect-images.outputs.matching == 'true' ||
+      needs.detect-images.outputs.collaboration == 'true' ||
+      needs.detect-images.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Health checks
+        run: |
+          BASE="https://${{ secrets.DOMAIN }}"
+          for path in /api/user/health /api/question/health /api/matching/health /api/collab/health; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$BASE$path")
+            echo "$path -> $status"
+            [ "$status" = "200" ] || { echo "FAILED: $path returned $status"; exit 1; }
+          done

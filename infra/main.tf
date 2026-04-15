@@ -6,12 +6,15 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11"
+    }
   }
 
-  backend "gcs" {
-    bucket = "peerprep-g10-tfstate-001"
-    prefix = "peerprep/state"
-  }
+  # Use environment-specific backend files, for example:
+  # terraform init -backend-config=backends/staging.tfbackend
+  backend "gcs" {}
 }
 
 provider "google" {
@@ -19,16 +22,51 @@ provider "google" {
   region  = var.region
 }
 
+# Automatically enable required Google APIs for the project
+locals {
+  required_apis = [
+    "serviceusage.googleapis.com",
+    "sts.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "compute.googleapis.com",
+    "vpcaccess.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "run.googleapis.com",
+    "sqladmin.googleapis.com",
+    "secretmanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "redis.googleapis.com",
+    "iam.googleapis.com"
+  ]
+}
+
+resource "google_project_service" "required" {
+  for_each           = toset(local.required_apis)
+  project            = var.project_id
+  service            = each.key
+  disable_on_destroy = false
+}
+
+# API enablement is eventually consistent; wait before creating dependent resources.
+resource "time_sleep" "api_propagation" {
+  create_duration = "90s"
+  depends_on      = [google_project_service.required]
+}
+
 module "networking" {
   source     = "./modules/networking"
   project_id = var.project_id
   region     = var.region
+
+  depends_on = [time_sleep.api_propagation]
 }
 
 module "artifact_registry" {
   source     = "./modules/artifact_registry"
   project_id = var.project_id
   region     = var.region
+
+  depends_on = [time_sleep.api_propagation]
 }
 
 module "databases" {
@@ -40,7 +78,7 @@ module "databases" {
   db_password_user     = var.db_password_user
   db_password_collab   = var.db_password_collab
 
-  depends_on = [module.networking]
+  depends_on = [time_sleep.api_propagation, module.networking]
 }
 
 module "secrets" {
@@ -53,6 +91,8 @@ module "secrets" {
   db_password_user     = var.db_password_user
   db_password_collab   = var.db_password_collab
   admin_seed_password  = var.admin_seed_password
+
+  depends_on = [time_sleep.api_propagation]
 }
 
 module "cloud_run" {
@@ -61,6 +101,8 @@ module "cloud_run" {
   region           = var.region
   vpc_connector_id = module.networking.vpc_connector_id
   registry_url     = module.artifact_registry.registry_url
+
+  depends_on = [time_sleep.api_propagation, module.networking, module.artifact_registry]
 }
 
 module "load_balancer" {
@@ -72,4 +114,6 @@ module "load_balancer" {
   question_neg      = module.cloud_run.question_neg
   matching_neg      = module.cloud_run.matching_neg
   collaboration_neg = module.cloud_run.collaboration_neg
+
+  depends_on = [time_sleep.api_propagation, module.cloud_run]
 }

@@ -31,10 +31,14 @@ resource "google_compute_global_address" "lb_ip" {
 }
 
 resource "google_compute_managed_ssl_certificate" "cert" {
-  name = "peerprep-ssl-cert"
+  name = "peerprep-ssl-cert-${replace(var.domain, ".", "-")}"
 
   managed {
     domains = [var.domain]
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
